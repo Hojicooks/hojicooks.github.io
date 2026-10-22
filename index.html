@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cabine Miroir</title>
+<meta name="description" content="Miroir selfie avec retardateur, dressing et planche de photos.">
+<meta name="theme-color" content="#111214">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cabine">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout : une colonne pensée pour le téléphone. Viseur, barre de prise de vue, dressing posé sur le drap, planche de photos. */
+:root{
+  color-scheme: dark;
+  --ink:#111214;
+  --panel:#1a1b1e;
+  --raise:#24262a;
+  --line:#35373c;
+  --text:#f3f0e8;
+  --muted:#a7a49b;
+  --tape:#e8c35a;
+  --tape-ink:#1b1606;
+  --sheet:#dcd6c8;
+  --live:#f08c7c;
+  --flash:#ffffff;
+  --scrim:rgba(17,18,20,.92);
+  --shade:rgba(0,0,0,.55);
+  --f-display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",Impact,sans-serif;
+  --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --radius:16px;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:var(--ink);
+}
+body{
+  margin:0;background:var(--ink);color:var(--text);
+  font-family:var(--f-body);font-size:15px;line-height:1.45;
+  -webkit-text-size-adjust:100%;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px 40px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+img{max-width:100%}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--tape);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;margin:-1px}
+
+.app{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+/* En-tête */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;margin:0;font-family:var(--f-display);font-weight:800;font-size:30px;letter-spacing:.04em;text-transform:uppercase;line-height:1}
+.brand small{font-size:12px;font-weight:600;letter-spacing:.18em;color:var(--tape-ink);background:var(--tape);padding:4px 7px 3px;border-radius:4px}
+.top-actions{display:flex;gap:8px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;background:var(--raise);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.chip[data-mode="live"]{color:var(--text)}
+.chip[data-mode="live"] .dot{background:var(--live);animation:pulse 1.6s ease-in-out infinite}
+.chip[data-mode="photo"] .dot{background:var(--tape)}
+.toggle{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.toggle[aria-pressed="true"]{color:var(--tape);border-color:var(--tape)}
+
+/* Installation */
+.install{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.install div:first-child{min-width:0;flex:1 1 220px}
+.install b{display:block;font-size:14px}
+.install p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.install-actions{display:flex;gap:8px;align-items:center}
+
+/* Viseur */
+.stage{position:relative;width:100%;height:min(66svh,640px);min-height:380px;border-radius:var(--radius);overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.stage video,.stage .still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:100%}
+.stage video{transform:scaleX(-1)}
+.state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;text-align:center}
+.state svg{color:var(--tape)}
+.state h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:34px;text-transform:uppercase;letter-spacing:.03em;line-height:1;text-wrap:balance}
+.state p{margin:0;color:var(--muted);max-width:32ch;text-wrap:pretty}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;border-radius:999px;border:0;background:var(--tape);color:var(--tape-ink);font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:progress}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.ghost:disabled{opacity:.35;cursor:default}
+.btn.small{min-height:38px;padding:0 16px;font-size:14px}
+
+.guide{position:absolute;inset:0;pointer-events:none}
+.guide .mark{position:absolute;left:14px;right:14px;border-top:1.5px dashed var(--tape);opacity:.8}
+.guide .mark span{position:absolute;right:0;font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--tape);background:var(--shade);padding:2px 7px;border-radius:4px}
+.guide .head{top:7%}
+.guide .head span{top:6px}
+.guide .feet{top:94%}
+.guide .feet span{bottom:6px}
+
+.outfit{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:12px;background:var(--scrim);max-width:calc(100% - 24px)}
+.outfit img{width:30px;height:30px;border-radius:8px;background:var(--sheet);object-fit:contain;flex:none}
+.outfit img.photo{object-fit:cover}
+.outfit div{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.outfit small{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.outfit b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.count{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:var(--f-display);font-weight:800;font-size:clamp(120px,36vw,190px);line-height:1;color:var(--tape);text-shadow:0 4px 30px var(--shade);font-variant-numeric:tabular-nums}
+.count.tick{animation:tick .9s ease-out}
+.flash{position:absolute;inset:0;background:var(--flash);opacity:0;pointer-events:none}
+.flash.go{animation:flash .45s ease-out}
+
+/* Prise de vue */
+.controls{display:flex;flex-direction:column;gap:14px}
+.timer{display:flex;gap:6px;justify-content:center}
+.timer button{flex:1;max-width:86px;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
+.timer button[aria-checked="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
+.rail{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+.last{justify-self:start;width:54px;height:54px;border-radius:12px;border:1px solid var(--line);background:var(--panel);overflow:hidden;padding:0;cursor:pointer}
+.last:disabled{cursor:default}
+.last img{width:100%;height:100%;object-fit:cover;display:block}
+.shutter{width:80px;height:80px;border-radius:50%;border:4px solid var(--text);background:transparent;padding:6px;cursor:pointer;display:grid;place-items:center}
+.shutter i{display:block;width:100%;height:100%;border-radius:50%;background:var(--text);transition:transform .15s,border-radius .2s,background .2s}
+.shutter:active i{transform:scale(.92)}
+.shutter.counting i{background:var(--tape);border-radius:12px;transform:scale(.55)}
+.shutter.off i{background:var(--tape)}
+.side{justify-self:end;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.hint{margin:0;text-align:center;color:var(--muted);font-size:13.5px;text-wrap:balance}
+
+/* Sections */
+.section{display:flex;flex-direction:column;gap:10px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.section-head h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.07em}
+.section-head span{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.note{margin:0;color:var(--muted);font-size:13px;max-width:62ch}
+
+.closet{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
+.item{flex:0 0 108px;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;padding:0;border:0;background:none;text-align:left;cursor:pointer}
+.item .pic{width:108px;height:122px;border-radius:12px;background:var(--sheet);display:grid;place-items:center;overflow:hidden;border:2px solid transparent}
+.item .pic img{width:100%;height:100%;object-fit:contain;padding:10px}
+.item .pic img.photo{object-fit:cover;padding:0}
+.item[aria-pressed="true"] .pic{border-color:var(--tape)}
+.item .name{font-size:13px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.item .kind{font-size:11.5px;color:var(--muted)}
+.item.add .pic{background:transparent;border:1.5px dashed var(--line);color:var(--muted);font-size:34px;font-weight:400}
+
+.editor{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:12px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.field{display:flex;flex-direction:column;gap:5px;flex:1 1 180px;min-width:0}
+.field label{font-size:11.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.field input{min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--ink);color:var(--text);padding:0 12px;width:100%}
+.editor .danger{color:var(--live);border-color:var(--live)}
+
+.shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.shots button{padding:0;border:0;border-radius:10px;overflow:hidden;aspect-ratio:3/4;max-width:100%;background:var(--panel);cursor:pointer;position:relative}
+.shots img{width:100%;height:100%;object-fit:cover;display:block}
+.shots .lbl{position:absolute;left:6px;bottom:6px;font-size:11px;font-weight:600;background:var(--scrim);padding:2px 7px;border-radius:6px;max-width:calc(100% - 12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{margin:0;border:1px dashed var(--line);border-radius:12px;padding:18px;color:var(--muted);font-size:14px;text-align:center;text-wrap:balance}
+
+/* Visionneuse */
+.viewer{position:fixed;inset:0;z-index:20;background:var(--scrim);display:flex;flex-direction:column;gap:12px;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 18px) max(16px,env(safe-area-inset-left,0px))}
+.viewer-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.viewer-top p{margin:0;font-size:14px;color:var(--muted);min-width:0}
+.viewer-top b{color:var(--text);font-weight:600}
+.viewer figure{flex:1;min-height:0;margin:0;display:flex;align-items:center;justify-content:center}
+.viewer figure img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px}
+.viewer-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.viewer-bar .danger{color:var(--live);border-color:var(--live)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes tick{from{transform:scale(1.25);opacity:.2}to{transform:scale(1);opacity:1}}
+@keyframes flash{from{opacity:.85}to{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .chip[data-mode="live"] .dot,.count.tick,.flash.go{animation:none}
+  .shutter i{transition:none}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <h1 class="brand">Cabine <small>Miroir</small></h1>
+    <div class="top-actions">
+      <span class="chip" id="modeChip" data-mode="off"><span class="dot"></span><span id="modeText">Caméra coupée</span></span>
+      <button class="toggle" id="guideBtn" type="button" aria-pressed="true">Repères</button>
+    </div>
+  </header>
+
+  <aside class="install" id="install" hidden>
+    <div>
+      <b>Mettre l'app sur ton écran d'accueil</b>
+      <p id="installText"></p>
+    </div>
+    <div class="install-actions">
+      <button class="btn small" id="installBtn" type="button" hidden>Installer</button>
+      <button class="toggle" id="installClose" type="button">Plus tard</button>
+    </div>
+  </aside>
+
+  <section class="stage" id="stage" aria-label="Miroir">
+    <video id="video" playsinline muted autoplay hidden></video>
+    <img class="still" id="still" alt="Dernière photo prise" hidden>
+
+    <div class="state" id="startState">
+      <svg width="74" height="96" viewBox="0 0 74 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <path d="M2 14V2h12M60 2h12v12M72 82v12H60M14 94H2V82"/>
+        <circle cx="37" cy="20" r="7"/>
+        <path d="M37 28v30M24 38l13-6 13 6M30 84l7-26 7 26"/>
+      </svg>
+      <h2>Ton miroir</h2>
+      <p>Pose ton téléphone contre un meuble, active la caméra selfie et recule jusqu'à voir tes pieds.</p>
+      <button class="btn" id="startBtn" type="button">Activer la caméra</button>
+    </div>
+
+    <div class="state" id="fallbackState" hidden>
+      <h2>Mode photo</h2>
+      <p>Le direct n'est pas disponible : la caméra a été refusée ou n'est pas accessible. Autorise-la dans les réglages du navigateur, ou prends une photo avec l'appareil photo selfie.</p>
+      <button class="btn" id="fallbackShoot" type="button">Prendre une photo</button>
+    </div>
+
+    <div class="guide" id="guide" hidden aria-hidden="true">
+      <div class="mark head"><span>Tête ici</span></div>
+      <div class="mark feet"><span>Pieds ici</span></div>
+    </div>
+
+    <div class="outfit" id="outfitTag" hidden>
+      <img id="outfitImg" alt="">
+      <div><small>Tenue</small><b id="outfitName"></b></div>
+    </div>
+
+    <div class="count" id="count" aria-live="assertive"></div>
+    <div class="flash" id="flash"></div>
+  </section>
+
+  <section class="controls" aria-label="Prise de vue">
+    <div class="timer" id="timer" role="radiogroup" aria-label="Retardateur">
+      <button type="button" role="radio" data-s="0" aria-checked="false">Sans</button>
+      <button type="button" role="radio" data-s="3" aria-checked="false">3 s</button>
+      <button type="button" role="radio" data-s="5" aria-checked="true">5 s</button>
+      <button type="button" role="radio" data-s="10" aria-checked="false">10 s</button>
+    </div>
+    <div class="rail">
+      <button class="last" id="lastBtn" type="button" aria-label="Voir la dernière photo" disabled></button>
+      <button class="shutter off" id="shutter" type="button" aria-label="Activer la caméra"><i></i></button>
+      <button class="side" id="sideBtn" type="button" hidden>Couper</button>
+    </div>
+    <p class="hint" id="hint">Active la caméra, pose ton téléphone et recule jusqu'à voir tes pieds.</p>
+    <input class="sr-only" type="file" id="snapInput" accept="image/*" capture="user" tabindex="-1" aria-hidden="true">
+  </section>
+
+  <section class="section" aria-labelledby="closetTitle">
+    <div class="section-head">
+      <h2 id="closetTitle">Dressing</h2>
+      <span id="closetCount"></span>
+    </div>
+    <div class="closet" id="closet"></div>
+    <div class="editor" id="editor" hidden>
+      <div class="field">
+        <label for="gName">Nom du vêtement</label>
+        <input id="gName" type="text" maxlength="40" autocomplete="off" enterkeyhint="done">
+      </div>
+      <button class="btn ghost small danger" id="gRemove" type="button">Retirer</button>
+    </div>
+    <p class="note">La tenue choisie sert d'étiquette sur tes photos. L'IA l'appliquera sur toi plus tard. Les trois pièces dessinées sont des exemples : ajoute les tiennes, posées à plat sur le lit.</p>
+    <input class="sr-only" type="file" id="closetInput" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+  </section>
+
+  <section class="section" aria-labelledby="shotsTitle">
+    <div class="section-head">
+      <h2 id="shotsTitle">Photos</h2>
+      <span id="shotsCount">0 photo</span>
+    </div>
+    <div class="shots" id="shots"></div>
+    <p class="empty" id="shotsEmpty">Aucune photo pour l'instant. Choisis un retardateur, appuie sur le déclencheur et recule.</p>
+    <p class="note">Tes photos et ton dressing restent dans ce téléphone, rien n'est envoyé sur internet. Pour garder une photo dans ta galerie, ouvre-la puis touche « Enregistrer ».</p>
+  </section>
+</main>
+
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Photo" hidden>
+  <div class="viewer-top">
+    <p id="viewerMeta"></p>
+    <button class="toggle" id="viewerClose" type="button">Fermer</button>
+  </div>
+  <figure><img id="viewerImg" alt=""></figure>
+  <div class="viewer-bar">
+    <button class="btn ghost" id="viewerPrev" type="button">Précédente</button>
+    <button class="btn" id="viewerSave" type="button">Enregistrer</button>
+    <button class="btn ghost" id="viewerNext" type="button">Suivante</button>
+    <button class="btn ghost danger" id="viewerDelete" type="button">Supprimer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const video=$('video'), still=$('still'), startState=$('startState'), fallbackState=$('fallbackState');
+  const guide=$('guide'), guideBtn=$('guideBtn'), modeChip=$('modeChip'), modeText=$('modeText');
+  const outfitTag=$('outfitTag'), outfitImg=$('outfitImg'), outfitName=$('outfitName');
+  const count=$('count'), flashEl=$('flash'), timerEl=$('timer'), shutter=$('shutter'), sideBtn=$('sideBtn');
+  const lastBtn=$('lastBtn'), hint=$('hint'), snapInput=$('snapInput');
+  const closet=$('closet'), closetInput=$('closetInput'), closetCount=$('closetCount');
+  const editor=$('editor'), gName=$('gName'), gRemove=$('gRemove');
+  const shots=$('shots'), shotsEmpty=$('shotsEmpty'), shotsCount=$('shotsCount');
+  const viewer=$('viewer'), viewerImg=$('viewerImg'), viewerMeta=$('viewerMeta');
+  const viewerPrev=$('viewerPrev'), viewerNext=$('viewerNext'), viewerSave=$('viewerSave'), viewerDelete=$('viewerDelete'), viewerClose=$('viewerClose');
+
+  /* ---------- Stockage local (IndexedDB + préférences) ---------- */
+  let dbPromise=null;
+  function openDb(){
+    return new Promise((resolve,reject)=>{
+      if(!('indexedDB' in window)) return reject(new Error('indexedDB indisponible'));
+      const r=indexedDB.open('cabine-miroir',1);
+      r.onupgradeneeded=()=>{
+        const d=r.result;
+        if(!d.objectStoreNames.contains('photos')) d.createObjectStore('photos',{keyPath:'id'});
+        if(!d.objectStoreNames.contains('garments')) d.createObjectStore('garments',{keyPath:'id'});
+      };
+      r.onsuccess=()=>resolve(r.result);
+      r.onerror=()=>reject(r.error);
+    });
+  }
+  function db(){ if(!dbPromise) dbPromise=openDb().catch(()=>null); return dbPromise; }
+  async function dbPut(store,value){
+    const d=await db(); if(!d) return false;
+    return new Promise(res=>{
+      try{ const tx=d.transaction(store,'readwrite'); tx.objectStore(store).put(value); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); }
+      catch(e){ res(false); }
+    });
+  }
+  async function dbDelete(store,key){
+    const d=await db(); if(!d) return false;
+    return new Promise(res=>{
+      try{ const tx=d.transaction(store,'readwrite'); tx.objectStore(store).delete(key); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); }
+      catch(e){ res(false); }
+    });
+  }
+  async function dbAll(store){
+    const d=await db(); if(!d) return [];
+    return new Promise(res=>{
+      try{ const rq=d.transaction(store,'readonly').objectStore(store).getAll(); rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>res([]); }
+      catch(e){ res([]); }
+    });
+  }
+  const pref={
+    get(k,def){ try{ const v=localStorage.getItem('cabine.'+k); return v===null?def:JSON.parse(v); }catch(e){ return def; } },
+    set(k,v){ try{ localStorage.setItem('cabine.'+k,JSON.stringify(v)); }catch(e){} }
+  };
+  let persistAsked=false;
+  function askPersist(){
+    if(persistAsked) return; persistAsked=true;
+    try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
+  }
+
+  /* ---------- Pièces d'exemple, dessinées comme posées sur un drap ---------- */
+  const SHAPES={
+    tee:'M30 18 L42 12 Q50 19 58 12 L70 18 L86 33 L76 43 L70 38 L70 88 L30 88 L30 38 L24 43 L14 33 Z',
+    jean:'M31 10 L69 10 L73 90 L55 90 L50 38 L45 90 L27 90 Z',
+    jacket:'M30 16 L42 10 L50 24 L58 10 L70 16 L86 68 L77 72 L70 46 L70 90 L30 90 L30 46 L23 72 L14 68 Z'
+  };
+  function garmentSvg(path,fill,stroke,extra){
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="'+path+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5" stroke-linejoin="round"/>'+(extra||'')+'</svg>';
+    return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  }
+  const EXAMPLES=[
+    {id:'ex1',name:'T-shirt blanc',kind:'Haut · exemple',src:garmentSvg(SHAPES.tee,'#f7f6f2','#8f8b82'),photo:false},
+    {id:'ex2',name:'Jean brut',kind:'Bas · exemple',src:garmentSvg(SHAPES.jean,'#2f4a6b','#1d2f45','<path d="M50 10 V38" stroke="#1d2f45" stroke-width="1.5"/>'),photo:false},
+    {id:'ex3',name:'Veste noire',kind:'Veste · exemple',src:garmentSvg(SHAPES.jacket,'#262628','#0e0e0f','<path d="M50 24 V90" stroke="#5a5a60" stroke-width="1.5"/>'),photo:false}
+  ];
+
+  const state={
+    mode:'off', stream:null, timer:pref.get('timer',5), countdown:null, guideOn:pref.get('guide',true),
+    wake:null, pending:false, photos:[], view:-1, confirmDelete:false, confirmRemove:false,
+    garments:EXAMPLES.slice(), selected:pref.get('selected','ex2')
+  };
+  if(![0,3,5,10].includes(state.timer)) state.timer=5;
+
+  /* ---------- Modes ---------- */
+  const HINTS={
+    off:"Active la caméra, pose ton téléphone et recule jusqu'à voir tes pieds.",
+    photo:"Le déclencheur ouvre l'appareil photo selfie du téléphone. Son propre retardateur fonctionne aussi."
+  };
+  function liveHint(){
+    return state.timer===0 ? "Photo immédiate. Appuie sur le déclencheur."
+      : "Retardateur "+state.timer+" s : appuie, puis recule. Appuie à nouveau pour annuler.";
+  }
+  function setMode(m){
+    state.mode=m;
+    modeChip.dataset.mode=m;
+    modeText.textContent={off:'Caméra coupée',live:'Direct',photo:'Mode photo'}[m];
+    video.hidden = m!=='live';
+    startState.hidden = m!=='off';
+    const hasStill = m==='photo' && !!still.getAttribute('src');
+    still.hidden = !hasStill;
+    fallbackState.hidden = !(m==='photo' && !hasStill);
+    timerEl.hidden = m!=='live';
+    shutter.classList.toggle('off', m==='off');
+    shutter.setAttribute('aria-label', m==='off' ? 'Activer la caméra' : m==='photo' ? 'Prendre une photo' : 'Déclencher');
+    sideBtn.hidden = m==='off';
+    sideBtn.textContent = m==='live' ? 'Couper' : 'Réessayer le direct';
+    hint.textContent = m==='live' ? liveHint() : HINTS[m];
+    renderOverlay();
+  }
+  function selectedGarment(){ return state.garments.find(x=>x.id===state.selected)||null; }
+  function renderOverlay(){
+    guide.hidden = !(state.mode==='live' && state.guideOn);
+    const g=selectedGarment();
+    outfitTag.hidden = !g || state.mode==='off';
+    if(g){ outfitImg.src=g.src; outfitImg.className=g.photo?'photo':''; outfitName.textContent=g.name; }
+  }
+
+  /* ---------- Caméra ---------- */
+  async function startCamera(){
+    if(state.pending) return;
+    if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){ setMode('photo'); return; }
+    state.pending=true;
+    const startBtn=$('startBtn'); startBtn.disabled=true; startBtn.textContent="En attente de l'autorisation…";
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:1920}}});
+      state.stream=stream;
+      video.srcObject=stream;
+      try{ await video.play(); }catch(e){}
+      setMode('live');
+      requestWake();
+    }catch(e){
+      setMode('photo');
+    }finally{
+      state.pending=false; startBtn.disabled=false; startBtn.textContent='Activer la caméra';
+    }
+  }
+  function stopCamera(){
+    cancelCountdown();
+    if(state.stream){ state.stream.getTracks().forEach(t=>t.stop()); state.stream=null; }
+    video.srcObject=null;
+    releaseWake();
+    setMode('off');
+  }
+  function requestWake(){
+    try{
+      if('wakeLock' in navigator && document.visibilityState==='visible'){
+        navigator.wakeLock.request('screen').then(l=>{state.wake=l;}).catch(()=>{});
+      }
+    }catch(e){}
+  }
+  function releaseWake(){ try{ if(state.wake){ state.wake.release(); state.wake=null; } }catch(e){} }
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'){ if(state.mode==='live') requestWake(); }
+    else cancelCountdown();
+  });
+
+  /* ---------- Retardateur ---------- */
+  function showCount(n){
+    count.textContent=n;
+    count.classList.remove('tick'); void count.offsetWidth; count.classList.add('tick');
+  }
+  function startCountdown(){
+    let n=state.timer;
+    shutter.classList.add('counting'); shutter.setAttribute('aria-label','Annuler le retardateur');
+    showCount(n);
+    state.countdown=setInterval(()=>{
+      n--;
+      if(n>0) showCount(n);
+      else { cancelCountdown(); capture(); }
+    },1000);
+  }
+  function cancelCountdown(){
+    if(state.countdown){ clearInterval(state.countdown); state.countdown=null; }
+    count.textContent=''; count.classList.remove('tick');
+    shutter.classList.remove('counting');
+    if(state.mode==='live') shutter.setAttribute('aria-label','Déclencher');
+  }
+  function capture(){
+    const w=video.videoWidth, h=video.videoHeight;
+    if(!w||!h) return;
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const g=c.getContext('2d');
+    g.translate(w,0); g.scale(-1,1); // même sens que le miroir
+    g.drawImage(video,0,0,w,h);
+    flashEl.classList.remove('go'); void flashEl.offsetWidth; flashEl.classList.add('go');
+    try{ if(navigator.vibrate) navigator.vibrate(40); }catch(e){}
+    c.toBlob(b=>{ if(b) addPhoto(b); },'image/jpeg',0.9);
+  }
+
+  shutter.addEventListener('click',()=>{
+    if(state.mode==='off') return startCamera();
+    if(state.mode==='photo') return snapInput.click();
+    if(state.countdown) return cancelCountdown();
+    if(state.timer===0) capture(); else startCountdown();
+  });
+  $('startBtn').addEventListener('click',startCamera);
+  $('fallbackShoot').addEventListener('click',()=>snapInput.click());
+  sideBtn.addEventListener('click',()=>{ if(state.mode==='live') stopCamera(); else startCamera(); });
+  guideBtn.addEventListener('click',()=>{
+    state.guideOn=!state.guideOn; pref.set('guide',state.guideOn);
+    guideBtn.setAttribute('aria-pressed',String(state.guideOn));
+    renderOverlay();
+  });
+  function renderTimer(){
+    timerEl.querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',String(Number(x.dataset.s)===state.timer)));
+  }
+  timerEl.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-s]'); if(!b) return;
+    cancelCountdown();
+    state.timer=Number(b.dataset.s); pref.set('timer',state.timer);
+    renderTimer();
+    if(state.mode==='live') hint.textContent=liveHint();
+  });
+  snapInput.addEventListener('change',()=>{
+    const f=snapInput.files && snapInput.files[0];
+    if(f){ addPhoto(f); still.src=URL.createObjectURL(f); setMode('photo'); }
+    snapInput.value='';
+  });
+
+  /* ---------- Photos ---------- */
+  function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function addPhoto(blob){
+    const g=selectedGarment();
+    const rec={id:newId('p'),blob,time:Date.now(),garment:g?g.name:null};
+    state.photos.push(Object.assign({url:URL.createObjectURL(blob)},rec));
+    renderShots();
+    dbPut('photos',rec);
+    askPersist();
+  }
+  function fmtTime(t){
+    const d=new Date(t);
+    return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }
+  function renderShots(){
+    shots.textContent='';
+    state.photos.forEach((p,i)=>{
+      const b=document.createElement('button'); b.type='button';
+      b.setAttribute('aria-label','Photo '+(i+1)+(p.garment?', tenue '+p.garment:''));
+      const img=document.createElement('img'); img.src=p.url; img.alt=''; img.loading='lazy';
+      const l=document.createElement('span'); l.className='lbl'; l.textContent=p.garment||'Sans tenue';
+      b.append(img,l); b.addEventListener('click',()=>openViewer(i));
+      shots.append(b);
+    });
+    shotsEmpty.hidden=state.photos.length>0;
+    shotsCount.textContent=state.photos.length+(state.photos.length>1?' photos':' photo');
+    lastBtn.textContent='';
+    const last=state.photos[state.photos.length-1];
+    lastBtn.disabled=!last;
+    if(last){ const img=document.createElement('img'); img.src=last.url; img.alt=''; lastBtn.append(img); }
+  }
+  lastBtn.addEventListener('click',()=>{ if(state.photos.length) openViewer(state.photos.length-1); });
+
+  /* ---------- Visionneuse ---------- */
+  let returnFocus=null;
+  function openViewer(i){
+    returnFocus=document.activeElement;
+    state.view=i; state.confirmDelete=false;
+    viewer.hidden=false; renderViewer(); viewerClose.focus();
+  }
+  function closeViewer(){
+    viewer.hidden=true; state.view=-1;
+    if(returnFocus && document.contains(returnFocus)) returnFocus.focus();
+  }
+  function renderViewer(){
+    const p=state.photos[state.view]; if(!p){ closeViewer(); return; }
+    viewerImg.src=p.url;
+    viewerImg.alt='Photo '+(state.view+1);
+    viewerMeta.textContent='';
+    const b=document.createElement('b'); b.textContent='Photo '+(state.view+1)+' sur '+state.photos.length;
+    viewerMeta.append(b, document.createTextNode(' · '+fmtTime(p.time)+' · '+(p.garment?'Tenue : '+p.garment:'Sans tenue')));
+    viewerPrev.disabled=state.view<=0;
+    viewerNext.disabled=state.view>=state.photos.length-1;
+    viewerDelete.textContent=state.confirmDelete?'Confirmer la suppression':'Supprimer';
+  }
+  async function savePhoto(){
+    const p=state.photos[state.view]; if(!p) return;
+    const d=new Date(p.time), pad=n=>String(n).padStart(2,'0');
+    const name='cabine-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'.jpg';
+    try{
+      const file=new File([p.blob],name,{type:p.blob.type||'image/jpeg'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
+    }catch(e){ if(e && e.name==='AbortError') return; }
+    const a=document.createElement('a'); a.href=p.url; a.download=name; document.body.append(a); a.click(); a.remove();
+  }
+  viewerSave.addEventListener('click',savePhoto);
+  viewerClose.addEventListener('click',closeViewer);
+  viewerPrev.addEventListener('click',()=>{ if(state.view>0){ state.view--; state.confirmDelete=false; renderViewer(); } });
+  viewerNext.addEventListener('click',()=>{ if(state.view<state.photos.length-1){ state.view++; state.confirmDelete=false; renderViewer(); } });
+  viewerDelete.addEventListener('click',()=>{
+    if(!state.confirmDelete){ state.confirmDelete=true; renderViewer(); return; }
+    const [gone]=state.photos.splice(state.view,1);
+    try{ URL.revokeObjectURL(gone.url); }catch(e){}
+    dbDelete('photos',gone.id);
+    state.confirmDelete=false;
+    if(state.view>=state.photos.length) state.view=state.photos.length-1;
+    renderShots();
+    if(state.view<0) closeViewer(); else renderViewer();
+  });
+  document.addEventListener('keydown',e=>{
+    if(viewer.hidden) return;
+    if(e.key==='Escape') closeViewer();
+    if(e.key==='ArrowLeft') viewerPrev.click();
+    if(e.key==='ArrowRight') viewerNext.click();
+  });
+
+  /* ---------- Dressing ---------- */
+  function renderCloset(){
+    closet.textContent='';
+    state.garments.forEach(g=>{
+      const b=document.createElement('button'); b.type='button'; b.className='item';
+      b.setAttribute('aria-pressed',String(g.id===state.selected));
+      const pic=document.createElement('span'); pic.className='pic';
+      const img=document.createElement('img'); img.src=g.src; img.alt=''; if(g.photo) img.className='photo';
+      pic.append(img);
+      const n=document.createElement('span'); n.className='name'; n.textContent=g.name;
+      const k=document.createElement('span'); k.className='kind'; k.textContent=g.kind;
+      b.append(pic,n,k);
+      b.addEventListener('click',()=>{
+        state.selected = state.selected===g.id ? null : g.id;
+        pref.set('selected',state.selected);
+        state.confirmRemove=false;
+        renderCloset(); renderOverlay();
+      });
+      closet.append(b);
+    });
+    const add=document.createElement('button'); add.type='button'; add.className='item add';
+    add.innerHTML='<span class="pic" aria-hidden="true">+</span><span class="name">Ajouter</span><span class="kind">Photo d\'un vêtement</span>';
+    add.addEventListener('click',()=>closetInput.click());
+    closet.append(add);
+    const own=state.garments.filter(g=>g.photo).length;
+    closetCount.textContent=state.garments.length+' pièces'+(own?' dont '+own+' à toi':'');
+    renderEditor();
+  }
+  function renderEditor(){
+    const g=selectedGarment();
+    const editable=!!(g && g.photo);
+    editor.hidden=!editable;
+    if(!editable) return;
+    if(document.activeElement!==gName) gName.value=g.name;
+    gRemove.textContent=state.confirmRemove?'Confirmer':'Retirer';
+  }
+  function saveGarment(g){ dbPut('garments',{id:g.id,name:g.name,blob:g.blob,created:g.created}); }
+  gName.addEventListener('input',()=>{
+    const g=selectedGarment(); if(!g||!g.photo) return;
+    g.name=gName.value.trim()||'Sans nom';
+    outfitName.textContent=g.name;
+    const btn=closet.querySelector('.item[aria-pressed="true"] .name'); if(btn) btn.textContent=g.name;
+  });
+  gName.addEventListener('change',()=>{ const g=selectedGarment(); if(g&&g.photo) saveGarment(g); });
+  gName.addEventListener('keydown',e=>{ if(e.key==='Enter') gName.blur(); });
+  gRemove.addEventListener('click',()=>{
+    const g=selectedGarment(); if(!g||!g.photo) return;
+    if(!state.confirmRemove){ state.confirmRemove=true; renderEditor(); return; }
+    state.confirmRemove=false;
+    state.garments=state.garments.filter(x=>x.id!==g.id);
+    try{ URL.revokeObjectURL(g.src); }catch(e){}
+    dbDelete('garments',g.id);
+    state.selected=null; pref.set('selected',null);
+    renderCloset(); renderOverlay();
+  });
+  closetInput.addEventListener('change',()=>{
+    const files=Array.from(closetInput.files||[]);
+    let n=state.garments.filter(g=>g.photo).length;
+    files.forEach(f=>{
+      n++;
+      const g={id:newId('g'),name:'Mon vêtement '+n,kind:'Ta photo',src:URL.createObjectURL(f),photo:true,blob:f,created:Date.now()};
+      state.garments.push(g);
+      saveGarment(g);
+      state.selected=g.id;
+    });
+    pref.set('selected',state.selected);
+    closetInput.value='';
+    renderCloset(); renderOverlay();
+    askPersist();
+    closet.scrollTo({left:closet.scrollWidth,behavior:'smooth'});
+    if(files.length){ gName.focus(); gName.select(); }
+  });
+
+  /* ---------- Installation sur l'écran d'accueil ---------- */
+  const install=$('install'), installText=$('installText'), installBtn=$('installBtn');
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true;
+  const ua=navigator.userAgent||'';
+  const isIOS=/iphone|ipad|ipod/i.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  let deferredPrompt=null;
+  function showInstall(){
+    if(standalone || pref.get('installDismissed',false)) return;
+    if(isIOS) installText.textContent="Dans Safari : bouton Partager, puis « Sur l'écran d'accueil ».";
+    else if(deferredPrompt) installText.textContent="Elle s'ouvrira en plein écran, comme une vraie app.";
+    else installText.textContent="Menu du navigateur ⋮, puis « Ajouter à l'écran d'accueil » ou « Installer l'application ».";
+    installBtn.hidden=!deferredPrompt;
+    install.hidden=false;
+  }
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; showInstall(); });
+  window.addEventListener('appinstalled',()=>{ install.hidden=true; deferredPrompt=null; });
+  installBtn.addEventListener('click',async()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt=null; install.hidden=true;
+  });
+  $('installClose').addEventListener('click',()=>{ install.hidden=true; pref.set('installDismissed',true); });
+
+  /* ---------- Démarrage ---------- */
+  guideBtn.setAttribute('aria-pressed',String(state.guideOn));
+  renderTimer();
+  renderCloset();
+  renderShots();
+  setMode('off');
+  showInstall();
+
+  Promise.all([dbAll('garments'),dbAll('photos')]).then(([gs,ps])=>{
+    gs.sort((a,b)=>(a.created||0)-(b.created||0)).forEach(g=>{
+      if(!g.blob) return;
+      state.garments.push({id:g.id,name:g.name,kind:'Ta photo',src:URL.createObjectURL(g.blob),photo:true,blob:g.blob,created:g.created});
+    });
+    if(state.selected && !state.garments.some(g=>g.id===state.selected)) state.selected=null;
+    ps.sort((a,b)=>a.time-b.time).forEach(p=>{
+      if(!p.blob) return;
+      state.photos.push(Object.assign({url:URL.createObjectURL(p.blob)},p));
+    });
+    renderCloset(); renderShots(); renderOverlay();
+  });
+
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+    window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+  }
+})();
+</script>
+</body>
+</html>
