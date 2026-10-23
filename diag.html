@@ -71,6 +71,15 @@ const base='https://huggingface.co/spaces/BoyuanJiang/FitDiT/resolve/main/exampl
   if(which.includes('qwen2')) jobs.push(cap(run('QWEN2','v2','linoyts/Qwen-Image-Edit-2511-Fast',async sub=>{
     await sub('/infer',[[{image:person,caption:null},{image:garm,caption:null}],'Make the person in image 1 wear the top from image 2.',0,true,1,4,1024,768,false]); log('QWEN2','TERMINÉ');
   }),limit,'QWEN2'));
+  if(which.includes('weshop')) jobs.push(cap(run('WESHOP','v2','WeShopAI/WeShopAI-Virtual-Try-On',async sub=>{
+    const d=await sub('/generate_image',[garm,person]); log('WESHOP','TERMINÉ');
+  }),limit,'WESHOP'));
+  if(which.includes('prith')) jobs.push(cap(run('PRITH','v2','prithivMLmods/Qwen-Image-Edit-2511-LoRAs-Fast',async sub=>{
+    const b64=b=>new Promise(r=>{const f=new FileReader(); f.onload=()=>r(f.result); f.readAsDataURL(b);});
+    const s=await sub('/check_safety',['Make the person in image 1 wear the top from image 2.']); 
+    const d=await sub('/edit_image',[JSON.stringify([await b64(person),await b64(garm)]),'Make the person in image 1 wear the top from image 2. Keep everything else unchanged.',q.get('lora')||'Unblur-Anything',0,true,1,4]);
+    log('PRITH','TERMINÉ',d && d[0] && Object.keys(d[0]), d && d[0] && d[0].status, d && d[0] && String(d[0].image||'').slice(0,40));
+  }),limit,'PRITH'));
   await Promise.all(jobs);
   log('FIN DU DIAGNOSTIC');
 })();
