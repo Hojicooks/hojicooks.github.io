@@ -683,6 +683,14 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
           <button class="btn small" id="retryJob" type="button" hidden>Reprendre</button>
           <button class="btn ghost small" id="cancelJob" type="button">Annuler</button>
         </div>
+        <div id="quotaAlt" hidden>
+          <p class="note">En attendant, sans quota et sans limite :</p>
+          <div class="row">
+            <button class="btn ghost small" id="altFlat" type="button">Aperçu à plat</button>
+            <button class="btn ghost small" id="altFx" type="button">Tenue en filtre, en direct</button>
+          </div>
+        </div>
+        <p class="note" id="statusDetail" hidden></p>
       </div>
     </div>
 
@@ -1051,7 +1059,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.2</p>
+      <p class="note">Cabine Miroir · version 6.3</p>
     </div>
   </div>
 </div>
@@ -1866,9 +1874,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   const fx={on:false,index:0,prep:new Map(),sm:null,miss:0,hist:{15:[],16:[]},lastSwipe:0,drawn:false};
   function fxOutfits(){
     const list=state.outfits.filter(o=>outfitPieces(o).length);
-    if(list.length) return list;
     const tmp={id:'_cabine',name:'Tenue de la cabine',pieces:Object.assign({},state.cab.picks)};
-    return outfitPieces(tmp).length ? [tmp] : [];
+    if(outfitPieces(tmp).length && !list.some(o=>piecesKey(o.pieces)===piecesKey(tmp.pieces))) list.push(tmp);
+    return list;
   }
   function fxCurrent(){
     const l=fxOutfits(); if(!l.length) return null;
@@ -3376,13 +3384,24 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   }
   const isDuration = m => /GPU duration|larger than the maximum|illegal duration/i.test(m);
   const isQuota = m => !isDuration(m) && /quota|exceeded|GPU limit|run out of/i.test(m);
+  // Le quota Hugging Face repart 24 h après la première utilisation : l'app note quand elle a commencé à calculer.
+  function markGpuUse(){ const t=pref.get('gpuStart',0); if(!t || Date.now()-t>=864e5) pref.set('gpuStart',Date.now()); }
   function quotaText(m){
-    const q=m.match(/\((\d+)s requested vs\.? (\d+)s left\)/i);
-    const t=m.match(/Try again in (?:(\d+) days?, )?(\d+):(\d+):(\d+)/i);
-    let when='';
-    if(t){ const h=Number(t[2])+24*Number(t[1]||0), mn=Number(t[3]); when = h>=1 ? ' Il revient dans environ '+h+' h.' : ' Il revient dans '+Math.max(1,mn)+' min.'; }
-    return 'Quota de calcul gratuit épuisé'+(q?' : la démo réserve '+q[1]+' s, il te reste '+q[2]+' s aujourd\'hui.':'.')+when+
-      (state.token?'':' Avec un jeton Hugging Face gratuit (réglages), tu passes à 5 min par jour au lieu de 2.');
+    const q=m.match(/\((\d+)\s*s\s*requested vs\.?\s*(\d+)\s*s\s*left\)/i);
+    const left=!q && m.match(/(\d+)\s*s(?:econds?)?\s+(?:of (?:GPU )?quota\s+)?left/i);
+    const t=m.match(/(?:try again|retry)\s+in\s+(?:(\d+)\s*days?,?\s*)?(\d+):(\d+):(\d+)/i);
+    let wait=null; // minutes
+    if(t) wait=(Number(t[1]||0)*24+Number(t[2]))*60+Number(t[3]);
+    else{ const st=pref.get('gpuStart',0), ms=st?st+864e5-Date.now():0; if(ms>0) wait=Math.ceil(ms/60000); }
+    let when=' Il revient 24 h après ton premier rendu de la journée.';
+    if(wait!=null){
+      const at=new Date(Date.now()+wait*60000), hh=at.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      const tomorrow=at.toDateString()!==new Date().toDateString();
+      when = wait<60 ? ' Il revient dans '+Math.max(1,wait)+' min, vers '+hh+'.' : ' Il revient vers '+hh+(tomorrow?' demain':'')+', dans environ '+Math.round(wait/60)+' h.';
+    }
+    const detail = q ? ' : la démo réserve '+q[1]+' s, il te reste '+q[2]+' s.' : left ? ' : il te reste '+left[1]+' s, pas assez pour cette démo.' : '.';
+    return 'Quota de calcul gratuit épuisé'+detail+when+
+      (state.token?' Ton compte gratuit a droit à 5 min de calcul par jour, soit 3 à 5 pièces.':' Avec un jeton Hugging Face gratuit (réglages), tu passes à 5 min par jour au lieu de 2.');
   }
   const isAuth = m => /token|unauthori|\b401\b|credentials/i.test(m);
   function friendlyError(e){
@@ -3463,6 +3482,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     $('statusBar').hidden=kind==='error';
     $('retryJob').hidden=kind!=='error';
     $('cancelJob').textContent = kind==='error' ? 'Fermer' : 'Annuler';
+    $('quotaAlt').hidden=true; $('statusDetail').hidden=true;
   }
   async function ensureSession(){
     const cab=state.cab;
@@ -3492,6 +3512,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     let done=0;
     try{
       const sess=await ensureSession();
+      markGpuUse();
       const dims={w:sess.base.w,h:sess.base.h};
       for(let i=p.keep;i<p.seq.length;i++){
         if(job.cancelled) break;
@@ -3524,7 +3545,13 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         toast(done>1?'Tenue prête':'Rendu prêt');
       }
     }catch(e){
-      if(!job.cancelled){ cab.error=e; setStatus(friendlyError(e)+(done?' Les étapes déjà faites sont gardées.':''),'error'); }
+      if(!job.cancelled){
+        cab.error=e; setStatus(friendlyError(e)+(done?' Les étapes déjà faites sont gardées.':''),'error');
+        const m=errText(e);
+        $('quotaAlt').hidden=!isQuota(m);
+        // Message d'origine de la démo, en petit, pour comprendre ce qui s'est passé.
+        if(m){ $('statusDetail').textContent='Détail : '+m.slice(0,220); $('statusDetail').hidden=false; }
+      }
     }finally{
       clearInterval(job.clock);
       if(cab.job===job) cab.job=null;
@@ -3534,6 +3561,11 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   $('generate').addEventListener('click',()=>generate('update'));
   $('variant').addEventListener('click',()=>generate('variant'));
   $('retryJob').addEventListener('click',()=>{ $('status').hidden=true; generate('update'); });
+  $('altFlat').addEventListener('click',()=>$('flatBtn').click());
+  $('altFx').addEventListener('click',()=>{
+    const same=state.outfits.find(o=>piecesKey(o.pieces)===piecesKey(state.cab.picks));
+    tryLive(same?same.id:'_cabine');
+  });
   $('cancelJob').addEventListener('click',()=>{
     const job=state.cab.job;
     if(job){
