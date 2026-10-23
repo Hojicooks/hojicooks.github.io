@@ -1,0 +1,15 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Diagnostic Decart</title></head>
+<body><h1>Diagnostic Decart (sans clé)</h1><pre id="log">démarrage…</pre>
+<script type="module">
+const log=t=>{ document.getElementById('log').textContent+='\n'+t; };
+for(const url of ['https://cdn.jsdelivr.net/npm/@decartai/sdk@0.2.12/+esm','https://esm.sh/@decartai/sdk@0.2.12']){
+  try{
+    const t0=performance.now(); const m=await import(url);
+    log('OK '+url+' en '+Math.round(performance.now()-t0)+' ms · exports: '+['createDecartClient','models'].map(k=>k+'='+typeof m[k]).join(', '));
+    const model=m.models.realtime('lucy-vton-3.6'); log('  modèle '+model.name+' '+model.width+'x'+model.height+' fps '+JSON.stringify(model.fps));
+    const c=m.createDecartClient({apiKey:'dct_test_invalide'}); log('  client: realtime.connect='+typeof (c.realtime&&c.realtime.connect)+' tokens.create='+typeof (c.tokens&&c.tokens.create));
+    try{ await c.tokens.create({expiresIn:60}); log('  jeton: réponse inattendue'); }catch(e){ log('  jeton (clé invalide, attendu) : '+(e.message||e).slice(0,160)); }
+  }catch(e){ log('ÉCHEC '+url+' : '+(e&&e.message||e)); }
+}
+log('TERMINÉ');
+</script></body></html>
