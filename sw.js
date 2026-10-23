@@ -1,6 +1,6 @@
 // Cabine Miroir : réseau d'abord, copie locale si le téléphone est hors ligne.
 // Change le numéro de version après une mise à jour pour vider l'ancienne copie.
-const CACHE = 'cabine-v4';
+const CACHE = 'cabine-v5';
 const ASSETS = [
   './',
   './index.html',

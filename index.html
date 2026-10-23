@@ -415,6 +415,13 @@ a{color:var(--tape)}
 
     <div class="step">
       <h3 class="step-title"><b>3</b>Le rendu</h3>
+      <aside class="install" id="tokenCard" hidden>
+        <div>
+          <b>Ajoute ton jeton gratuit</b>
+          <p>Sans compte, Hugging Face n'accorde que 2 min de calcul par jour, et chaque pièce en réserve au moins 1. Avec un compte gratuit : 5 min par jour, une file prioritaire, les chaussures et le moteur Leffa.</p>
+        </div>
+        <div class="install-actions"><button class="btn small" id="tokenOpen" type="button">Ajouter</button></div>
+      </aside>
       <div class="seg" id="engineSeg" role="radiogroup" aria-label="Moteur">
         <button type="button" role="radio" data-engine="specialise">Spécialisé</button>
         <button type="button" role="radio" data-engine="realiste">Réaliste (expérimental)</button>
@@ -650,7 +657,7 @@ a{color:var(--tape)}
         <span class="label" id="engBasLabel">Bas et robe</span>
         <div class="chips wrap" id="engBas" role="radiogroup" aria-labelledby="engBasLabel"></div>
       </div>
-      <p class="note">Chaussures et mode Réaliste : <a href="https://huggingface.co/spaces/linoyts/Qwen-Image-Edit-2511-Fast" target="_blank" rel="noopener">Qwen Image Edit 2511</a>, version rapide. Si un moteur est en pause ou plante, l'app passe tout de suite au suivant.</p>
+      <p class="note">Chaussures et mode Réaliste : <a href="https://huggingface.co/spaces/prithivMLmods/Qwen-Image-Edit-2511-LoRAs-Fast" target="_blank" rel="noopener">Qwen Image Edit 2511</a>, version rapide. Si un moteur est en pause ou plante, l'app passe tout de suite au suivant. Leffa et les chaussures demandent un jeton : sans compte, le quota du jour est trop petit.</p>
       <p class="note">Démos utilisées : <a href="https://huggingface.co/spaces/yisol/IDM-VTON" target="_blank" rel="noopener">IDM-VTON</a>, <a href="https://huggingface.co/spaces/BoyuanJiang/FitDiT" target="_blank" rel="noopener">FitDiT</a>, <a href="https://huggingface.co/spaces/franciszzj/Leffa" target="_blank" rel="noopener">Leffa</a>. Ce sont des démos publiques : elles peuvent être lentes, saturées ou en pause.</p>
     </div>
     <div class="group">
@@ -704,12 +711,13 @@ a{color:var(--tape)}
   const DISPLAY_ORDER=['haut','bas','chaussures'];
   const ENGINES={
     idm:{label:'IDM-VTON',space:'yisol/IDM-VTON',client:'v1'},
-    fitdit:{label:'FitDiT',space:'BoyuanJiang/FitDiT',client:'v1'},
-    leffa:{label:'Leffa',space:'franciszzj/Leffa',client:'v1'},
-    qwen25:{label:'Qwen Image Edit',space:'linoyts/Qwen-Image-Edit-2511-Fast',client:'v2'}
+    fitdit:{label:'FitDiT',space:'BoyuanJiang/FitDiT',client:'v2'},
+    // Leffa réserve 180 s de GPU par essai : impossible sans jeton (120 s par jour).
+    leffa:{label:'Leffa',space:'franciszzj/Leffa',client:'v2',tokenOnly:true},
+    qwenp:{label:'Qwen Image Edit',space:'prithivMLmods/Qwen-Image-Edit-2511-LoRAs-Fast',client:'v2'}
   };
   // Moteurs possibles par case, du conseillé au secours.
-  const SLOT_ENGINES={haut:['idm','fitdit','leffa'],bas:['fitdit','leffa'],chaussures:['qwen25']};
+  const SLOT_ENGINES={haut:['idm','fitdit','leffa'],bas:['fitdit','leffa'],chaussures:['qwenp']};
   const CLIENT_URL={
     v1:'https://cdn.jsdelivr.net/npm/@gradio/client@1.19.1/dist/browser.js',
     v2:'https://cdn.jsdelivr.net/npm/@gradio/client@2.7.1/dist/browser.js'
@@ -826,6 +834,10 @@ a{color:var(--tape)}
       // Leffa centre la photo sur un fond blanc 768×1024 : on retire les bandes ajoutées.
       const s=Math.min(1024/H0,768/W0), nw=Math.floor(W0*s), nh=Math.floor(H0*s), rx=ow/768, ry=oh/1024;
       sx=Math.floor((768-nw)/2)*rx; sy=Math.floor((1024-nh)/2)*ry; sw=nw*rx; sh=nh*ry;
+    }else if(engineId==='qwenp'){
+      // Image envoyée au centre d'un carré : on ne garde que la zone de la photo.
+      const k=1024/Math.max(W0,H0), rx=ow/1024, ry=oh/1024;
+      sx=(1024-W0*k)/2*rx; sy=(1024-H0*k)/2*ry; sw=W0*k*rx; sh=H0*k*ry;
     }
     const c=document.createElement('canvas'); c.width=W0; c.height=H0;
     c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,W0,H0);
@@ -1388,10 +1400,11 @@ a{color:var(--tape)}
   }
   // Ordre d'essai des moteurs pour une case : le choisi d'abord, puis les secours.
   function chainFor(slot){
-    const list=SLOT_ENGINES[slot].slice();
+    const usable=e=>!(ENGINES[e].tokenOnly && !state.token);
+    const list=SLOT_ENGINES[slot].filter(usable);
     const pick=state.engineChoice[slot];
     if(pick && list.includes(pick)){ list.splice(list.indexOf(pick),1); list.unshift(pick); }
-    if(state.cab.engine==='realiste') return ['qwen25'].concat(list.filter(e=>e!=='qwen25'));
+    if(state.cab.engine==='realiste') return ['qwenp'].concat(list.filter(e=>e!=='qwenp'));
     return list;
   }
   function engineFor(slot){ return chainFor(slot)[0]; }
@@ -1462,6 +1475,7 @@ a{color:var(--tape)}
       ? 'Un modèle d\'essayage par pièce : '+engLabel(engineFor('haut'))+' pour le haut, '+engLabel(engineFor('bas'))+' pour le bas et les robes, Qwen Image Edit pour les chaussures. Tu peux les changer dans les réglages.'
       : 'Qwen Image Edit 2511 pour toutes les pièces : rendu plus libre, parfois plus naturel, parfois moins fidèle au vêtement.';
     renderFraming();
+    $('tokenCard').hidden=!!state.token;
     // Boutons
     const photo=photoById(cab.photoId);
     const up=plan('update'), va=plan('variant');
@@ -1536,13 +1550,29 @@ a{color:var(--tape)}
     return null;
   }
   // Lance un appel et suit la file d'attente jusqu'au résultat.
+  // Si la démo ne donne plus signe de vie, on abandonne au lieu d'attendre indéfiniment.
+  const STALL_MS=window.__cabineStallMs||150000, TOTAL_MS=330000;
   async function call(client,endpoint,data,onStatus,job,busyText){
     const handle=client.submit(endpoint,data); job.handle=handle;
-    for await (const msg of handle){
+    const it=handle[Symbol.asyncIterator]();
+    const start=Date.now(); let last=start;
+    while(true){
+      const wait=Math.max(1000,Math.min(STALL_MS-(Date.now()-last),TOTAL_MS-(Date.now()-start)));
+      let timer;
+      const r=await Promise.race([it.next(),new Promise(res=>{ timer=setTimeout(()=>res({timeout:true}),wait); })]);
+      clearTimeout(timer);
       if(job.cancelled) return null;
+      if(r.timeout){ try{ if(handle.cancel) handle.cancel(); }catch(e){} throw new Error('délai dépassé : la démo ne répond pas'); }
+      if(r.done) return null;
+      const msg=r.value; last=Date.now();
       if(msg.type==='status'){
         if(msg.stage==='error') throw new Error(typeof msg.message==='string'?msg.message:(msg.title||'erreur du service'));
-        if(msg.stage==='pending' && typeof msg.position==='number'){
+        const pd=msg.progress_data && msg.progress_data[0];
+        if(pd && /ZeroGPU/i.test(pd.desc||'')){
+          onStatus('Réservation d\'un GPU…'+(pd.length?' '+Math.round(100*pd.index/pd.length)+' %':''));
+        }else if(pd && pd.length){
+          onStatus((busyText||'Génération')+' · '+Math.round(100*pd.index/pd.length)+' %');
+        }else if(msg.stage==='pending' && typeof msg.position==='number'){
           onStatus(msg.position<=0 ? 'Tu es le prochain dans la file…' : 'File d\'attente : '+msg.position+(msg.position>1?' personnes':' personne')+' avant toi…');
         }else if(msg.stage==='generating'||msg.stage==='pending'){
           onStatus(busyText||'Génération en cours…');
@@ -1550,7 +1580,6 @@ a{color:var(--tape)}
       }
       if(msg.type==='data') return msg.data;
     }
-    return null;
   }
   // Remplace les fichiers renvoyés par une démo par leur contenu, pour les lui renvoyer.
   async function rehydrate(x){
@@ -1565,7 +1594,21 @@ a{color:var(--tape)}
     }
     return x;
   }
-  const round16 = v => Math.max(256,Math.min(2048,Math.round(v/16)*16));
+  function toDataUrl(blob){
+    return new Promise((res,rej)=>{ const f=new FileReader(); f.onload=()=>res(f.result); f.onerror=()=>rej(f.error); f.readAsDataURL(blob); });
+  }
+  // Place l'image au centre d'un carré de 1024 px, bordé de sa propre couleur de fond.
+  async function squareInput(blob){
+    const img=await loadImage(blob), S=1024, iw=img.naturalWidth, ih=img.naturalHeight, k=S/Math.max(iw,ih);
+    const c=document.createElement('canvas'); c.width=S; c.height=S;
+    const g=c.getContext('2d',{willReadFrequently:true});
+    g.drawImage(img,0,0,8,8);
+    const d=g.getImageData(0,0,8,8).data; let r=0,gg=0,b=0,n=0;
+    for(let i=0;i<d.length;i+=4){ const p=i/4, x=p%8, y=(p/8)|0; if(x===0||y===0||x===7||y===7){ r+=d[i]; gg+=d[i+1]; b+=d[i+2]; n++; } }
+    g.fillStyle='rgb('+Math.round(r/n)+','+Math.round(gg/n)+','+Math.round(b/n)+')'; g.fillRect(0,0,S,S);
+    g.drawImage(img,(S-iw*k)/2,(S-ih*k)/2,iw*k,ih*k);
+    return canvasBlob(c,0.92);
+  }
   const rnd = () => Math.floor(Math.random()*100000);
   function qwenPrompt(g){
     const c=color(g.color), k=cat(g.category);
@@ -1608,8 +1651,11 @@ a{color:var(--tape)}
         const lower = k==='bas', dress = k==='robe';
         out=await call(client,'/leffa_predict_vt',[input,garm,false,hq?50:30,2.5,rnd(),(lower||dress)?'dress_code':'viton_hd',dress?'dresses':(lower?'lower_body':'upper_body'),false],onStatus,job);
       }else{
-        const s=(hq?1280:1024)/Math.max(dims.w,dims.h);
-        out=await call(client,'/infer',[[{image:input,caption:null},{image:garm,caption:null}],qwenPrompt(garment),0,true,1,4,round16(dims.h*s),round16(dims.w*s),false],onStatus,job);
+        // La démo renvoie une image carrée : on envoie des images carrées, puis on recoupe au cadrage d'origine.
+        const imgs=JSON.stringify([await toDataUrl(await squareInput(input)),await toDataUrl(await squareInput(garm))]);
+        out=await call(client,'/edit_image',[imgs,qwenPrompt(garment),'Unblur-Anything',0,true,1,hq?6:4],onStatus,job);
+        const r=Array.isArray(out)?out[0]:out;
+        if(r && r.status==='blocked') throw new Error('image refusée par le filtre de sécurité de la démo');
       }
       if(job.cancelled) return null;
       const url=findUrl(out);
@@ -1629,12 +1675,23 @@ a{color:var(--tape)}
   }
   const isDuration = m => /GPU duration|larger than the maximum|illegal duration/i.test(m);
   const isQuota = m => !isDuration(m) && /quota|exceeded|GPU limit|run out of/i.test(m);
+  function quotaText(m){
+    const q=m.match(/\((\d+)s requested vs\.? (\d+)s left\)/i);
+    const t=m.match(/Try again in (?:(\d+) days?, )?(\d+):(\d+):(\d+)/i);
+    let when='';
+    if(t){ const h=Number(t[2])+24*Number(t[1]||0), mn=Number(t[3]); when = h>=1 ? ' Il revient dans environ '+h+' h.' : ' Il revient dans '+Math.max(1,mn)+' min.'; }
+    return 'Quota de calcul gratuit épuisé'+(q?' : la démo réserve '+q[1]+' s, il te reste '+q[2]+' s aujourd\'hui.':'.')+when+
+      (state.token?'':' Avec un jeton Hugging Face gratuit (réglages), tu passes à 5 min par jour au lieu de 2.');
+  }
   const isAuth = m => /token|unauthori|\b401\b|credentials/i.test(m);
   function friendlyError(e){
     const m=errText(e);
     if(navigator.onLine===false) return "Pas de connexion internet. Reconnecte-toi, puis touche « Reprendre ».";
     if(isDuration(m)) return "Cette démo demande plus de temps de calcul que ce qu'autorise un compte gratuit, et aucun autre moteur n'a pu prendre le relais.";
-    if(isQuota(m)) return 'Quota gratuit du jour épuisé. Réessaie plus tard, ou ajoute un jeton Hugging Face gratuit dans les réglages.';
+    if(isQuota(m)) return quotaText(m);
+    if(/délai dépassé/i.test(m)) return 'Les démos ne répondent pas (plus de 2 min sans nouvelles). Réessaie dans un moment.';
+    if(/filtre de sécurité/i.test(m)) return 'La démo a refusé l\'image avec son filtre de sécurité. Essaie une autre photo.';
+    if(/ZeroGPU worker error/i.test(m)) return 'La démo a planté pendant le calcul. Réessaie, ou change de moteur dans les réglages.';
     if(isAuth(m)) return 'Le jeton Hugging Face est refusé. Vérifie-le ou efface-le dans les réglages.';
     if(/sleep|paused|RUNTIME_ERROR|BUILD|not running/i.test(m)) return 'Les démos gratuites sont en pause ou en maintenance. Réessaie plus tard.';
     if(/busy/i.test(m)) return 'Les démos sont saturées. Touche « Reprendre » dans un moment.';
@@ -1924,6 +1981,7 @@ a{color:var(--tape)}
   /* ================= RÉGLAGES ================= */
   const settings=$('settings');
   $('openSettings').addEventListener('click',()=>{ settings.hidden=false; renderSettings(); $('settingsClose').focus(); });
+  $('tokenOpen').addEventListener('click',()=>{ settings.hidden=false; renderSettings(); $('hfToken').focus(); });
   $('settingsClose').addEventListener('click',()=>{ settings.hidden=true; });
   settings.addEventListener('click',e=>{ if(e.target===settings) settings.hidden=true; });
   function renderSettings(){
@@ -1933,7 +1991,7 @@ a{color:var(--tape)}
       SLOT_ENGINES[slot].forEach((e,i)=>{
         const b=document.createElement('button'); b.type='button'; b.className='fchip'; b.setAttribute('role','radio');
         b.setAttribute('aria-checked',String(engineFor(slot)===e || (state.cab.engine==='realiste' && state.engineChoice[slot]===e)));
-        b.textContent=engLabel(e)+(i===0?' · conseillé':'');
+        b.textContent=engLabel(e)+(i===0?' · conseillé':'')+(ENGINES[e].tokenOnly&&!state.token?' · jeton requis':'');
         b.addEventListener('click',()=>{ state.engineChoice[slot]=e; pref.set('engineChoice',state.engineChoice); renderSettings(); if(state.tab==='cabine') renderCabine(); });
         box.append(b);
       });
@@ -1952,8 +2010,9 @@ a{color:var(--tape)}
     const v=$('hfToken').value.trim();
     if(v && !/^hf_[A-Za-z0-9]{10,}$/.test(v)){ toast('Ce jeton ne ressemble pas à un jeton Hugging Face (hf_…)'); return; }
     state.token=v; pref.set('hfToken',v); toast(v?'Jeton enregistré':'Jeton effacé');
+    renderSettings(); renderCabine();
   });
-  $('clearToken').addEventListener('click',()=>{ state.token=''; pref.set('hfToken',''); $('hfToken').value=''; toast('Jeton effacé'); });
+  $('clearToken').addEventListener('click',()=>{ state.token=''; pref.set('hfToken',''); $('hfToken').value=''; toast('Jeton effacé'); renderSettings(); renderCabine(); });
 
   /* ================= CLAVIER ================= */
   document.addEventListener('keydown',e=>{
