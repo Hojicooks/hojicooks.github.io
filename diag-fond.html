@@ -52,6 +52,14 @@ try{
       const wg=w.getContext('2d'); wg.fillStyle='#fff'; wg.fillRect(0,0,w.width,w.height); wg.drawImage(c,0,0);
       let fg=0; for(let i=0;i<m.data.length;i+=(m.channels||1)) if(m.data[i]>128) fg++;
       log('  part du vêtement : '+Math.round(100*fg/(m.width*m.height))+' %');
+      // Aperçu texte : luminance de la photo | masque (# = vêtement)
+      const W=56,H=Math.round(56*bm.height/bm.width*0.5);
+      const sc=document.createElement('canvas'); sc.width=W; sc.height=H; const sg=sc.getContext('2d',{willReadFrequently:true}); sg.drawImage(bm,0,0,W,H); const sd=sg.getImageData(0,0,W,H).data;
+      const mk=document.createElement('canvas'); mk.width=W; mk.height=H; const mg=mk.getContext('2d',{willReadFrequently:true}); mg.drawImage(mc,0,0,W,H); const md=mg.getImageData(0,0,W,H).data;
+      const ramp=' .:-=+*#%@'; let txt='';
+      let soft=0; for(let i=0;i<m.data.length;i+=(m.channels||1)){ const v=m.data[i]; if(v>30&&v<225) soft++; }
+      for(let y=0;y<H;y++){ let a='',b=''; for(let x=0;x<W;x++){ const i=(y*W+x)*4; const L=(sd[i]*0.3+sd[i+1]*0.59+sd[i+2]*0.11)/255; a+=ramp[Math.min(9,Math.floor(L*10))]; const al=md[i+3]; b+= al>200?'#':al>60?'+':'.'; } txt+=a+' | '+b+'\n'; }
+      log('  bord flou : '+(100*soft/(m.width*m.height)).toFixed(1)+' %\n'+txt);
       const row=document.createElement('div'); row.className='row';
       const a=new Image(); a.src=URL.createObjectURL(blob);
       const b=new Image(); b.className='chk'; b.src=c.toDataURL('image/png');
