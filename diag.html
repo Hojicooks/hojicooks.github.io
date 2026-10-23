@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Diagnostic Cabine</title></head>
 <body style="background:#111;color:#eee;font:13px monospace">
-<pre id="out">démarrage…</pre>
+<div id="gal"></div><pre id="out">démarrage…</pre>
 <script type="module">
 const out=document.getElementById('out'); const lines=[]; const t0=performance.now();
 const log=(...a)=>{ lines.push(((performance.now()-t0)/1000).toFixed(1)+'s '+a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' ')); out.textContent=lines.join('\n'); };
@@ -80,6 +80,21 @@ const base='https://huggingface.co/spaces/BoyuanJiang/FitDiT/resolve/main/exampl
     const d=await sub('/edit_image',[JSON.stringify([await b64(person),await b64(garm)]),'Make the person in image 1 wear the top from image 2. Keep everything else unchanged.',q.get('lora')||'Unblur-Anything',0,true,1,4]);
     log('PRITH','TERMINÉ',d && d[0] && Object.keys(d[0]), d && d[0] && d[0].status, d && d[0] && String(d[0].image||'').slice(0,40));
   }),limit,'PRITH'));
+  if(which.includes('visual')) jobs.push(cap((async()=>{
+    const show=(label,src)=>{ const f=document.createElement('figure'); f.style.cssText='display:inline-block;margin:4px;width:31%;vertical-align:top'; const i=document.createElement('img'); i.src=src; i.style.width='100%'; const c=document.createElement('figcaption'); c.textContent=label; f.append(i,c); document.getElementById('gal').append(f); };
+    const sq=async b=>{ const im=await createImageBitmap(b); const S=1024,k=S/Math.max(im.width,im.height); const c=document.createElement('canvas'); c.width=S;c.height=S; const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,S,S); g.drawImage(im,(S-im.width*k)/2,(S-im.height*k)/2,im.width*k,im.height*k); return await new Promise(r=>c.toBlob(r,'image/jpeg',0.92)); };
+    const b64=b=>new Promise(r=>{const f=new FileReader(); f.onload=()=>r(f.result); f.readAsDataURL(b);});
+    show('personne',URL.createObjectURL(person)); show('vêtement',URL.createObjectURL(garm));
+    await run('VISUAL','v2','prithivMLmods/Qwen-Image-Edit-2511-LoRAs-Fast',async sub=>{
+      const d=await sub('/edit_image',[JSON.stringify([await b64(await sq(person)),await b64(await sq(garm))]),'Image 1 shows a person. Image 2 shows a top. Edit image 1 so the person wears exactly the top from image 2, replacing the top they are wearing. Keep the same person, face, hair, skin, body shape, pose, framing, background, lighting and every other piece of clothing unchanged. Photorealistic photo, natural fit, realistic fabric folds and shadows.','Unblur-Anything',0,true,1,4]);
+      show('Qwen (prithiv)',d[0].image); log('VISUAL','Qwen ok');
+    });
+    await run('VISUAL2','v2','BoyuanJiang/FitDiT',async sub=>{
+      const m=await sub('/generate_mask',[person,'Upper-body',0,0,0,0]);
+      const r=await sub('/process',[person,garm,m[0],m[1],20,2,-1,1,'768x1024']);
+      show('FitDiT',r[0][0].image.url); log('VISUAL2','FitDiT ok');
+    });
+  })(),limit,'VISUAL'));
   await Promise.all(jobs);
   log('FIN DU DIAGNOSTIC');
 })();
