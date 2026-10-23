@@ -428,7 +428,13 @@ button.stat{cursor:pointer}
 /* Effet filtre */
 .stage .fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1);z-index:1}
 .stage.noflip .fx{transform:none}
-.stage .ai-out{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transform:scaleX(-1);background:#000;max-width:100%}
+.stage .ai-out{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;transform:scaleX(-1);background:#000;max-width:100%}
+body.immersive .stage .ai-out{object-fit:cover}
+.stage .ai-out.fixed{inset:auto;object-fit:fill;max-width:none}
+.viewer figure video{max-width:100%;max-height:100%;border-radius:12px;background:#000;object-fit:contain}
+.shots .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;background:var(--scrim);color:var(--text);display:grid;place-items:center;font-size:16px;pointer-events:none;padding-left:3px}
+.thumb .pic{position:relative}
+.thumb .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;background:var(--scrim);color:var(--text);display:grid;place-items:center;font-size:11px;pointer-events:none;padding-left:2px}
 .stage.noflip .ai-out{transform:none}
 .fx-bar{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;max-width:calc(100% - 20px);padding:4px;border-radius:999px;background:var(--scrim);box-shadow:0 4px 18px var(--shade)}
 .fx-nav{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--raise);color:var(--text);font-size:24px;line-height:1;padding:0 0 3px;cursor:pointer}
@@ -759,6 +765,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   </div>
   <figure id="viewerFig">
     <img id="viewerImg" alt="">
+    <video id="viewerVid" playsinline muted loop controls hidden></video>
     <button class="nav prev" id="viewerPrev" type="button" aria-label="Précédente">‹</button>
     <button class="nav next" id="viewerNext" type="button" aria-label="Suivante">›</button>
   </figure>
@@ -843,6 +850,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       <button class="toggle" id="sBackRetake" type="button">Reprendre le dos</button>
       <button class="toggle" id="sBackDelete" type="button">Retirer le dos</button>
     </div>
+    <div class="field" id="sVideos" hidden>
+      <span class="label">Essayages en vidéo</span>
+      <div class="strip" id="sVideoStrip"></div>
+    </div>
     <div class="field">
       <label for="sName">Nom</label>
       <input id="sName" type="text" maxlength="40" autocomplete="off" enterkeyhint="done">
@@ -905,6 +916,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     </div>
     <div class="slots" id="oSlots"></div>
     <div class="harmony" id="oHarmony" hidden></div>
+    <div class="field" id="oVideos" hidden>
+      <span class="label">Essayages en vidéo</span>
+      <div class="strip" id="oVideoStrip"></div>
+    </div>
     <div class="sheet-actions">
       <button class="btn" id="oLive" type="button">Essayer en direct (filtre)</button>
       <button class="btn ghost" id="oCabin" type="button">Mettre dans la cabine</button>
@@ -1049,6 +1064,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
           <button type="button" role="radio" data-s="120">2 min</button>
         </div>
       </div>
+      <button class="opt" id="dcRec" type="button" role="switch" aria-checked="true">
+        <span><b>Enregistrer une vidéo de chaque essai</b><small>Une vidéo par tenue, rangée dans les Looks et sur la fiche des vêtements et de la tenue. Ne consomme pas de crédits.</small></span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
       <div class="field">
         <label for="dcBudget">Crédits sur ton compte Decart</label>
         <input id="dcBudget" type="text" inputmode="numeric" maxlength="7" autocomplete="off">
@@ -1089,7 +1108,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.4</p>
+      <p class="note">Cabine Miroir · version 6.5</p>
     </div>
   </div>
 </div>
@@ -1725,11 +1744,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     const outfit = (aiLive || (fx.on && fx.drawn)) ? fxCurrent() : null;
     let comp=null;
     if(aiLive){
-      comp=document.createElement('canvas'); comp.width=c.width; comp.height=c.height;
-      const g2=comp.getContext('2d'), aw=aiv.videoWidth, ah=aiv.videoHeight;
-      const k=Math.max(comp.width/aw,comp.height/ah), sw2=comp.width/k, sh2=comp.height/k;
-      if(opt.mirror){ g2.translate(comp.width,0); g2.scale(-1,1); }
-      g2.drawImage(aiv,(aw-sw2)/2,(ah-sh2)/2,sw2,sh2,0,0,comp.width,comp.height);
+      comp=aiFrame(1600,opt.mirror);
     }else if(outfit){
       comp=document.createElement('canvas'); comp.width=c.width; comp.height=c.height;
       const g2=comp.getContext('2d'); g2.drawImage(c,0,0);
@@ -1811,12 +1826,12 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   /* ---------- Plein écran ---------- */
   function enterImmersive(){
     if(state.mode!=='live') return;
-    document.body.classList.add('immersive'); $('immBar').hidden=false; renderStageOpts();
+    document.body.classList.add('immersive'); $('immBar').hidden=false; renderStageOpts(); if(ai.on) setTimeout(aiFit,50);
     try{ const el=document.documentElement; if(el.requestFullscreen){ const r=el.requestFullscreen({navigationUI:'hide'}); if(r && r.catch) r.catch(()=>{}); } }catch(e){}
   }
   function exitImmersive(){
     if(!document.body.classList.contains('immersive')) return;
-    document.body.classList.remove('immersive'); $('immBar').hidden=true;
+    document.body.classList.remove('immersive'); $('immBar').hidden=true; if(ai.on) setTimeout(aiFit,50);
     try{ if(document.fullscreenElement && document.exitFullscreen){ const r=document.exitFullscreen(); if(r && r.catch) r.catch(()=>{}); } }catch(e){}
   }
   $('fullBtn').addEventListener('click',enterImmersive);
@@ -2145,7 +2160,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   // durée maximale, arrêt si personne n'est dans l'image, arrêt dès qu'on quitte le miroir.
   const DECART_SDK=['https://cdn.jsdelivr.net/npm/@decartai/sdk@0.2.12/+esm','https://esm.sh/@decartai/sdk@0.2.12'];
   const DECART_MODEL='lucy-vton-3.6', CREDITS_PER_S=2;
-  const ai={on:false,phase:'off',rt:null,track:null,gen:0,timer:null,start:0,secs:0,switching:false,pendingSwitch:false};
+  const ai={on:false,phase:'off',rt:null,track:null,gen:0,timer:null,start:0,secs:0,switching:false,pendingSwitch:false,
+    input:null,inAspect:0,fix:false,remote:null,rec:null,recSaved:0};
   if(window.__cabineTest) window.__cabineAi=ai; // tests automatisés uniquement
   let decartMod=null;
   async function loadDecart(){
@@ -2218,21 +2234,22 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         if(tok && tok.apiKey) client=sdk.createDecartClient({apiKey:tok.apiKey,telemetry:false});
       }catch(e){ if(/401|403|invalid/i.test(errText(e))) throw e; }
       if(gen!==ai.gen) return;
-      const src=state.stream && state.stream.getVideoTracks()[0];
-      if(!src) throw new Error('caméra coupée');
-      const track=src.clone(); ai.track=track;
-      try{ await track.applyConstraints({frameRate:{ideal:30,max:30}}); }catch(e){}
+      if(!(state.stream && video.videoWidth)) throw new Error('caméra coupée');
+      ai.input=aiInput(); ai.inAspect=ai.input.w/ai.input.h;
       const o=fxCurrent(); outfitPieces(o).forEach(x=>fxPrep(x.g));
       aiStatus('Préparation de « '+o.name+' »…');
       const init=await aiGarment(o); if(gen!==ai.gen) return;
       aiStatus('Connexion à Decart…');
-      const rt=await client.realtime.connect(new MediaStream([track]),{
+      const rt=await client.realtime.connect(ai.input.stream,{
         model, mirror:false,
         initialState:{prompt:{text:init.prompt,enhance:false},image:init.image},
         onRemoteStream:st=>{
           if(gen!==ai.gen) return;
           const v=$('aiVideo'); v.srcObject=st; v.hidden=false; const pr=v.play(); if(pr && pr.catch) pr.catch(()=>{});
+          ai.remote=st;
           if(ai.phase!=='live'){ ai.phase='live'; ai.start=Date.now(); buzz(30); }
+          if(!ai.rec) recStart(fxCurrent());
+      aiFit();
           aiStatus();
         },
         onConnectionChange:st=>{ if(gen!==ai.gen) return; if(st==='reconnecting') aiStatus('Reconnexion…'); },
@@ -2264,7 +2281,11 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     ai.switching=true;
     try{
       const o=fxCurrent(); const g=await aiGarment(o);
-      if(ai.rt) await ai.rt.set({prompt:g.prompt,image:g.image,enhance:false});
+      if(ai.rt){
+        await ai.rt.set({prompt:g.prompt,image:g.image,enhance:false});
+        // Une vidéo par tenue : on clôt celle de la tenue précédente et on en commence une nouvelle.
+        recStop(); recStart(o);
+      }
     }catch(e){ aiStatus('Changement de tenue impossible : '+errText(e)); }
     finally{
       ai.switching=false;
@@ -2274,19 +2295,108 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function aiStop(msg,isError){
     if(!ai.on && !ai.rt) return;
     ai.gen++; clearInterval(ai.timer); ai.timer=null;
+    const recLen = ai.rec ? (Date.now()-ai.rec.start)/1000 : 0;
+    recStop();
     const rt=ai.rt; ai.rt=null; try{ if(rt) rt.disconnect(); }catch(e){}
-    if(ai.track){ try{ ai.track.stop(); }catch(e){} ai.track=null; }
+    if(ai.input){ ai.input.stop(); ai.input=null; }
+    ai.remote=null;
     // Compteur : le plus grand entre les secondes annoncées par Decart et le temps écoulé depuis l'image reçue.
     const secs=aiLiveSecs();
     if(secs>0) pref.set('decartUsedSec',dcUsedSec()+secs);
     ai.on=false; ai.phase='off'; ai.start=0; ai.secs=0; ai.switching=false; ai.pendingSwitch=false;
     if(!ai.prevFx){ fx.on=false; fxClear(); }
     const v=$('aiVideo'); v.hidden=true; try{ v.srcObject=null; }catch(e){}
+    ai.fix=false; v.classList.remove('fixed'); v.style.width=v.style.height=v.style.left=v.style.top='';
     fxStatus(''); renderStageOpts(); syncLive();
-    if(msg) toast(msg+(secs>0?' · '+Math.round(secs)+' s, '+Math.round(secs*CREDITS_PER_S)+' crédits':''));
+    if(msg) toast(msg+(secs>0?' · '+Math.round(secs)+' s, '+Math.round(secs*CREDITS_PER_S)+' crédits':'')+(recLen>=2?' · vidéo rangée dans les Looks':''));
     if(!settings.hidden) renderSettings();
   }
   $('aiBtn').addEventListener('click',()=>{ if(ai.on) aiStop('Direct IA arrêté'); else aiStart(); });
+  // Image envoyée à Decart : la caméra recadrée (sans étirement) au format exact du modèle.
+  function aiInput(){
+    const portrait=video.videoHeight>=video.videoWidth, W=portrait?720:1280, H=portrait?1280:720;
+    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const g=c.getContext('2d');
+    let stopped=false, handle=0, usesRvfc=!!video.requestVideoFrameCallback;
+    const draw=()=>{
+      const vw=video.videoWidth, vh=video.videoHeight;
+      if(vw && vh){ const k=Math.max(W/vw,H/vh), sw=W/k, sh=H/k; g.drawImage(video,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,W,H); }
+    };
+    const loop=()=>{ if(stopped) return; draw(); handle = usesRvfc ? video.requestVideoFrameCallback(loop) : setTimeout(loop,33); };
+    loop();
+    const stream=c.captureStream(30);
+    return {stream,w:W,h:H,stop(){
+      stopped=true;
+      try{ if(usesRvfc && video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(handle); else clearTimeout(handle); }catch(e){}
+      stream.getTracks().forEach(t=>{ try{ t.stop(); }catch(e){} });
+    }};
+  }
+  // Si l'image renvoyée n'a pas les proportions de l'image envoyée, on les rétablit à l'affichage.
+  function aiFit(){
+    const v=$('aiVideo');
+    if(!ai.on || !v.videoWidth || !ai.inAspect){ ai.fix=false; v.classList.remove('fixed'); return; }
+    const out=v.videoWidth/v.videoHeight, inA=ai.inAspect;
+    ai.fix=Math.abs(out-inA)/inA>0.04;
+    if(!ai.fix){ v.classList.remove('fixed'); v.style.width=v.style.height=v.style.left=v.style.top=''; return; }
+    const W=stage.clientWidth, H=stage.clientHeight, imm=document.body.classList.contains('immersive');
+    let w=W, h=W/inA;
+    if(imm ? h<H : h>H){ h=H; w=H*inA; }
+    v.classList.add('fixed');
+    Object.assign(v.style,{width:w+'px',height:h+'px',left:((W-w)/2)+'px',top:((H-h)/2)+'px'});
+  }
+  ['loadedmetadata','resize'].forEach(ev=>$('aiVideo').addEventListener(ev,aiFit));
+  window.addEventListener('resize',()=>{ if(ai.on) aiFit(); });
+  // Image de la vidéo Decart, aux bonnes proportions (et en miroir si demandé).
+  function aiFrame(maxSide,mirror){
+    const v=$('aiVideo'), aw=v.videoWidth, ah=v.videoHeight; if(!aw || !ah) return null;
+    let cw=aw, ch=ah; if(ai.fix && ai.inAspect) cw=Math.round(ah*ai.inAspect);
+    const k=Math.min(1,(maxSide||4096)/Math.max(cw,ch));
+    const c=document.createElement('canvas'); c.width=Math.round(cw*k); c.height=Math.round(ch*k);
+    const g=c.getContext('2d');
+    if(mirror){ g.translate(c.width,0); g.scale(-1,1); }
+    g.drawImage(v,0,0,aw,ah,0,0,c.width,c.height);
+    return c;
+  }
+  /* ---------- Vidéo de chaque essai en Direct IA ---------- */
+  const REC_TYPES=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  function recMime(){
+    if(!window.MediaRecorder) return null;
+    for(const t of REC_TYPES){ try{ if(MediaRecorder.isTypeSupported(t)) return t; }catch(e){} }
+    return '';
+  }
+  function recStart(o){
+    if(!o || !pref.get('decartRec',true) || !ai.remote) return;
+    const mime=recMime(); if(mime===null) return;
+    let mr;
+    try{ mr=new MediaRecorder(ai.remote, mime ? {mimeType:mime,videoBitsPerSecond:2500000} : {videoBitsPerSecond:2500000}); }catch(e){ return; }
+    const seg={mr,chunks:[],outfit:o,start:Date.now(),poster:null,mime:(mr.mimeType||mime||'video/webm'),fixAspect:null,saved:false};
+    mr.ondataavailable=e=>{ if(e.data && e.data.size) seg.chunks.push(e.data); };
+    mr.onstop=()=>recSave(seg);
+    try{ mr.start(1000); }catch(e){ return; }
+    ai.rec=seg;
+    // Vignette prise une fois l'image stabilisée.
+    setTimeout(()=>{ if(seg.saved || seg.poster) return; const c=aiFrame(720,false); if(c){ seg.fixAspect=ai.fix?ai.inAspect:null; c.toBlob(b=>{ if(b) seg.poster=b; },'image/jpeg',0.85); } },1500);
+  }
+  function recStop(){
+    const seg=ai.rec; ai.rec=null; if(!seg) return;
+    if(!seg.poster){ const c=aiFrame(720,false); if(c){ seg.fixAspect=ai.fix?ai.inAspect:null; seg.posterCanvas=c; } }
+    try{ if(seg.mr.state!=='inactive') seg.mr.stop(); else recSave(seg); }catch(e){ recSave(seg); }
+  }
+  async function recSave(seg){
+    if(seg.saved) return; seg.saved=true;
+    const dur=(Date.now()-seg.start)/1000;
+    if(dur<2 || !seg.chunks.length) return;
+    const type=seg.mime.split(';')[0]||'video/webm';
+    const vid=new Blob(seg.chunks,{type});
+    let poster=seg.poster;
+    if(!poster && seg.posterCanvas) poster=await canvasBlob(seg.posterCanvas,0.85);
+    if(!poster){ const c=document.createElement('canvas'); c.width=360; c.height=640; const g=c.getContext('2d'); g.fillStyle='#1a1b1e'; g.fillRect(0,0,360,640); poster=await canvasBlob(c,0.8); }
+    const pieces=outfitPieces(seg.outfit).map(x=>({slot:x.slot,garmentId:x.g.id,garmentName:x.g.name,engine:'decart'}));
+    addLook({id:newId('l'),name:seg.outfit.name,time:seg.start,blob:poster,video:vid,mime:type,dur:Math.round(dur),
+      fixAspect:seg.fixAspect,outfitId:seg.outfit.id&&seg.outfit.id!=='_cabine'?seg.outfit.id:null,baseBlob:null,baseId:null,pieces,kind:'video',fav:false,worn:[]});
+    ai.recSaved++;
+    if(ai.on) aiStatus('Vidéo de « '+seg.outfit.name+' » enregistrée');
+  }
 
   async function addPhoto(blob){
     const rec={id:newId('p'),blob,time:Date.now()};
@@ -2726,6 +2836,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     });
     const pieces=outfitPieces(o).map(x=>x.g);
     renderHarmony(pieces,$('oHarmony'));
+    videoStrip($('oVideoStrip'),$('oVideos'),videosOf(l=>l.outfitId===o.id || piecesKey(Object.fromEntries((l.pieces||[]).map(p=>[p.slot,p.garmentId])))===piecesKey(o.pieces)));
     $('oLive').disabled=!pieces.length; $('oCabin').disabled=!pieces.length;
     $('outfitTitle').textContent = outfitIsNew ? 'Nouvelle tenue' : 'Tenue';
   }
@@ -2826,6 +2937,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       + (used ? ' · dans '+used+(used>1?' looks':' look') : '')
       + (price && w.n ? ' · '+euro(price/w.n)+' par port' : '');
     $('sAuto').hidden=!g._auto;
+    videoStrip($('sVideoStrip'),$('sVideos'),videosOf(l=>(l.pieces||[]).some(p=>p.garmentId===g.id)));
     sFav.setAttribute('aria-pressed',String(!!g.fav));
     sFav.textContent = g.fav ? '♥ Dans tes favoris' : '♡ Ajouter aux favoris';
   }
@@ -3807,7 +3919,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
 
   /* ================= LOOKS ================= */
   function lookRecord(l){
-    return {id:l.id,name:l.name,time:l.time,blob:l.blob,baseBlob:l.baseBlob||null,baseId:l.baseId||null,pieces:l.pieces||[],kind:l.kind||'ia',fav:!!l.fav,worn:l.worn||[]};
+    return {id:l.id,name:l.name,time:l.time,blob:l.blob,baseBlob:l.baseBlob||null,baseId:l.baseId||null,pieces:l.pieces||[],kind:l.kind||'ia',fav:!!l.fav,worn:l.worn||[],
+      video:l.video||null,mime:l.mime||'',dur:l.dur||0,fixAspect:l.fixAspect||null,outfitId:l.outfitId||null};
   }
   function saveLookRec(l){ return dbPut('looks',lookRecord(l)); }
   function addLook(rec){
@@ -3815,10 +3928,21 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     saveLookRec(rec); askPersist();
     if(state.tab==='looks') renderLooks();
   }
-  const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['ia','IA'],['live','Direct IA'],['filtre','Filtre'],['flat','À plat']];
-  const KIND_LABEL={ia:'IA',flat:'À plat',filtre:'Filtre',live:'Direct IA'};
+  const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['video','Vidéos'],['ia','IA'],['live','Direct IA'],['filtre','Filtre'],['flat','À plat']];
+  const KIND_LABEL={ia:'IA',flat:'À plat',filtre:'Filtre',live:'Direct IA',video:'Vidéo'};
+  const fmtDur = s => Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
+  // Vidéos d'essai où figure une pièce (ou une tenue).
+  const videosOf = test => state.looks.filter(l=>l.kind==='video' && l.video && test(l)).slice().reverse();
+  function videoStrip(box,wrap,list){
+    box.textContent=''; wrap.hidden=!list.length;
+    list.forEach((l,i)=>{
+      const t=thumb(l.url,fmtDur(l.dur||0)+' · '+fmtShort(l.time),false,()=>openViewer('looks',list,i));
+      const pl=document.createElement('span'); pl.className='play'; pl.textContent='▶'; pl.setAttribute('aria-hidden','true');
+      t.querySelector('.pic').append(pl); t.setAttribute('aria-label','Vidéo de '+l.name+', '+fmtDur(l.dur||0)); box.append(t);
+    });
+  }
   function lookMatches(l,f){
-    return f==='all' || (f==='fav' && l.fav) || (f==='worn' && (l.worn||[]).length>0) || (f==='ia' && (l.kind||'ia')==='ia') || (f==='flat' && l.kind==='flat') || (f==='filtre' && l.kind==='filtre') || (f==='live' && l.kind==='live');
+    return f==='all' || (f==='fav' && l.fav) || (f==='worn' && (l.worn||[]).length>0) || (f==='ia' && (l.kind||'ia')==='ia') || (f==='flat' && l.kind==='flat') || (f==='filtre' && l.kind==='filtre') || (f==='live' && l.kind==='live') || (f==='video' && l.kind==='video');
   }
   $('compareMode').addEventListener('click',()=>{
     state.compareMode=!state.compareMode; state.compareSel=[]; renderLooks();
@@ -3843,8 +3967,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       const worn=(l.worn||[]).length;
       b.setAttribute('aria-label','Look '+l.name+' du '+fmtDate(l.time)+(l.fav?', favori':'')+(worn?', porté '+worn+' fois':''));
       const img=document.createElement('img'); img.src=l.url; img.alt=''; img.loading='lazy';
-      const lb=document.createElement('span'); lb.className='lbl'; lb.textContent=l.name+(worn?' · '+worn+'×':'');
+      const lb=document.createElement('span'); lb.className='lbl'; lb.textContent=(l.kind==='video'?fmtDur(l.dur||0)+' · ':'')+l.name+(worn?' · '+worn+'×':'');
       b.append(img,lb);
+      if(l.kind==='video'){ const pl=document.createElement('span'); pl.className='play'; pl.textContent='▶'; pl.setAttribute('aria-hidden','true'); b.append(pl); }
       if(sel>=0){ const n=document.createElement('span'); n.className='pickno'; n.textContent=sel+1; b.append(n); }
       else if(!state.compareMode){
         const k=document.createElement('span'); k.className='kind'; k.textContent=KIND_LABEL[l.kind||'ia']||'IA'; k.setAttribute('aria-hidden','true'); b.append(k);
@@ -3887,12 +4012,27 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   }
   function closeViewer(){
     viewer.hidden=true; state.viewer.index=-1;
+    const vid=$('viewerVid'); try{ vid.pause(); }catch(e){}
+    if(vid.dataset.url){ try{ URL.revokeObjectURL(vid.dataset.url); }catch(e){} }
+    vid.removeAttribute('src'); vid.dataset.url=''; vid.dataset.id='';
     if(viewerReturn && document.contains(viewerReturn)) viewerReturn.focus();
   }
   function renderViewer(){
     const items=vitems(), it=vcur();
     if(!it){ closeViewer(); return; }
     const isLook=state.viewer.list==='looks';
+    const vid=$('viewerVid'), isVid=isLook && !!it.video;
+    viewerImg.hidden=isVid; vid.hidden=!isVid;
+    if(isVid){
+      if(vid.dataset.id!==it.id){
+        if(vid.dataset.url) try{ URL.revokeObjectURL(vid.dataset.url); }catch(e){}
+        const u=URL.createObjectURL(it.video); vid.dataset.url=u; vid.dataset.id=it.id; vid.src=u;
+        vid.style.aspectRatio = it.fixAspect ? String(it.fixAspect) : '';
+        vid.style.objectFit = it.fixAspect ? 'fill' : 'contain';
+        vid.style.height = it.fixAspect ? '100%' : ''; vid.style.width = it.fixAspect ? 'auto' : '';
+        const pr=vid.play(); if(pr && pr.catch) pr.catch(()=>{});
+      }
+    }else if(!vid.paused) vid.pause();
     viewerImg.src=it.url; viewerImg.alt=(isLook?'Look ':'Photo ')+(state.viewer.index+1);
     viewerMeta.textContent='';
     const b=document.createElement('b');
@@ -3911,7 +4051,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       $('viewerFav').textContent = it.fav ? '♥' : '♡';
       $('viewerFav').setAttribute('aria-label',it.fav?'Retirer des favoris':'Ajouter aux favoris');
     }
-    viewerAction.textContent = isLook ? (it.kind==='flat' ? 'Mettre dans la cabine' : (it.kind==='filtre'||it.kind==='live') ? 'Rendu IA dans la cabine' : 'Ouvrir dans la cabine') : 'Habiller';
+    viewerAction.textContent = isLook ? ((it.kind==='flat'||it.kind==='video') ? 'Mettre dans la cabine' : (it.kind==='filtre'||it.kind==='live') ? 'Rendu IA dans la cabine' : 'Ouvrir dans la cabine') : 'Habiller';
     viewerPrev.disabled=state.viewer.index<=0;
     viewerNext.disabled=state.viewer.index>=items.length-1;
   }
@@ -3932,7 +4072,11 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
   }
   function saveBlob(blob,prefix,time){ return shareFile(blob,'cabine-'+prefix+'-'+stamp(time)+'.jpg'); }
-  $('viewerSave').addEventListener('click',()=>{ const it=vcur(); if(it) saveBlob(it.blob,state.viewer.list==='looks'?'look':'photo',it.time); });
+  $('viewerSave').addEventListener('click',()=>{
+    const it=vcur(); if(!it) return;
+    if(it.video) return shareFile(it.video,'cabine-video-'+stamp(it.time)+(/mp4/.test(it.video.type)?'.mp4':'.webm'));
+    saveBlob(it.blob,state.viewer.list==='looks'?'look':'photo',it.time);
+  });
   $('viewerClose').addEventListener('click',closeViewer);
   viewerPrev.addEventListener('click',()=>{ if(state.viewer.index>0){ state.viewer.index--; renderViewer(); } });
   viewerNext.addEventListener('click',()=>{ if(state.viewer.index<vitems().length-1){ state.viewer.index++; renderViewer(); } });
@@ -4014,6 +4158,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(document.activeElement!==$('dcBudget')) $('dcBudget').value=String(dcBudget());
     document.querySelectorAll('#dcMax button').forEach(b=>b.setAttribute('aria-checked',String(Number(b.dataset.s)===dcMax())));
     $('dcUsage').textContent=aiUsageText();
+    $('dcRec').setAttribute('aria-checked',String(!!pref.get('decartRec',true)));
     const info=$('storageInfo');
     info.textContent=state.photos.length+' photos, '+state.garments.length+' vêtements, '+state.outfits.length+' tenues, '+state.looks.length+' looks.';
     try{
@@ -4037,6 +4182,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(v && !/^[A-Za-z0-9_\-]{20,}$/.test(v)){ toast('Cette clé ne ressemble pas à une clé Decart (dct_…)'); return; }
     pref.set('decartKey',v); toast(v?'Clé Decart enregistrée dans ce téléphone':'Clé Decart effacée'); renderSettings();
   });
+  $('dcRec').addEventListener('click',()=>{ pref.set('decartRec',!pref.get('decartRec',true)); renderSettings(); });
   $('dcClear').addEventListener('click',()=>{ pref.set('decartKey',''); $('dcKey').value=''; toast('Clé Decart effacée'); renderSettings(); });
   document.querySelectorAll('#dcMax button').forEach(b=>b.addEventListener('click',()=>{ pref.set('decartMax',Number(b.dataset.s)); renderSettings(); }));
   $('dcBudget').addEventListener('change',()=>{
@@ -4092,7 +4238,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       await add('garments',state.garments,async g=>Object.assign(garmentRecord(g),{data:await toDataUrl(g.blob),origData:await opt64(g.origBlob),
         backData:await opt64(g.backBlob),backOrigData:await opt64(g.backOrig)}));
       await add('outfits',state.outfits,async o=>({id:o.id,name:o.name,pieces:o.pieces,created:o.created}));
-      await add('looks',state.looks,async l=>{ const r=lookRecord(l); delete r.blob; delete r.baseBlob; r.data=await toDataUrl(l.blob); r.baseData=l.baseBlob?await toDataUrl(l.baseBlob):null; return r; });
+      await add('looks',state.looks,async l=>{ const r=lookRecord(l); delete r.blob; delete r.baseBlob; delete r.video; r.data=await toDataUrl(l.blob); r.baseData=l.baseBlob?await toDataUrl(l.baseBlob):null; r.videoData=l.video?await toDataUrl(l.video):null; return r; });
       parts.push('}');
       downloadFile(new Blob(parts,{type:'application/json'}),'cabine-sauvegarde-'+stamp()+'.json');
       pref.set('lastBackup',Date.now());
@@ -4132,7 +4278,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       }
       for(const l of j.looks||[]){
         if(!l.data || state.looks.some(x=>x.id===l.id)){ skipped++; continue; }
-        const rec=lookRecord(Object.assign({},l,{blob:await blobOf(l.data),baseBlob:await blobOf(l.baseData)}));
+        const rec=lookRecord(Object.assign({},l,{blob:await blobOf(l.data),baseBlob:await blobOf(l.baseData),video:await blobOf(l.videoData)}));
         state.looks.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec)); await saveLookRec(rec); added++;
       }
     }catch(e){ toast('Import interrompu : '+errText(e)); }
@@ -4148,7 +4294,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ['Prendre une photo sans toucher le téléphone','Active « Main levée » sous le retardateur, puis lève une main au-dessus de ta tête pendant une seconde : le compte à rebours démarre (3 s si le retardateur est sur « Sans »).'],
       ['L\'effet filtre','Touche « Tenue en filtre » : les pièces de tes tenues se posent sur toi en direct, gratuitement, dans le téléphone. C\'est un effet de type filtre (pas de vrais plis ni d\'ombres) ; pour un rendu réaliste, prends la photo puis touche « Rendu IA ». Les pièces sont détourées automatiquement la première fois.'],
       ['Changer de tenue d\'un geste','Avec l\'effet filtre, balaie l\'air d\'une main à hauteur de poitrine : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Les flèches en haut de l\'image marchent aussi. Reste en entier dans l\'image pour que tes mains soient vues.'],
-      ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. L\'app s\'arrête seule au bout de la durée choisie (réglages), si tu sors de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper.'],
+      ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. L\'app s\'arrête seule au bout de la durée choisie (réglages), si tu sors de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper. Chaque tenue essayée est enregistrée en vidéo (Looks → Vidéos, et sur la fiche du vêtement) : pas besoin de la refaire.'],
       ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
       ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
       ['Les écritures de mon t-shirt sont à l\'envers','C\'est l\'effet miroir. Désactive-le dans « Plus d\'options » : l\'écran et la photo seront à l\'endroit.'],
