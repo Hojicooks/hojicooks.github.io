@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Diagnostic Cabine</title></head>
+<body style="background:#111;color:#eee;font:13px monospace">
+<pre id="out">démarrage…</pre>
+<script type="module">
+const out=document.getElementById('out'); const lines=[]; const t0=performance.now();
+const log=(...a)=>{ lines.push(((performance.now()-t0)/1000).toFixed(1)+'s '+a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' ')); out.textContent=lines.join('\n'); };
+window.addEventListener('error',e=>log('ONERROR',String(e.message)));
+window.addEventListener('unhandledrejection',e=>log('UNHANDLED',String(e.reason&&e.reason.message||e.reason)));
+const V1='https://cdn.jsdelivr.net/npm/@gradio/client@1.19.1/dist/browser.js';
+const V2='https://cdn.jsdelivr.net/npm/@gradio/client@2.7.1/dist/browser.js';
+async function img(url){ const r=await fetch(url); if(!r.ok) throw new Error('img '+r.status); return await r.blob(); }
+async function run(tag,ver,space,steps){
+  const m=await import(ver==='v1'?V1:V2);
+  const t=performance.now(); log(tag,'connect…');
+  const c=await m.Client.connect(space,{events:['data','status','log']});
+  log(tag,'connecté en',((performance.now()-t)/1000).toFixed(1)+'s');
+  const sub=async(ep,data)=>{
+    const h=c.submit(ep,data);
+    for await (const msg of h){
+      if(msg.type==='status') log(tag,ep,'status',{stage:msg.stage,pos:msg.position,eta:msg.eta,msg:msg.message,code:msg.code,title:msg.title,prog:msg.progress_data&&msg.progress_data.map(p=>(p.desc||'')+':'+p.index+'/'+p.length)});
+      else if(msg.type==='log') log(tag,ep,'log',{level:msg.level,log:msg.log});
+      else if(msg.type==='data'){ log(tag,ep,'DATA',JSON.stringify(msg.data).slice(0,240)); return msg.data; }
+      if(msg.type==='status' && msg.stage==='error') throw new Error(msg.message||msg.title||'error');
+    }
+    throw new Error('flux terminé sans données');
+  };
+  return steps(sub);
+}
+function cap(p,ms,tag){ return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('DÉLAI DÉPASSÉ '+ms/1000+'s')),ms))]).catch(e=>log(tag,'ÉCHEC',String(e&&e.message||e))); }
+const base='https://huggingface.co/spaces/BoyuanJiang/FitDiT/resolve/main/examples/';
+(async()=>{
+  let person,garm;
+  try{ person=await img(base+'model/0279.jpg'); garm=await img(base+'garment/0.jpg'); log('images',person.size,garm.size); }
+  catch(e){ log('images ÉCHEC',String(e)); return; }
+  const which=new URLSearchParams(location.search).get('e')||'fitdit,leffa,qwen';
+  const limit=Number(new URLSearchParams(location.search).get('t')||100)*1000;
+  const jobs=[];
+  if(which.includes('fitdit')) jobs.push(cap(run('FITDIT','v1','BoyuanJiang/FitDiT',async sub=>{
+    const m=await sub('/generate_mask',[person,'Upper-body',0,0,0,0]);
+    await sub('/process',[person,garm,m[0],m[1],20,2,-1,1,'768x1024']); log('FITDIT','TERMINÉ');
+  }),limit,'FITDIT'));
+  if(which.includes('leffa')) jobs.push(cap(run('LEFFA','v1','franciszzj/Leffa',async sub=>{
+    await sub('/leffa_predict_vt',[person,garm,false,30,2.5,42,'viton_hd','upper_body',false]); log('LEFFA','TERMINÉ');
+  }),limit,'LEFFA'));
+  if(which.includes('qwen')) jobs.push(cap(run('QWEN','v2','linoyts/Qwen-Image-Edit-2511-Fast',async sub=>{
+    await sub('/infer',[[{image:person,caption:null},{image:garm,caption:null}],'Make the person in image 1 wear the top from image 2.',0,true,1,4,1024,768,false]); log('QWEN','TERMINÉ');
+  }),limit,'QWEN'));
+  if(which.includes('idm')) jobs.push(cap(run('IDM','v1','yisol/IDM-VTON',async sub=>{
+    await sub('/tryon',[{background:person,layers:[],composite:null},garm,'top',true,true,30,42]); log('IDM','TERMINÉ');
+  }),limit,'IDM'));
+  await Promise.all(jobs);
+  log('FIN DU DIAGNOSTIC');
+})();
+</script>
+</body></html>
