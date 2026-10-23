@@ -7,21 +7,27 @@ const out=document.getElementById('out'); const lines=[]; const t0=performance.n
 const log=(...a)=>{ lines.push(((performance.now()-t0)/1000).toFixed(1)+'s '+a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' ')); out.textContent=lines.join('\n'); };
 window.addEventListener('error',e=>log('ONERROR',String(e.message)));
 window.addEventListener('unhandledrejection',e=>log('UNHANDLED',String(e.reason&&e.reason.message||e.reason)));
-const V1='https://cdn.jsdelivr.net/npm/@gradio/client@1.19.1/dist/browser.js';
-const V2='https://cdn.jsdelivr.net/npm/@gradio/client@2.7.1/dist/browser.js';
+const URLS={v1:'https://cdn.jsdelivr.net/npm/@gradio/client@1.19.1/dist/browser.js',v2:'https://cdn.jsdelivr.net/npm/@gradio/client@2.7.1/dist/browser.js'};
 async function img(url){ const r=await fetch(url); if(!r.ok) throw new Error('img '+r.status); return await r.blob(); }
+async function probe(tag,url,opts){
+  try{ const r=await fetch(url,opts); log(tag,'probe',url.replace(/^https:\/\//,''),r.status,r.headers.get('access-control-allow-origin')); }
+  catch(e){ log(tag,'probe ÉCHEC',url.replace(/^https:\/\//,''),String(e.message)); }
+}
 async function run(tag,ver,space,steps){
-  const m=await import(ver==='v1'?V1:V2);
-  const t=performance.now(); log(tag,'connect…');
+  const m=await import(URLS[ver]);
+  const t=performance.now(); log(tag,ver,'connect…');
   const c=await m.Client.connect(space,{events:['data','status','log']});
   log(tag,'connecté en',((performance.now()-t)/1000).toFixed(1)+'s');
   const sub=async(ep,data)=>{
-    const h=c.submit(ep,data);
+    const h=c.submit(ep,data); let last='';
     for await (const msg of h){
-      if(msg.type==='status') log(tag,ep,'status',{stage:msg.stage,pos:msg.position,eta:msg.eta,msg:msg.message,code:msg.code,title:msg.title,prog:msg.progress_data&&msg.progress_data.map(p=>(p.desc||'')+':'+p.index+'/'+p.length)});
+      if(msg.type==='status'){
+        const s=JSON.stringify({stage:msg.stage,pos:msg.position,msg:msg.message,title:msg.title,prog:msg.progress_data&&msg.progress_data.map(p=>(p.desc||'')+(p.length?':'+Math.round(10*p.index/p.length)*10+'%':''))});
+        if(s!==last){ log(tag,ep,'status',s); last=s; }
+      }
       else if(msg.type==='log') log(tag,ep,'log',{level:msg.level,log:msg.log});
-      else if(msg.type==='data'){ log(tag,ep,'DATA',JSON.stringify(msg.data).slice(0,240)); return msg.data; }
-      if(msg.type==='status' && msg.stage==='error') throw new Error(msg.message||msg.title||'error');
+      else if(msg.type==='data'){ log(tag,ep,'DATA',JSON.stringify(msg.data).slice(0,200)); return msg.data; }
+      if(msg.type==='status' && msg.stage==='error') throw new Error((msg.title||'')+' '+(msg.message||'error'));
     }
     throw new Error('flux terminé sans données');
   };
@@ -33,22 +39,38 @@ const base='https://huggingface.co/spaces/BoyuanJiang/FitDiT/resolve/main/exampl
   let person,garm;
   try{ person=await img(base+'model/0279.jpg'); garm=await img(base+'garment/0.jpg'); log('images',person.size,garm.size); }
   catch(e){ log('images ÉCHEC',String(e)); return; }
-  const which=new URLSearchParams(location.search).get('e')||'fitdit,leffa,qwen';
-  const limit=Number(new URLSearchParams(location.search).get('t')||100)*1000;
+  const q=new URLSearchParams(location.search);
+  const which=(q.get('e')||'probe,fitdit2,leffa2,qwen1').split(',');
+  const limit=Number(q.get('t')||50)*1000;
   const jobs=[];
-  if(which.includes('fitdit')) jobs.push(cap(run('FITDIT','v1','BoyuanJiang/FitDiT',async sub=>{
+  if(which.includes('probe')) jobs.push((async()=>{
+    for(const [tag,id,host] of [['FITDIT','BoyuanJiang/FitDiT','https://boyuanjiang-fitdit.hf.space'],['LEFFA','franciszzj/Leffa','https://franciszzj-leffa.hf.space']]){
+      await probe(tag,'https://huggingface.co/api/spaces/'+id+'/host');
+      await probe(tag,host+'/config');
+      await probe(tag,host+'/gradio_api/info');
+      await probe(tag,host+'/info');
+      await probe(tag,host+'/gradio_api/info?serialize=False');
+    }
+  })());
+  if(which.includes('fitdit2')) jobs.push(cap(run('FITDIT','v2','BoyuanJiang/FitDiT',async sub=>{
     const m=await sub('/generate_mask',[person,'Upper-body',0,0,0,0]);
     await sub('/process',[person,garm,m[0],m[1],20,2,-1,1,'768x1024']); log('FITDIT','TERMINÉ');
   }),limit,'FITDIT'));
-  if(which.includes('leffa')) jobs.push(cap(run('LEFFA','v1','franciszzj/Leffa',async sub=>{
+  if(which.includes('leffa2')) jobs.push(cap(run('LEFFA','v2','franciszzj/Leffa',async sub=>{
     await sub('/leffa_predict_vt',[person,garm,false,30,2.5,42,'viton_hd','upper_body',false]); log('LEFFA','TERMINÉ');
   }),limit,'LEFFA'));
-  if(which.includes('qwen')) jobs.push(cap(run('QWEN','v2','linoyts/Qwen-Image-Edit-2511-Fast',async sub=>{
-    await sub('/infer',[[{image:person,caption:null},{image:garm,caption:null}],'Make the person in image 1 wear the top from image 2.',0,true,1,4,1024,768,false]); log('QWEN','TERMINÉ');
-  }),limit,'QWEN'));
-  if(which.includes('idm')) jobs.push(cap(run('IDM','v1','yisol/IDM-VTON',async sub=>{
+  if(which.includes('idm2')) jobs.push(cap(run('IDM','v2','yisol/IDM-VTON',async sub=>{
     await sub('/tryon',[{background:person,layers:[],composite:null},garm,'top',true,true,30,42]); log('IDM','TERMINÉ');
   }),limit,'IDM'));
+  if(which.includes('idm1')) jobs.push(cap(run('IDM','v1','yisol/IDM-VTON',async sub=>{
+    await sub('/tryon',[{background:person,layers:[],composite:null},garm,'top',true,true,30,42]); log('IDM','TERMINÉ');
+  }),limit,'IDM'));
+  if(which.includes('qwen1')) jobs.push(cap(run('QWEN1','v2','linoyts/Qwen-Image-Edit-2511-Fast',async sub=>{
+    await sub('/infer',[[{image:person,caption:null}],'Change the color of the top to red.',0,true,1,4,1024,768,false]); log('QWEN1','TERMINÉ');
+  }),limit,'QWEN1'));
+  if(which.includes('qwen2')) jobs.push(cap(run('QWEN2','v2','linoyts/Qwen-Image-Edit-2511-Fast',async sub=>{
+    await sub('/infer',[[{image:person,caption:null},{image:garm,caption:null}],'Make the person in image 1 wear the top from image 2.',0,true,1,4,1024,768,false]); log('QWEN2','TERMINÉ');
+  }),limit,'QWEN2'));
   await Promise.all(jobs);
   log('FIN DU DIAGNOSTIC');
 })();
