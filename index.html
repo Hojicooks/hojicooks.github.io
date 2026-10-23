@@ -446,6 +446,16 @@ body.immersive .stage .ai-out{object-fit:cover}
 @keyframes swl{from{transform:translateX(calc(-50% + 40px));opacity:.4}to{transform:translateX(-50%);opacity:1}}
 @keyframes swr{from{transform:translateX(calc(-50% - 40px));opacity:.4}to{transform:translateX(-50%);opacity:1}}
 body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
+/* Flèche affichée quand un balayage de la main est reconnu */
+.swipe-arrow{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;z-index:3;opacity:0;color:var(--tape)}
+.swipe-arrow svg{width:clamp(96px,30vw,170px);height:auto;filter:drop-shadow(0 4px 18px var(--shade))}
+.swipe-arrow.r svg{transform:scaleX(-1)}
+.swipe-arrow small{font-size:15px;font-weight:600;padding:5px 14px;border-radius:999px;background:var(--scrim);color:var(--text)}
+.swipe-arrow.l{animation:arrl .75s ease-out}
+.swipe-arrow.r{animation:arrr .75s ease-out}
+@keyframes arrl{0%{opacity:0;transform:translateX(40px)}25%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translateX(-40px)}}
+@keyframes arrr{0%{opacity:0;transform:translateX(-40px)}25%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translateX(40px)}}
+@keyframes arrf{0%{opacity:0}25%{opacity:1}70%{opacity:1}100%{opacity:0}}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes tick{from{transform:scale(1.25);opacity:.2}to{transform:scale(1);opacity:1}}
@@ -453,6 +463,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
 @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 @media (prefers-reduced-motion:reduce){
   .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i,.busy i,.fx-bar.swl,.fx-bar.swr{animation:none}
+  .swipe-arrow.l,.swipe-arrow.r{animation-name:arrf}
   .shutter i,.switch,.switch::after,.ob-dots i{transition:none}
 }
 </style>
@@ -510,6 +521,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <div class="mark feet"><span>Pieds ici</span></div>
       </div>
       <div class="count" id="count" aria-live="assertive"></div>
+      <div class="swipe-arrow" id="swipeArrow" aria-hidden="true">
+        <svg viewBox="0 0 120 80" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M110 40H14M46 8 14 40l32 32"/></svg>
+        <small id="swipeText"></small>
+      </div>
       <div class="flash" id="flash"></div>
       <div class="ring" id="ring" hidden aria-hidden="true"></div>
       <div class="stage-top">
@@ -1047,7 +1062,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     </div>
     <div class="group" id="decartGroup">
       <h3>Direct IA (Decart)</h3>
-      <p class="note">Essayage réaliste en direct par Decart (Lucy VTON 3.6), sur tes tenues. Coût : 2 crédits par seconde de direct, soit environ 8 min avec 1 000 crédits.</p>
+      <p class="note">Essayage réaliste en direct par Decart (Lucy VTON 3.6), sur tes tenues. Coût : 2 crédits par seconde de direct, soit environ 8 min avec 1 000 crédits. Rien n'est facturé tant que tu n'es pas en place et que le retardateur n'est pas fini ; deux mains levées arrêtent le direct.</p>
       <div class="field">
         <label for="dcKey">Clé API Decart</label>
         <input id="dcKey" type="password" autocomplete="off" spellcheck="false" placeholder="dct_…">
@@ -1108,7 +1123,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.5</p>
+      <p class="note">Cabine Miroir · version 6.6</p>
     </div>
   </div>
 </div>
@@ -1620,7 +1635,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     photo:"Le déclencheur ouvre l'appareil photo selfie du téléphone. Son propre retardateur fonctionne aussi."
   };
   function liveHint(){
-    if(ai.on) return 'Direct IA : balaie l\'air de la main pour changer de tenue. Arrêt automatique au bout de '+dcMax()+' s ou si tu sors de l\'image.';
+    if(ai.on) return 'Direct IA : balaie l\'air d\'une main pour changer de tenue, lève les deux mains une seconde pour arrêter. Arrêt automatique au bout de '+dcMax()+' s ou 3 s après ta sortie de l\'image.';
     if(fx.on) return 'Effet filtre : balaie l\'air d\'une main, à hauteur de poitrine, vers la gauche ou la droite pour changer de tenue.'+(opt.hand?' Main levée pour la photo.':'');
     if(opt.hand) return 'Lève une main au-dessus de ta tête une seconde : le retardateur ('+(state.timer||3)+' s) démarre. Le déclencheur marche aussi.';
     return state.timer===0 ? "Photo immédiate. Appuie sur le déclencheur."
@@ -1669,7 +1684,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     state.pending=true;
     const startBtn=$('startBtn'); startBtn.disabled=true; startBtn.textContent="En attente de l'autorisation…";
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:1920}}});
+      // La meilleure définition possible, sans imposer de sens : sur iPhone, largeur et hauteur demandées
+      // sont parfois inversées, et la caméra peut filmer en paysage même téléphone vertical.
+      // L'image est ensuite recadrée à la verticale (photo, Direct IA), d'où l'intérêt d'avoir de la marge.
+      const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1920},height:{ideal:1920}}});
       state.stream=stream; video.srcObject=stream;
       try{ await video.play(); }catch(e){}
       setMode('live'); requestWake();
@@ -1771,6 +1789,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(state.mode==='off') return startCamera();
     if(state.mode==='photo') return snapInput.click();
     if(state.countdown) return cancelCountdown();
+    if(ai.on && ai.phase!=='live'){ toast('Attends que le Direct IA démarre pour prendre une photo'); return; }
     if(state.timer===0) capture(); else startCountdown();
   }
   shutters.forEach(s=>s.addEventListener('click',onShutter));
@@ -1840,7 +1859,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement) exitImmersive(); });
 
   /* ---------- Coach de cadrage, main levée et effet filtre (détection du corps en direct) ---------- */
-  const live={on:false,gen:0,timer:null,raf:0,lm:null,raise:0,cooldown:0,cand:'',candSince:0,shown:'',last:0,err:0,lastBody:0};
+  const live={on:false,gen:0,timer:null,raf:0,lm:null,raise:0,both:0,bothCool:0,handCdAt:0,cooldown:0,cand:'',candSince:0,shown:'',last:0,err:0,lastBody:0,failed:false};
   function wantLive(){ return state.mode==='live' && state.tab==='miroir' && (opt.coach||opt.hand||fx.on) && document.visibilityState!=='hidden'; }
   function syncLive(){ if(wantLive()) startLive(); else stopLive(); }
   async function startLive(){
@@ -1848,8 +1867,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     live.on=true; const gen=++live.gen;
     if(!live.lm){
       showCoach('Chargement de la détection du corps…','wait');
-      try{ live.lm=await getPose('VIDEO'); }
-      catch(e){ if(gen===live.gen){ live.on=false; showCoach(''); toast('La détection du corps n\'a pas pu se charger : vérifie ta connexion.'); } return; }
+      try{ live.lm=await getPose('VIDEO'); live.failed=false; }
+      catch(e){ if(gen===live.gen){ live.on=false; live.failed=true; showCoach(''); toast('La détection du corps n\'a pas pu se charger : vérifie ta connexion.'); } return; }
     }
     if(!live.on || gen!==live.gen) return;
     showCoach(''); tickLive(gen);
@@ -1885,12 +1904,32 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       const dir=readSwipe(p,now);
       if(dir) fxStep(dir,true);
     }
-    // Main levée : un poignet au-dessus du nez pendant 0,6 s.
-    if(opt.hand && !state.countdown && Date.now()>live.cooldown){
-      const up = vis(0) && [15,16].some(i=>vis(i) && p[i].y < p[0].y-0.04);
+    // Bras levé : poignet au-dessus du nez, ou coude au-dessus de l'épaule (la main peut sortir du cadre).
+    const near=i=>!!(p && p[i] && (p[i].visibility==null || p[i].visibility>0.5) && p[i].x>-0.15 && p[i].x<1.15 && p[i].y>-0.2 && p[i].y<=1);
+    const armUp=i=>(vis(0) && near(i) && p[i].y < p[0].y-0.04) || (vis(i-2) && vis(i-4) && p[i-2].y < p[i-4].y-0.05);
+    const ups = p ? [15,16].filter(armUp).length : 0;
+    const t=Date.now();
+    // Direct IA : les deux mains levées pendant 1 s arrêtent le direct (ou annulent son démarrage).
+    if(ai.on && ups===2 && t>live.bothCool){
+      if(!live.both) live.both=t;
+      live.raise=0;
+      // La première main levée a pu lancer le retardateur photo : on l'annule.
+      if(state.countdown && t-live.handCdAt<2500) cancelCountdown();
+      if(t-live.both>=1000){
+        live.both=0; live.bothCool=t+2500; live.cooldown=Math.max(live.cooldown,t+2500);
+        aiStop(ai.phase==='live' ? 'Direct IA arrêté (deux mains levées)' : 'Direct IA annulé (deux mains levées), rien n\'a été facturé');
+        return;
+      }
+      showCoach('Deux mains levées : garde-les pour arrêter le direct…','wait'); live.cand=''; return;
+    }
+    live.both=0;
+    if(ai.on && ai.phase==='armed') aiArm(p,vis);
+    // Main levée : un bras levé pendant 0,6 s lance le retardateur photo (une seule main pendant le Direct IA).
+    if(opt.hand && !state.countdown && t>live.cooldown && (!ai.on || ai.phase==='live')){
+      const up = ai.on ? ups===1 : ups>=1;
       if(up){
-        if(!live.raise) live.raise=Date.now();
-        if(Date.now()-live.raise>=600){ live.raise=0; live.cooldown=Date.now()+4000; unlockAudio(); startCountdown(state.timer||3); }
+        if(!live.raise) live.raise=t;
+        if(t-live.raise>=600){ live.raise=0; live.cooldown=t+4000; live.handCdAt=t; unlockAudio(); startCountdown(state.timer||3); }
       }else live.raise=0;
     }else live.raise=0;
     if(live.raise){ showCoach('Main levée : garde-la une seconde…','wait'); live.cand=''; return; }
@@ -1926,7 +1965,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   // Version « autocollant » : chaque pièce détourée est posée et déformée selon les épaules, hanches et pieds.
   // Gratuit et dans le téléphone ; le rendu réaliste reste celui de la cabine.
   const fxCanvas=$('fx');
-  const fx={on:false,index:0,prep:new Map(),sm:null,miss:0,hist:{15:[],16:[]},lastSwipe:0,drawn:false};
+  const fx={on:false,index:0,prep:new Map(),sm:null,miss:0,hist:{15:[],16:[]},wsm:{15:null,16:null},lastSwipe:0,lastDir:0,ready:true,drawn:false};
   function fxOutfits(){
     const list=state.outfits.filter(o=>outfitPieces(o).length);
     const tmp={id:'_cabine',name:'Tenue de la cabine',pieces:Object.assign({},state.cab.picks)};
@@ -2080,27 +2119,45 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ctx.drawImage(e.img,x0,k.top,sw,sh,cx-w/2,bottom-h*0.85,w,h); fx.drawn=true;
     });
   }
-  // Geste : un poignet qui balaie l'air à hauteur de poitrine (au moins un quart de l'image en moins d'une demi-seconde).
+  // Geste de balayage, pensé pour ne pas se déclencher deux fois :
+  // - une seule main suivie à la fois (celle qui bouge le plus), levée au moins à hauteur du coude ;
+  // - position lissée, puis au moins un tiers de l'image traversé à l'horizontale en moins d'une demi-seconde ;
+  // - le mouvement de retour (sens inverse dans les 1,5 s) est ignoré ;
+  // - après un geste, la main doit se poser (ou se baisser) avant le suivant.
   function readSwipe(p,now){
-    if(!p) return 0;
-    const has=i=>!!(p[i] && (p[i].visibility==null || p[i].visibility>0.5));
-    const hipY = has(23)&&has(24) ? (p[23].y+p[24].y)/2 : 0.65;
-    let dir=0;
+    const has=i=>!!(p && p[i] && (p[i].visibility==null || p[i].visibility>0.5) && p[i].x>-0.1 && p[i].x<1.1 && p[i].y>-0.1 && p[i].y<1.1);
+    let best=null, raised=false;
     for(const i of [15,16]){
-      const h=fx.hist[i];
-      if(has(i) && p[i].y<hipY && p[i].x>-0.1 && p[i].x<1.1) h.push({t:now,x:p[i].x,y:p[i].y}); else h.length=0;
+      const e=i-2, h=fx.hist[i];
+      if(!(has(i) && has(e) && p[i].y < p[e].y+0.02)){ h.length=0; fx.wsm[i]=null; continue; }
+      raised=true;
+      const s=fx.wsm[i];
+      fx.wsm[i] = s ? {x:s.x+0.55*(p[i].x-s.x), y:s.y+0.55*(p[i].y-s.y)} : {x:p[i].x, y:p[i].y};
+      h.push({t:now,x:fx.wsm[i].x,y:fx.wsm[i].y});
       while(h.length && now-h[0].t>450) h.shift();
-      if(!dir && h.length>=3 && now-fx.lastSwipe>900){
-        const a=h[0], b=h[h.length-1], dx=b.x-a.x, dy=b.y-a.y;
-        if(Math.abs(dx)>0.25 && Math.abs(dy)<0.6*Math.abs(dx)){
-          // Sens vu à l'écran : vers la gauche = tenue suivante, comme sur un téléphone.
-          const screenDx = opt.mirror ? -dx : dx;
-          dir = screenDx<0 ? 1 : -1;
-        }
-      }
+      if(h.length>=3){ const dx=h[h.length-1].x-h[0].x; if(!best || Math.abs(dx)>Math.abs(best.dx)) best={dx,dy:h[h.length-1].y-h[0].y,h}; }
     }
-    if(dir){ fx.lastSwipe=now; fx.hist={15:[],16:[]}; }
+    // Main baissée, ou main immobile un instant : un nouveau geste est possible.
+    if(!raised) fx.ready=true;
+    else if(best){
+      const b=best.h[best.h.length-1], r=best.h.filter(q=>now-q.t<=160);
+      if(r.length>=2 && Math.hypot(b.x-r[0].x,b.y-r[0].y)<0.035) fx.ready=true;
+    }
+    if(!best || !fx.ready || now-fx.lastSwipe<450) return 0;
+    const {dx,dy}=best;
+    if(Math.abs(dx)<0.33 || Math.abs(dy)>0.5*Math.abs(dx)) return 0;
+    // Sens vu à l'écran : vers la gauche = tenue suivante, comme sur un téléphone.
+    const screenDx = opt.mirror ? -dx : dx, dir = screenDx<0 ? 1 : -1;
+    if(dir===-fx.lastDir && now-fx.lastSwipe<1500) return 0; // la main qui revient
+    fx.lastSwipe=now; fx.lastDir=dir; fx.ready=false; fx.hist={15:[],16:[]};
     return dir;
+  }
+  let arrowTimer=null;
+  function showArrow(dir){
+    const el=$('swipeArrow');
+    $('swipeText').textContent = dir>0 ? 'Tenue suivante' : 'Tenue précédente';
+    el.classList.remove('l','r'); void el.offsetWidth; el.classList.add(dir>0?'l':'r');
+    clearTimeout(arrowTimer); arrowTimer=setTimeout(()=>el.classList.remove('l','r'),800);
   }
   function fxStep(dir,gesture){
     const l=fxOutfits();
@@ -2109,8 +2166,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     renderFxBar(dir);
     // On prépare déjà la tenue suivante dans le même sens.
     outfitPieces(l[(fx.index+dir+l.length)%l.length]).forEach(x=>fxPrep(x.g));
-    if(gesture) buzz(30);
-    if(ai.on) aiSwitch();
+    if(gesture){ buzz(30); showArrow(dir); }
+    // Direct IA : la tenue n'est envoyée qu'après 0,6 s sans nouveau geste (deux gestes rapides = une seule demande).
+    if(ai.on){ clearTimeout(ai.swT); ai.swT=setTimeout(()=>{ ai.swT=null; aiSwitch(); },600); }
   }
   let fxStatusTimer=null;
   function fxStatus(t,ms){
@@ -2160,8 +2218,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   // durée maximale, arrêt si personne n'est dans l'image, arrêt dès qu'on quitte le miroir.
   const DECART_SDK=['https://cdn.jsdelivr.net/npm/@decartai/sdk@0.2.12/+esm','https://esm.sh/@decartai/sdk@0.2.12'];
   const DECART_MODEL='lucy-vton-3.6', CREDITS_PER_S=2;
+  // Phases : off → armed (attente d'être en place, gratuit) → countdown → connecting → live.
   const ai={on:false,phase:'off',rt:null,track:null,gen:0,timer:null,start:0,secs:0,switching:false,pendingSwitch:false,
-    input:null,inAspect:0,fix:false,remote:null,rec:null,recSaved:0};
+    input:null,inAspect:0,fix:false,remote:null,rec:null,recSaved:0,cd:null,armSince:0,armAt:0,armMsg:'',swT:null,sent:'',sentO:null,tok:null};
   if(window.__cabineTest) window.__cabineAi=ai; // tests automatisés uniquement
   let decartMod=null;
   async function loadDecart(){
@@ -2181,7 +2240,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function aiLiveSecs(){ return ai.phase==='live' && ai.start ? Math.max(ai.secs,(Date.now()-ai.start)/1000) : ai.secs; }
   function aiStatus(text){
     if(!ai.on) return;
-    if(text){ fxStatus(text); return; }
+    if(text){ ai.msg=text; fxStatus(text); return; }
+    // Message d'attente effacé entre-temps (fin d'un détourage…) : on le remet.
+    if(ai.phase!=='live' && ai.msg && !$('fxStatus').textContent) fxStatus(ai.msg);
     if(ai.phase==='live'){ const s=aiLiveSecs(); fxStatus('Direct IA · '+Math.round(s)+' s / '+dcMax()+' s · '+Math.round(s*CREDITS_PER_S)+' crédits'); }
   }
   // Description envoyée avec l'image du vêtement (Decart conseille une phrase précise de 20 à 30 mots).
@@ -2211,6 +2272,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     return {insufficient_credits:'Plus assez de crédits Decart : direct arrêté.',session_limit:'Durée maximale atteinte : direct arrêté.',
       moderation_violation:'Decart a coupé le direct (filtre de sécurité).',policy_violation:'Decart a refusé la session.'}[reason] || 'Direct IA terminé.';
   }
+  // Démarrage en trois temps, pour ne rien payer pendant qu'on se place :
+  // 1) armement : l'app attend de te voir en entier pendant 1 s (rien n'est envoyé à Decart) ;
+  // 2) retardateur avec les bips ;
+  // 3) connexion à Decart, seulement maintenant.
   async function aiStart(){
     if(ai.on) return;
     const key=dcKey();
@@ -2219,27 +2284,74 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(state.mode!=='live'){ await startCamera(); if(state.mode!=='live') return; }
     const used=Math.round(dcUsedSec()*CREDITS_PER_S);
     if(dcBudget()-used<CREDITS_PER_S*10){ toast('Crédits Decart presque épuisés d\'après le compteur (réglages pour le corriger)'); }
-    unlockAudio();
-    ai.prevFx=fx.on; ai.on=true; ai.phase='connecting'; ai.secs=0; ai.start=0; const gen=++ai.gen;
+    unlockAudio(); cancelCountdown();
+    ai.prevFx=fx.on; ai.on=true; ai.phase='armed'; ai.secs=0; ai.start=0; ai.armSince=0; ai.armAt=Date.now(); ai.armMsg=''; ai.sent=''; ai.sentO=null; ++ai.gen;
     fx.on=true; renderStageOpts(); syncLive();
+    aiArmStatus('Place-toi en entier dans l\'image : le direct démarre ensuite');
+    aiPrepare(ai.gen); // module et accès préparés à l'avance (gratuit)
+    const o=fxCurrent(); if(o) outfitPieces(o).forEach(x=>fxPrep(x.g));
+    ai.timer=setInterval(aiWatch,1000);
+  }
+  // Accès de courte durée : limité à ce site, à ce modèle et à la durée maximale choisie.
+  async function aiToken(sdk){
+    const base=sdk.createDecartClient({apiKey:dcKey(),telemetry:false});
+    try{
+      const tok=await base.tokens.create({expiresIn:120,allowedModels:[DECART_MODEL],allowedOrigins:[location.origin],constraints:{realtime:{maxSessionDuration:dcMax()}}});
+      if(tok && tok.apiKey) return {key:tok.apiKey,at:Date.now()};
+    }catch(e){ if(/401|403|invalid/i.test(errText(e))) throw e; }
+    return {key:dcKey(),at:Date.now(),direct:true}; // jeton impossible (réseau) : la clé sert directement
+  }
+  // Pendant qu'on se place : chargement du module et vérification de la clé, pour ne pas attendre la fin
+  // du retardateur pour apprendre qu'elle est refusée.
+  async function aiPrepare(gen){
+    try{
+      const sdk=await loadDecart(); if(gen!==ai.gen) return;
+      const t=await aiToken(sdk); if(gen===ai.gen) ai.tok=t;
+    }catch(e){ if(gen===ai.gen && /401|403|invalid/i.test(errText(e))) aiStop(aiErrText(e),true); }
+  }
+  function aiArmStatus(t){ if(ai.armMsg!==t || !$('fxStatus').textContent){ ai.armMsg=t; aiStatus(t); } }
+  // En entier : la tête et au moins un pied visibles, sans toucher les bords.
+  function fullBody(p,vis){
+    if(!p || !vis(0) || p[0].y<0.03) return false;
+    const feet=[27,28,29,30,31,32].filter(vis);
+    return feet.length>0 && Math.max.apply(null,feet.map(i=>p[i].y))<=0.985;
+  }
+  function aiArm(p,vis){
+    if(!fullBody(p,vis)){ ai.armSince=0; aiArmStatus('Place-toi en entier dans l\'image, de la tête aux pieds'); return; }
+    if(!ai.armSince){ ai.armSince=Date.now(); aiArmStatus('Ne bouge plus…'); return; }
+    if(Date.now()-ai.armSince>=1000) aiCountdown();
+  }
+  function aiCountdown(){
+    if(!ai.on || ai.phase!=='armed') return;
+    ai.phase='countdown'; const gen=ai.gen;
+    let n=state.timer||3;
+    showCount(n); aiStatus('Direct IA dans '+n+' s… (deux mains levées pour annuler)');
+    ai.cd=setInterval(()=>{
+      if(gen!==ai.gen){ clearInterval(ai.cd); return; }
+      n--;
+      if(n>0){ showCount(n); aiStatus('Direct IA dans '+n+' s… (deux mains levées pour annuler)'); return; }
+      clearInterval(ai.cd); ai.cd=null; count.textContent=''; count.classList.remove('tick');
+      aiConnect(gen);
+    },1000);
+  }
+  const outfitKey = o => o ? o.id+':'+piecesKey(o.pieces) : '';
+  async function aiConnect(gen){
+    if(!ai.on || gen!==ai.gen) return;
+    ai.phase='connecting';
     aiStatus('Connexion à Decart…');
     try{
       const sdk=await loadDecart(); if(gen!==ai.gen) return;
       const model=sdk.models.realtime(DECART_MODEL);
-      const base=sdk.createDecartClient({apiKey:key,telemetry:false});
-      // Accès de courte durée : limité à ce site, à ce modèle et à la durée maximale choisie.
-      let client=base;
-      try{
-        const tok=await base.tokens.create({expiresIn:120,allowedModels:[DECART_MODEL],allowedOrigins:[location.origin],constraints:{realtime:{maxSessionDuration:dcMax()}}});
-        if(tok && tok.apiKey) client=sdk.createDecartClient({apiKey:tok.apiKey,telemetry:false});
-      }catch(e){ if(/401|403|invalid/i.test(errText(e))) throw e; }
+      // Jeton préparé pendant l'armement, renouvelé s'il a plus d'une minute.
+      const tok = ai.tok && Date.now()-ai.tok.at<60000 ? ai.tok : await aiToken(sdk);
+      ai.tok=null;
       if(gen!==ai.gen) return;
+      const client=sdk.createDecartClient({apiKey:tok.key,telemetry:false});
       if(!(state.stream && video.videoWidth)) throw new Error('caméra coupée');
       ai.input=aiInput(); ai.inAspect=ai.input.w/ai.input.h;
       const o=fxCurrent(); outfitPieces(o).forEach(x=>fxPrep(x.g));
-      aiStatus('Préparation de « '+o.name+' »…');
       const init=await aiGarment(o); if(gen!==ai.gen) return;
-      aiStatus('Connexion à Decart…');
+      ai.sent=outfitKey(o); ai.sentO=o;
       const rt=await client.realtime.connect(ai.input.stream,{
         model, mirror:false,
         initialState:{prompt:{text:init.prompt,enhance:false},image:init.image},
@@ -2247,9 +2359,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
           if(gen!==ai.gen) return;
           const v=$('aiVideo'); v.srcObject=st; v.hidden=false; const pr=v.play(); if(pr && pr.catch) pr.catch(()=>{});
           ai.remote=st;
-          if(ai.phase!=='live'){ ai.phase='live'; ai.start=Date.now(); buzz(30); }
-          if(!ai.rec) recStart(fxCurrent());
-      aiFit();
+          if(ai.phase!=='live'){ ai.phase='live'; ai.start=Date.now(); live.lastBody=Date.now(); beep(1320,0.18); buzz(30); }
+          if(!ai.rec) recStart(ai.sentO||fxCurrent());
+          aiFit();
           aiStatus();
         },
         onConnectionChange:st=>{ if(gen!==ai.gen) return; if(st==='reconnecting') aiStatus('Reconnexion…'); },
@@ -2262,15 +2374,22 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       rt.on('generationEnded',e=>{ if(e && typeof e.seconds==='number') ai.secs=Math.max(ai.secs,e.seconds); });
       rt.on('sessionEnded',e=>aiStop(aiEndText(e && e.reason)));
       rt.on('error',e=>{ if(gen===ai.gen) aiStatus('Decart : '+((e && (e.message||e.code))||'erreur')); });
-      ai.timer=setInterval(aiWatch,1000);
+      // Tenue changée pendant la connexion : on l'envoie tout de suite.
+      if(!ai.swT && outfitKey(fxCurrent())!==ai.sent) aiSwitch();
     }catch(e){ if(gen===ai.gen) aiStop(aiErrText(e),true); }
   }
   // Garde-fous toutes les secondes : durée maximale et présence d'une personne dans l'image.
   function aiWatch(){
     if(!ai.on) return;
+    if(ai.phase==='armed'){
+      // Détection du corps indisponible : on passe directement au retardateur.
+      if(live.failed) return aiCountdown();
+      if(Date.now()-ai.armAt>180000) return aiStop('Direct IA annulé : personne en place au bout de 3 min');
+      return aiStatus();
+    }
     if(ai.phase==='live'){
       if(aiLiveSecs()>=dcMax()) return aiStop('Durée maximale atteinte ('+dcMax()+' s)');
-      if(live.lastBody && Date.now()-live.lastBody>6000) return aiStop('Personne dans l\'image : direct arrêté pour économiser tes crédits');
+      if(live.lastBody && Date.now()-live.lastBody>3000) return aiStop('Personne dans l\'image : direct arrêté pour économiser tes crédits');
     }
     aiStatus();
   }
@@ -2278,11 +2397,14 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   async function aiSwitch(){
     if(!ai.on || !ai.rt) return;
     if(ai.switching){ ai.pendingSwitch=true; return; }
+    const o=fxCurrent(), k=outfitKey(o);
+    if(!o || k===ai.sent) return; // revenu sur la tenue déjà envoyée : rien à demander
     ai.switching=true;
     try{
-      const o=fxCurrent(); const g=await aiGarment(o);
+      const g=await aiGarment(o);
       if(ai.rt){
         await ai.rt.set({prompt:g.prompt,image:g.image,enhance:false});
+        ai.sent=k; ai.sentO=o;
         // Une vidéo par tenue : on clôt celle de la tenue précédente et on en commence une nouvelle.
         recStop(); recStart(o);
       }
@@ -2295,6 +2417,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function aiStop(msg,isError){
     if(!ai.on && !ai.rt) return;
     ai.gen++; clearInterval(ai.timer); ai.timer=null;
+    clearTimeout(ai.swT); ai.swT=null;
+    if(ai.cd){ clearInterval(ai.cd); ai.cd=null; count.textContent=''; count.classList.remove('tick'); }
     const recLen = ai.rec ? (Date.now()-ai.rec.start)/1000 : 0;
     recStop();
     const rt=ai.rt; ai.rt=null; try{ if(rt) rt.disconnect(); }catch(e){}
@@ -2303,7 +2427,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     // Compteur : le plus grand entre les secondes annoncées par Decart et le temps écoulé depuis l'image reçue.
     const secs=aiLiveSecs();
     if(secs>0) pref.set('decartUsedSec',dcUsedSec()+secs);
-    ai.on=false; ai.phase='off'; ai.start=0; ai.secs=0; ai.switching=false; ai.pendingSwitch=false;
+    ai.on=false; ai.phase='off'; ai.start=0; ai.secs=0; ai.switching=false; ai.pendingSwitch=false; ai.armSince=0; ai.sent=''; ai.sentO=null; ai.tok=null; ai.msg=''; ai.armMsg='';
     if(!ai.prevFx){ fx.on=false; fxClear(); }
     const v=$('aiVideo'); v.hidden=true; try{ v.srcObject=null; }catch(e){}
     ai.fix=false; v.classList.remove('fixed'); v.style.width=v.style.height=v.style.left=v.style.top='';
@@ -2311,10 +2435,17 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(msg) toast(msg+(secs>0?' · '+Math.round(secs)+' s, '+Math.round(secs*CREDITS_PER_S)+' crédits':'')+(recLen>=2?' · vidéo rangée dans les Looks':''));
     if(!settings.hidden) renderSettings();
   }
-  $('aiBtn').addEventListener('click',()=>{ if(ai.on) aiStop('Direct IA arrêté'); else aiStart(); });
+  $('aiBtn').addEventListener('click',()=>{
+    if(!ai.on) return aiStart();
+    if(ai.phase==='armed' || ai.phase==='countdown') return aiStop('Direct IA annulé, rien n\'a été facturé');
+    aiStop('Direct IA arrêté');
+  });
   // Image envoyée à Decart : la caméra recadrée (sans étirement) au format exact du modèle.
+  // Le sens (vertical ou paysage) suit le miroir à l'écran, pas la caméra : sur iPhone, la caméra peut filmer
+  // en paysage même téléphone vertical. L'image est alors recadrée au centre en 9:16.
   function aiInput(){
-    const portrait=video.videoHeight>=video.videoWidth, W=portrait?720:1280, H=portrait?1280:720;
+    const sw=stage.clientWidth||innerWidth, sh=stage.clientHeight||innerHeight;
+    const portrait=sh>=sw, W=portrait?720:1280, H=portrait?1280:720;
     const c=document.createElement('canvas'); c.width=W; c.height=H;
     const g=c.getContext('2d');
     let stopped=false, handle=0, usesRvfc=!!video.requestVideoFrameCallback;
@@ -4293,8 +4424,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ['Comment bien cadrer ?','Pose le téléphone debout, à hauteur de hanche, contre un meuble, et recule de 2 à 3 m. Le coach de cadrage te dit d\'avancer, de reculer ou de te décaler ; quand il affiche « Cadrage parfait », tu es en entier.'],
       ['Prendre une photo sans toucher le téléphone','Active « Main levée » sous le retardateur, puis lève une main au-dessus de ta tête pendant une seconde : le compte à rebours démarre (3 s si le retardateur est sur « Sans »).'],
       ['L\'effet filtre','Touche « Tenue en filtre » : les pièces de tes tenues se posent sur toi en direct, gratuitement, dans le téléphone. C\'est un effet de type filtre (pas de vrais plis ni d\'ombres) ; pour un rendu réaliste, prends la photo puis touche « Rendu IA ». Les pièces sont détourées automatiquement la première fois.'],
-      ['Changer de tenue d\'un geste','Avec l\'effet filtre, balaie l\'air d\'une main à hauteur de poitrine : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Les flèches en haut de l\'image marchent aussi. Reste en entier dans l\'image pour que tes mains soient vues.'],
-      ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. L\'app s\'arrête seule au bout de la durée choisie (réglages), si tu sors de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper. Chaque tenue essayée est enregistrée en vidéo (Looks → Vidéos, et sur la fiche du vêtement) : pas besoin de la refaire.'],
+      ['Changer de tenue d\'un geste','Avec l\'effet filtre ou le Direct IA, lève une main à hauteur de poitrine (au-dessus du coude) et balaie franchement l\'air, sur au moins un tiers de l\'image : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Une grande flèche confirme le geste. Le retour de la main est ignoré : marque un temps d\'arrêt ou baisse la main avant le geste suivant. Les flèches en haut de l\'image marchent aussi. Reste en entier dans l\'image pour que tes mains soient vues.'],
+      ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. Rien n\'est facturé au démarrage : après l\'appui sur « Direct IA », l\'app attend de te voir en entier une seconde, lance ton retardateur avec les bips, et ne se connecte qu\'ensuite. Pour arrêter sans toucher le téléphone, lève les deux mains au-dessus de la tête une seconde (une seule main levée prend une photo). L\'app s\'arrête aussi seule au bout de la durée choisie (réglages), 3 s après ta sortie de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper : la tenue est envoyée une demi-seconde après le dernier geste. L\'image est envoyée à la verticale quand le téléphone est droit ; recule jusqu\'à être vu de la tête aux pieds. Chaque tenue essayée est enregistrée en vidéo (Looks → Vidéos, et sur la fiche du vêtement) : pas besoin de la refaire.'],
       ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
       ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
       ['Les écritures de mon t-shirt sont à l\'envers','C\'est l\'effet miroir. Désactive-le dans « Plus d\'options » : l\'écran et la photo seront à l\'endroit.'],
