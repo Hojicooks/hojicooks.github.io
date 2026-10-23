@@ -428,6 +428,8 @@ button.stat{cursor:pointer}
 /* Effet filtre */
 .stage .fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1);z-index:1}
 .stage.noflip .fx{transform:none}
+.stage .ai-out{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transform:scaleX(-1);background:#000;max-width:100%}
+.stage.noflip .ai-out{transform:none}
 .fx-bar{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;max-width:calc(100% - 20px);padding:4px;border-radius:999px;background:var(--scrim);box-shadow:0 4px 18px var(--shade)}
 .fx-nav{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--raise);color:var(--text);font-size:24px;line-height:1;padding:0 0 3px;cursor:pointer}
 .fx-name{display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 6px;text-align:center}
@@ -479,6 +481,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     <div class="stage" id="stage">
       <video id="video" playsinline muted autoplay hidden></video>
       <canvas class="fx" id="fx" hidden aria-hidden="true"></canvas>
+      <video class="ai-out" id="aiVideo" playsinline muted autoplay hidden></video>
       <img class="still" id="still" alt="Dernière photo prise" hidden>
       <div class="grid3" id="grid3" hidden aria-hidden="true"></div>
       <div class="state" id="startState">
@@ -531,6 +534,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       </div>
       <div class="quick" id="quickRow" hidden>
         <button class="toggle" type="button" id="fxBtn" aria-pressed="false">Tenue en filtre</button>
+        <button class="toggle" type="button" id="aiBtn" aria-pressed="false">Direct IA</button>
         <button class="toggle" type="button" data-opt="coach" aria-pressed="false">Coach</button>
         <button class="toggle" type="button" data-opt="hand" aria-pressed="false">Main levée</button>
         <button class="toggle" type="button" data-opt="ring" aria-pressed="false">Lumière</button>
@@ -1026,6 +1030,32 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       </div>
       <p class="note">Crée un compte gratuit puis un jeton « Read » dans <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Settings → Access Tokens</a>. Il reste dans ce téléphone.</p>
     </div>
+    <div class="group" id="decartGroup">
+      <h3>Direct IA (Decart)</h3>
+      <p class="note">Essayage réaliste en direct par Decart (Lucy VTON 3.6), sur tes tenues. Coût : 2 crédits par seconde de direct, soit environ 8 min avec 1 000 crédits.</p>
+      <div class="field">
+        <label for="dcKey">Clé API Decart</label>
+        <input id="dcKey" type="password" autocomplete="off" spellcheck="false" placeholder="dct_…">
+      </div>
+      <div class="row">
+        <button class="btn small" id="dcSave" type="button">Enregistrer</button>
+        <button class="btn ghost small" id="dcClear" type="button">Effacer</button>
+      </div>
+      <div class="field">
+        <span class="label" id="dcMaxLabel">Durée maximale d'une session</span>
+        <div class="seg three" id="dcMax" role="radiogroup" aria-labelledby="dcMaxLabel">
+          <button type="button" role="radio" data-s="30">30 s</button>
+          <button type="button" role="radio" data-s="60">1 min</button>
+          <button type="button" role="radio" data-s="120">2 min</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="dcBudget">Crédits sur ton compte Decart</label>
+        <input id="dcBudget" type="text" inputmode="numeric" maxlength="7" autocomplete="off">
+      </div>
+      <p class="note" id="dcUsage"></p>
+      <p class="note">La clé reste dans ce téléphone : l'app s'en sert pour créer des accès de courte durée, limités à ce site et à la durée choisie. Crée-la ou change-la sur <a href="https://platform.decart.ai" target="_blank" rel="noopener">platform.decart.ai</a>, et ne la partage pas.</p>
+    </div>
     <div class="group">
       <h3>Moteurs</h3>
       <div class="field">
@@ -1059,7 +1089,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.3</p>
+      <p class="note">Cabine Miroir · version 6.4</p>
     </div>
   </div>
 </div>
@@ -1551,7 +1581,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     document.querySelectorAll('.tab').forEach(b=>{
       if(b.dataset.tab===name) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
     });
-    if(name!=='miroir'){ cancelCountdown(); exitImmersive(); }
+    if(name!=='miroir'){ cancelCountdown(); exitImmersive(); if(ai.on) aiStop('Direct IA arrêté (miroir quitté)'); }
     syncLive();
     if(name==='dressing') renderDressing();
     if(name==='cabine'){ $('cabBadge').hidden=true; renderCabine(); ensureWeather(false); }
@@ -1571,6 +1601,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     photo:"Le déclencheur ouvre l'appareil photo selfie du téléphone. Son propre retardateur fonctionne aussi."
   };
   function liveHint(){
+    if(ai.on) return 'Direct IA : balaie l\'air de la main pour changer de tenue. Arrêt automatique au bout de '+dcMax()+' s ou si tu sors de l\'image.';
     if(fx.on) return 'Effet filtre : balaie l\'air d\'une main, à hauteur de poitrine, vers la gauche ou la droite pour changer de tenue.'+(opt.hand?' Main levée pour la photo.':'');
     if(opt.hand) return 'Lève une main au-dessus de ta tête une seconde : le retardateur ('+(state.timer||3)+' s) démarre. Le déclencheur marche aussi.';
     return state.timer===0 ? "Photo immédiate. Appuie sur le déclencheur."
@@ -1586,8 +1617,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     $('quickRow').hidden=!isLive;
     document.querySelectorAll('#quickRow [data-opt]').forEach(b=>b.setAttribute('aria-pressed',String(!!opt[b.dataset.opt])));
     $('fullBtn').hidden=!isLive;
-    $('fxBtn').setAttribute('aria-pressed',String(fx.on));
-    fxCanvas.hidden=!(isLive && fx.on);
+    $('fxBtn').setAttribute('aria-pressed',String(fx.on && !ai.on));
+    $('aiBtn').setAttribute('aria-pressed',String(ai.on));
+    fxCanvas.hidden=!(isLive && fx.on && !ai.on);
     $('fxBar').hidden=!(isLive && fx.on);
     if(isLive && fx.on) renderFxBar();
     $('immTimer').textContent = state.timer ? state.timer+' s' : 'Sans';
@@ -1608,7 +1640,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     sideBtn.hidden = m==='off';
     sideBtn.textContent = m==='live' ? 'Couper' : 'Réessayer le direct';
     hint.textContent = m==='live' ? liveHint() : HINTS[m];
-    if(m!=='live') exitImmersive();
+    if(m!=='live'){ exitImmersive(); if(ai.on) aiStop('Direct IA arrêté'); }
     renderStageOpts(); syncLive();
   }
   async function startCamera(){
@@ -1636,7 +1668,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function releaseWake(){ try{ if(state.wake){ state.wake.release(); state.wake=null; } }catch(e){} }
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible'){ if(state.mode==='live') requestWake(); syncLive(); }
-    else { cancelCountdown(); stopLive(); flushUndo(); }
+    else { cancelCountdown(); if(ai.on) aiStop('Direct IA arrêté (app en arrière-plan)'); stopLive(); flushUndo(); }
   });
 
   /* ---------- Sons et vibrations ---------- */
@@ -1689,9 +1721,16 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(opt.mirror){ g.translate(c.width,0); g.scale(-1,1); }
     g.drawImage(video,sx,sy,sw,sh,0,0,c.width,c.height);
     // Avec l'effet filtre : une seconde image où la tenue est posée sur la photo.
-    const outfit = fx.on && fx.drawn ? fxCurrent() : null;
+    const aiv=$('aiVideo'), aiLive=ai.on && ai.phase==='live' && aiv.videoWidth>0;
+    const outfit = (aiLive || (fx.on && fx.drawn)) ? fxCurrent() : null;
     let comp=null;
-    if(outfit){
+    if(aiLive){
+      comp=document.createElement('canvas'); comp.width=c.width; comp.height=c.height;
+      const g2=comp.getContext('2d'), aw=aiv.videoWidth, ah=aiv.videoHeight;
+      const k=Math.max(comp.width/aw,comp.height/ah), sw2=comp.width/k, sh2=comp.height/k;
+      if(opt.mirror){ g2.translate(comp.width,0); g2.scale(-1,1); }
+      g2.drawImage(aiv,(aw-sw2)/2,(ah-sh2)/2,sw2,sh2,0,0,comp.width,comp.height);
+    }else if(outfit){
       comp=document.createElement('canvas'); comp.width=c.width; comp.height=c.height;
       const g2=comp.getContext('2d'); g2.drawImage(c,0,0);
       if(opt.mirror){ g2.translate(comp.width,0); g2.scale(-1,1); }
@@ -1702,7 +1741,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     c.toBlob(async b=>{
       if(!b) return;
       const pid=await addPhoto(b);
-      if(comp) comp.toBlob(cb=>{ if(cb) fxSaveLook(cb,b,pid,outfit); },'image/jpeg',0.92);
+      if(comp) comp.toBlob(cb=>{ if(cb) fxSaveLook(cb,b,pid,outfit,aiLive?'live':'filtre'); },'image/jpeg',0.92);
     },'image/jpeg',0.92);
   }
   function capture(){
@@ -1786,7 +1825,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement) exitImmersive(); });
 
   /* ---------- Coach de cadrage, main levée et effet filtre (détection du corps en direct) ---------- */
-  const live={on:false,gen:0,timer:null,raf:0,lm:null,raise:0,cooldown:0,cand:'',candSince:0,shown:'',last:0,err:0};
+  const live={on:false,gen:0,timer:null,raf:0,lm:null,raise:0,cooldown:0,cand:'',candSince:0,shown:'',last:0,err:0,lastBody:0};
   function wantLive(){ return state.mode==='live' && state.tab==='miroir' && (opt.coach||opt.hand||fx.on) && document.visibilityState!=='hidden'; }
   function syncLive(){ if(wantLive()) startLive(); else stopLive(); }
   async function startLive(){
@@ -1825,8 +1864,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     const r=visibleRect();
     const p=raw ? raw.map(q=>({x:(q.x-r.x)/r.w,y:(q.y-r.y)/r.h,visibility:q.visibility})) : null;
     const vis=i=>!!(p && p[i] && (p[i].visibility==null || p[i].visibility>0.5) && p[i].x>=0 && p[i].x<=1 && p[i].y>=0 && p[i].y<=1);
+    if(p) live.lastBody=Date.now();
     if(fx.on){
-      fxDraw(p);
+      if(ai.on) fxClear(); else fxDraw(p);
       const dir=readSwipe(p,now);
       if(dir) fxStep(dir,true);
     }
@@ -2055,6 +2095,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     // On prépare déjà la tenue suivante dans le même sens.
     outfitPieces(l[(fx.index+dir+l.length)%l.length]).forEach(x=>fxPrep(x.g));
     if(gesture) buzz(30);
+    if(ai.on) aiSwitch();
   }
   let fxStatusTimer=null;
   function fxStatus(t,ms){
@@ -2074,7 +2115,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       on=false;
     }
     fx.on=on;
-    if(!on) fxClear();
+    if(!on){ fxClear(); if(ai.on) aiStop('Direct IA arrêté'); }
     renderStageOpts(); syncLive();
   }
   // Depuis une fiche tenue : ouvre le miroir avec l'effet filtre sur cette tenue.
@@ -2088,15 +2129,164 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   $('fxPrev').addEventListener('click',()=>fxStep(-1,false));
   $('fxNext').addEventListener('click',()=>fxStep(1,false));
   // Photo avec l'effet filtre : la photo nette va dans « Tes photos », la version avec la tenue dans les Looks.
-  function fxSaveLook(blob,rawBlob,photoId,o){
-    const pieces=outfitPieces(o).map(x=>({slot:x.slot,garmentId:x.g.id,garmentName:x.g.name,engine:'filtre'}));
-    addLook({id:newId('l'),name:o.name,time:Date.now(),blob,baseBlob:rawBlob,baseId:photoId,pieces,kind:'filtre',fav:false,worn:[]});
+  function fxSaveLook(blob,rawBlob,photoId,o,kind){
+    kind=kind||'filtre';
+    const pieces=outfitPieces(o).map(x=>({slot:x.slot,garmentId:x.g.id,garmentName:x.g.name,engine:kind==='live'?'decart':'filtre'}));
+    addLook({id:newId('l'),name:o.name,time:Date.now(),blob,baseBlob:rawBlob,baseId:photoId,pieces,kind,fav:false,worn:[]});
     toast('Photo avec « '+o.name+' » ajoutée aux Looks',{label:'Rendu IA',undo(){
       state.cab.photoId=photoId;
       SLOTS.forEach(s=>{ state.cab.picks[s.id]=garmentById(o.pieces[s.id])?o.pieces[s.id]:null; state.cab.locks[s.id]=false; });
       setTab('cabine');
     }});
   }
+
+  /* ---------- Direct IA (Decart Lucy VTON 3.6) : rendu réaliste en direct, payant au temps ---------- */
+  // La caméra est envoyée à Decart, la vidéo revient habillée. Garde-fous : jeton limité à ce site et à une
+  // durée maximale, arrêt si personne n'est dans l'image, arrêt dès qu'on quitte le miroir.
+  const DECART_SDK=['https://cdn.jsdelivr.net/npm/@decartai/sdk@0.2.12/+esm','https://esm.sh/@decartai/sdk@0.2.12'];
+  const DECART_MODEL='lucy-vton-3.6', CREDITS_PER_S=2;
+  const ai={on:false,phase:'off',rt:null,track:null,gen:0,timer:null,start:0,secs:0,switching:false,pendingSwitch:false};
+  if(window.__cabineTest) window.__cabineAi=ai; // tests automatisés uniquement
+  let decartMod=null;
+  async function loadDecart(){
+    if(decartMod) return decartMod;
+    let err=null;
+    for(const u of DECART_SDK){ try{ decartMod=await import(u); return decartMod; }catch(e){ err=e; } }
+    throw err || new Error('module Decart introuvable');
+  }
+  const dcKey = () => pref.get('decartKey','');
+  const dcMax = () => { const v=pref.get('decartMax',60); return [30,60,120].includes(v)?v:60; };
+  const dcUsedSec = () => pref.get('decartUsedSec',0);
+  const dcBudget = () => { const v=Number(pref.get('decartBudget',1000)); return isFinite(v)&&v>=0?v:1000; };
+  function aiUsageText(){
+    const used=Math.round(dcUsedSec()*CREDITS_PER_S), left=Math.max(0,dcBudget()-used);
+    return 'Utilisé avec cette app : '+Math.round(dcUsedSec())+' s, soit '+used+' crédits. Restant estimé : '+left+' crédits, environ '+Math.floor(left/CREDITS_PER_S/60)+' min '+String(Math.round(left/CREDITS_PER_S%60)).padStart(2,'0')+' de direct.';
+  }
+  function aiLiveSecs(){ return ai.phase==='live' && ai.start ? Math.max(ai.secs,(Date.now()-ai.start)/1000) : ai.secs; }
+  function aiStatus(text){
+    if(!ai.on) return;
+    if(text){ fxStatus(text); return; }
+    if(ai.phase==='live'){ const s=aiLiveSecs(); fxStatus('Direct IA · '+Math.round(s)+' s / '+dcMax()+' s · '+Math.round(s*CREDITS_PER_S)+' crédits'); }
+  }
+  // Description envoyée avec l'image du vêtement (Decart conseille une phrase précise de 20 à 30 mots).
+  function aiPrompt(ps){
+    const d=g=>{ const c=color(g.color), k=cat(g.category); return ((c?c.en+' ':'')+k.en).trim(); };
+    if(ps.length===1){
+      const g=ps[0].g, part={top:'top',jacket:'jacket',trousers:'trousers',outfit:'outfit',shoes:'shoes',accessory:'accessory'}[cat(g.category).part]||'garment';
+      return 'Substitute the person\'s current '+part+' with the '+d(g)+' shown in the reference image, matching its exact color, pattern, fabric and fit. Keep the face, body, pose and background unchanged.';
+    }
+    return 'Substitute the person\'s current clothes with the outfit shown in the reference image: '+ps.map(x=>d(x.g)).join(', ')+'. Match colors, patterns and fit exactly. Keep the face, body, pose and background unchanged.';
+  }
+  // Une pièce : sa photo sur fond blanc. Plusieurs : une planche à plat de la tenue, sur fond blanc.
+  async function aiGarment(o){
+    const ps=outfitPieces(o);
+    const img = ps.length===1 ? await garmentInput(ps[0].g.cutBlob||ps[0].g.blob) : await flatLay(DISPLAY_ORDER.map(id=>ps.find(x=>x.slot===id)).filter(Boolean),{plain:true});
+    return {image:img,prompt:aiPrompt(ps)};
+  }
+  function aiErrText(e){
+    const m=errText(e);
+    if(/401|invalid or expired api key|unauthori/i.test(m)) return 'Clé Decart refusée : vérifie-la dans les réglages.';
+    if(/insufficient|credit|402/i.test(m)) return 'Plus assez de crédits Decart.';
+    if(/NotAllowed|Permission/i.test(m)) return 'Caméra refusée.';
+    if(/fetch|network|import|module/i.test(m)) return 'Impossible de joindre Decart : vérifie ta connexion.';
+    return 'Direct IA interrompu : '+(m||'erreur inconnue')+'.';
+  }
+  function aiEndText(reason){
+    return {insufficient_credits:'Plus assez de crédits Decart : direct arrêté.',session_limit:'Durée maximale atteinte : direct arrêté.',
+      moderation_violation:'Decart a coupé le direct (filtre de sécurité).',policy_violation:'Decart a refusé la session.'}[reason] || 'Direct IA terminé.';
+  }
+  async function aiStart(){
+    if(ai.on) return;
+    const key=dcKey();
+    if(!key){ openSettingsAt('dcKey'); toast('Colle d\'abord ta clé Decart dans les réglages'); return; }
+    if(!fxOutfits().length){ setFx(true); return; } // invite à créer une tenue
+    if(state.mode!=='live'){ await startCamera(); if(state.mode!=='live') return; }
+    const used=Math.round(dcUsedSec()*CREDITS_PER_S);
+    if(dcBudget()-used<CREDITS_PER_S*10){ toast('Crédits Decart presque épuisés d\'après le compteur (réglages pour le corriger)'); }
+    unlockAudio();
+    ai.prevFx=fx.on; ai.on=true; ai.phase='connecting'; ai.secs=0; ai.start=0; const gen=++ai.gen;
+    fx.on=true; renderStageOpts(); syncLive();
+    aiStatus('Connexion à Decart…');
+    try{
+      const sdk=await loadDecart(); if(gen!==ai.gen) return;
+      const model=sdk.models.realtime(DECART_MODEL);
+      const base=sdk.createDecartClient({apiKey:key,telemetry:false});
+      // Accès de courte durée : limité à ce site, à ce modèle et à la durée maximale choisie.
+      let client=base;
+      try{
+        const tok=await base.tokens.create({expiresIn:120,allowedModels:[DECART_MODEL],allowedOrigins:[location.origin],constraints:{realtime:{maxSessionDuration:dcMax()}}});
+        if(tok && tok.apiKey) client=sdk.createDecartClient({apiKey:tok.apiKey,telemetry:false});
+      }catch(e){ if(/401|403|invalid/i.test(errText(e))) throw e; }
+      if(gen!==ai.gen) return;
+      const src=state.stream && state.stream.getVideoTracks()[0];
+      if(!src) throw new Error('caméra coupée');
+      const track=src.clone(); ai.track=track;
+      try{ await track.applyConstraints({frameRate:{ideal:30,max:30}}); }catch(e){}
+      const o=fxCurrent(); outfitPieces(o).forEach(x=>fxPrep(x.g));
+      aiStatus('Préparation de « '+o.name+' »…');
+      const init=await aiGarment(o); if(gen!==ai.gen) return;
+      aiStatus('Connexion à Decart…');
+      const rt=await client.realtime.connect(new MediaStream([track]),{
+        model, mirror:false,
+        initialState:{prompt:{text:init.prompt,enhance:false},image:init.image},
+        onRemoteStream:st=>{
+          if(gen!==ai.gen) return;
+          const v=$('aiVideo'); v.srcObject=st; v.hidden=false; const pr=v.play(); if(pr && pr.catch) pr.catch(()=>{});
+          if(ai.phase!=='live'){ ai.phase='live'; ai.start=Date.now(); buzz(30); }
+          aiStatus();
+        },
+        onConnectionChange:st=>{ if(gen!==ai.gen) return; if(st==='reconnecting') aiStatus('Reconnexion…'); },
+        onQueuePosition:q=>{ if(gen===ai.gen) aiStatus('File d\'attente Decart : '+q.position+(q.queueSize?' sur '+q.queueSize:'')+'…'); },
+        onCapacityWait:w=>{ if(gen===ai.gen) aiStatus('Serveurs Decart pleins, nouvel essai dans '+Math.ceil(w.retryAfterMs/1000)+' s…'); }
+      });
+      if(gen!==ai.gen){ try{ rt.disconnect(); }catch(e){} return; }
+      ai.rt=rt;
+      rt.on('generationTick',e=>{ if(e && typeof e.seconds==='number') ai.secs=Math.max(ai.secs,e.seconds); aiStatus(); });
+      rt.on('generationEnded',e=>{ if(e && typeof e.seconds==='number') ai.secs=Math.max(ai.secs,e.seconds); });
+      rt.on('sessionEnded',e=>aiStop(aiEndText(e && e.reason)));
+      rt.on('error',e=>{ if(gen===ai.gen) aiStatus('Decart : '+((e && (e.message||e.code))||'erreur')); });
+      ai.timer=setInterval(aiWatch,1000);
+    }catch(e){ if(gen===ai.gen) aiStop(aiErrText(e),true); }
+  }
+  // Garde-fous toutes les secondes : durée maximale et présence d'une personne dans l'image.
+  function aiWatch(){
+    if(!ai.on) return;
+    if(ai.phase==='live'){
+      if(aiLiveSecs()>=dcMax()) return aiStop('Durée maximale atteinte ('+dcMax()+' s)');
+      if(live.lastBody && Date.now()-live.lastBody>6000) return aiStop('Personne dans l\'image : direct arrêté pour économiser tes crédits');
+    }
+    aiStatus();
+  }
+  // Tenue suivante pendant le direct : l'image et la description changent sans couper la connexion.
+  async function aiSwitch(){
+    if(!ai.on || !ai.rt) return;
+    if(ai.switching){ ai.pendingSwitch=true; return; }
+    ai.switching=true;
+    try{
+      const o=fxCurrent(); const g=await aiGarment(o);
+      if(ai.rt) await ai.rt.set({prompt:g.prompt,image:g.image,enhance:false});
+    }catch(e){ aiStatus('Changement de tenue impossible : '+errText(e)); }
+    finally{
+      ai.switching=false;
+      if(ai.pendingSwitch){ ai.pendingSwitch=false; aiSwitch(); }
+    }
+  }
+  function aiStop(msg,isError){
+    if(!ai.on && !ai.rt) return;
+    ai.gen++; clearInterval(ai.timer); ai.timer=null;
+    const rt=ai.rt; ai.rt=null; try{ if(rt) rt.disconnect(); }catch(e){}
+    if(ai.track){ try{ ai.track.stop(); }catch(e){} ai.track=null; }
+    // Compteur : le plus grand entre les secondes annoncées par Decart et le temps écoulé depuis l'image reçue.
+    const secs=aiLiveSecs();
+    if(secs>0) pref.set('decartUsedSec',dcUsedSec()+secs);
+    ai.on=false; ai.phase='off'; ai.start=0; ai.secs=0; ai.switching=false; ai.pendingSwitch=false;
+    if(!ai.prevFx){ fx.on=false; fxClear(); }
+    const v=$('aiVideo'); v.hidden=true; try{ v.srcObject=null; }catch(e){}
+    fxStatus(''); renderStageOpts(); syncLive();
+    if(msg) toast(msg+(secs>0?' · '+Math.round(secs)+' s, '+Math.round(secs*CREDITS_PER_S)+' crédits':''));
+    if(!settings.hidden) renderSettings();
+  }
+  $('aiBtn').addEventListener('click',()=>{ if(ai.on) aiStop('Direct IA arrêté'); else aiStart(); });
 
   async function addPhoto(blob){
     const rec={id:newId('p'),blob,time:Date.now()};
@@ -3117,11 +3307,12 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   $('inspire').addEventListener('click',inspire);
 
   /* ---------- Aperçu à plat : planche instantanée avec les photos des pièces ---------- */
-  async function flatLay(pieces){
-    const W=900, H=1200, P=44, G=26, CAP=40;
+  async function flatLay(pieces,o){
+    const plain=!!(o && o.plain);
+    const W=900, H=1200, P=44, G=26, CAP=plain?0:40;
     const c=document.createElement('canvas'); c.width=W; c.height=H;
     const x=c.getContext('2d');
-    const bg=x.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#efe9dd'); bg.addColorStop(1,'#e2dbcc');
+    const bg=x.createLinearGradient(0,0,0,H); bg.addColorStop(0,plain?'#ffffff':'#efe9dd'); bg.addColorStop(1,plain?'#ffffff':'#e2dbcc');
     x.fillStyle=bg; x.fillRect(0,0,W,H);
     const WEIGHT={haut:1,bas:1.2,chaussures:0.55};
     const total=pieces.reduce((a,p)=>a+WEIGHT[p.slot],0);
@@ -3146,8 +3337,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       x.restore();
       y+=rh+G;
     }
-    x.fillStyle='rgba(40,34,24,.55)'; x.font='600 22px "Instrument Sans", system-ui, sans-serif'; x.textAlign='right';
-    x.fillText('Cabine Miroir · '+new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'}),W-P,H-P+8);
+    if(!plain){ x.fillStyle='rgba(40,34,24,.55)'; x.font='600 22px "Instrument Sans", system-ui, sans-serif'; x.textAlign='right'; }
+    if(!plain) x.fillText('Cabine Miroir · '+new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'}),W-P,H-P+8);
     return canvasBlob(c,0.9);
   }
   let flatCur=null;
@@ -3624,10 +3815,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     saveLookRec(rec); askPersist();
     if(state.tab==='looks') renderLooks();
   }
-  const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['ia','IA'],['filtre','Filtre'],['flat','À plat']];
-  const KIND_LABEL={ia:'IA',flat:'À plat',filtre:'Filtre'};
+  const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['ia','IA'],['live','Direct IA'],['filtre','Filtre'],['flat','À plat']];
+  const KIND_LABEL={ia:'IA',flat:'À plat',filtre:'Filtre',live:'Direct IA'};
   function lookMatches(l,f){
-    return f==='all' || (f==='fav' && l.fav) || (f==='worn' && (l.worn||[]).length>0) || (f==='ia' && (l.kind||'ia')==='ia') || (f==='flat' && l.kind==='flat') || (f==='filtre' && l.kind==='filtre');
+    return f==='all' || (f==='fav' && l.fav) || (f==='worn' && (l.worn||[]).length>0) || (f==='ia' && (l.kind||'ia')==='ia') || (f==='flat' && l.kind==='flat') || (f==='filtre' && l.kind==='filtre') || (f==='live' && l.kind==='live');
   }
   $('compareMode').addEventListener('click',()=>{
     state.compareMode=!state.compareMode; state.compareSel=[]; renderLooks();
@@ -3720,7 +3911,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       $('viewerFav').textContent = it.fav ? '♥' : '♡';
       $('viewerFav').setAttribute('aria-label',it.fav?'Retirer des favoris':'Ajouter aux favoris');
     }
-    viewerAction.textContent = isLook ? (it.kind==='flat' ? 'Mettre dans la cabine' : it.kind==='filtre' ? 'Rendu IA dans la cabine' : 'Ouvrir dans la cabine') : 'Habiller';
+    viewerAction.textContent = isLook ? (it.kind==='flat' ? 'Mettre dans la cabine' : (it.kind==='filtre'||it.kind==='live') ? 'Rendu IA dans la cabine' : 'Ouvrir dans la cabine') : 'Habiller';
     viewerPrev.disabled=state.viewer.index<=0;
     viewerNext.disabled=state.viewer.index>=items.length-1;
   }
@@ -3819,6 +4010,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       });
     });
     if(document.activeElement!==$('hfToken')) $('hfToken').value=state.token||'';
+    if(document.activeElement!==$('dcKey')) $('dcKey').value=dcKey();
+    if(document.activeElement!==$('dcBudget')) $('dcBudget').value=String(dcBudget());
+    document.querySelectorAll('#dcMax button').forEach(b=>b.setAttribute('aria-checked',String(Number(b.dataset.s)===dcMax())));
+    $('dcUsage').textContent=aiUsageText();
     const info=$('storageInfo');
     info.textContent=state.photos.length+' photos, '+state.garments.length+' vêtements, '+state.outfits.length+' tenues, '+state.looks.length+' looks.';
     try{
@@ -3835,6 +4030,21 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     renderSettings(); renderCabine();
   });
   $('clearToken').addEventListener('click',()=>{ state.token=''; pref.set('hfToken',''); $('hfToken').value=''; toast('Jeton effacé'); renderSettings(); renderCabine(); });
+  // Ouvre les réglages directement sur un champ (ex. la clé Decart).
+  function openSettingsAt(id){ settings.hidden=false; renderSettings(); const el=$(id); if(el){ el.scrollIntoView({block:'center'}); el.focus(); } }
+  $('dcSave').addEventListener('click',()=>{
+    const v=$('dcKey').value.trim();
+    if(v && !/^[A-Za-z0-9_\-]{20,}$/.test(v)){ toast('Cette clé ne ressemble pas à une clé Decart (dct_…)'); return; }
+    pref.set('decartKey',v); toast(v?'Clé Decart enregistrée dans ce téléphone':'Clé Decart effacée'); renderSettings();
+  });
+  $('dcClear').addEventListener('click',()=>{ pref.set('decartKey',''); $('dcKey').value=''; toast('Clé Decart effacée'); renderSettings(); });
+  document.querySelectorAll('#dcMax button').forEach(b=>b.addEventListener('click',()=>{ pref.set('decartMax',Number(b.dataset.s)); renderSettings(); }));
+  $('dcBudget').addEventListener('change',()=>{
+    const v=parseInt($('dcBudget').value.replace(/\D/g,''),10);
+    // Nouveau solde saisi : le compteur repart de zéro pour suivre ce solde.
+    if(isFinite(v)){ pref.set('decartBudget',v); pref.set('decartUsedSec',0); }
+    renderSettings();
+  });
 
   /* ---------- Apparence ---------- */
   const ap={theme:pref.get('theme','dark'),accent:pref.get('accent','or'),big:!!pref.get('bigText',false)};
@@ -3938,6 +4148,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ['Prendre une photo sans toucher le téléphone','Active « Main levée » sous le retardateur, puis lève une main au-dessus de ta tête pendant une seconde : le compte à rebours démarre (3 s si le retardateur est sur « Sans »).'],
       ['L\'effet filtre','Touche « Tenue en filtre » : les pièces de tes tenues se posent sur toi en direct, gratuitement, dans le téléphone. C\'est un effet de type filtre (pas de vrais plis ni d\'ombres) ; pour un rendu réaliste, prends la photo puis touche « Rendu IA ». Les pièces sont détourées automatiquement la première fois.'],
       ['Changer de tenue d\'un geste','Avec l\'effet filtre, balaie l\'air d\'une main à hauteur de poitrine : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Les flèches en haut de l\'image marchent aussi. Reste en entier dans l\'image pour que tes mains soient vues.'],
+      ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. L\'app s\'arrête seule au bout de la durée choisie (réglages), si tu sors de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper.'],
       ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
       ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
       ['Les écritures de mon t-shirt sont à l\'envers','C\'est l\'effet miroir. Désactive-le dans « Plus d\'options » : l\'écran et la photo seront à l\'endroit.'],
