@@ -279,11 +279,26 @@ a{color:var(--tape-text)}
 .sheet-wrap{position:fixed;inset:0;z-index:25;background:var(--shade);display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:560px;max-height:92%;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;
   padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet>*{flex-shrink:0}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .sheet-head h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.07em}
 .sheet-pic{position:relative;width:min(220px,60%);aspect-ratio:4/5;margin:0 auto;border-radius:14px;overflow:hidden;background:var(--sheet)}
 .sheet-pic img{width:100%;height:100%;object-fit:cover;display:block}
-.sheet-pic button{position:absolute;right:8px;bottom:8px}
+.sheet-pic>button{position:absolute;right:8px;bottom:8px;background:var(--scrim);border-color:transparent}
+/* Photos devant / dos et fond */
+.sheet-pic.cut img,.gcard .pic.cut img,.slot-pic.cut img{object-fit:contain;padding:6%}
+.faces{width:min(220px,60%);margin:-4px auto 0}
+.no-back{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;text-align:center;background:var(--raise);color:var(--muted);font-size:13px}
+.no-back b{color:var(--text);font-size:14px;line-height:1.25}
+.busy{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;background:rgba(0,0,0,.5);color:#fff;font-size:13px;font-weight:600;text-align:center;line-height:1.3}
+.busy i{width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+.gcard .back{position:absolute;left:6px;bottom:6px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--scrim);color:var(--text);padding:2px 6px;border-radius:5px}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{display:flex;align-items:center;gap:14px;width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--ink);color:var(--text);text-align:left;cursor:pointer}
+.choice svg{flex:none;color:var(--tape-text)}
+.choice b{display:block;font-size:15px;font-weight:600}
+.choice span span{display:block;color:var(--muted);font-size:13px;margin-top:2px;font-weight:400}
+@keyframes spin{to{transform:rotate(360deg)}}
 .sheet .swatches{display:flex;gap:8px;flex-wrap:wrap}
 .sheet-actions{display:flex;flex-direction:column;gap:8px}
 .group{display:flex;flex-direction:column;gap:12px;padding:12px;border-radius:14px;border:1px solid var(--line)}
@@ -410,7 +425,7 @@ button.stat{cursor:pointer}
 @keyframes flash{from{opacity:.85}to{opacity:0}}
 @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 @media (prefers-reduced-motion:reduce){
-  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i{animation:none}
+  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i,.busy i{animation:none}
   .shutter i,.switch,.switch::after,.ob-dots i{transition:none}
 }
 </style>
@@ -520,7 +535,6 @@ button.stat{cursor:pointer}
     <div class="section-head">
       <h2>Dressing</h2>
       <div class="head-actions">
-        <button class="btn ghost small" id="importShop" type="button">Depuis une boutique</button>
         <button class="btn small" id="addGarment" type="button">+ Ajouter</button>
       </div>
     </div>
@@ -560,6 +574,9 @@ button.stat{cursor:pointer}
     <p class="note">Pour de bons essais : un vêtement par photo, posé à plat, de face, bien éclairé. La couleur est détectée toute seule ; touche un vêtement pour compléter sa fiche.</p>
     <input class="sr-only" type="file" id="closetInput" accept="image/*" multiple tabindex="-1" aria-hidden="true">
     <input class="sr-only" type="file" id="shopInput" accept="image/*" tabindex="-1" aria-hidden="true">
+    <input class="sr-only" type="file" id="camInput" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+    <input class="sr-only" type="file" id="backCam" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+    <input class="sr-only" type="file" id="backPick" accept="image/*" tabindex="-1" aria-hidden="true">
   </section>
 
   <!-- ================= CABINE ================= -->
@@ -573,6 +590,10 @@ button.stat{cursor:pointer}
       <h3 class="step-title"><b>1</b>Ta photo</h3>
       <div class="strip" id="photoStrip"></div>
       <p class="warn" id="frameWarn" role="status" hidden></p>
+      <div class="row" id="backRow" hidden>
+        <button class="toggle" id="backView" type="button" aria-pressed="false">Je suis de dos sur cette photo</button>
+      </div>
+      <p class="note" id="backNote" hidden></p>
       <p class="note">Pour le bas et les chaussures, il faut une photo en pied, de face, de la tête aux pieds, sur un fond simple.</p>
       <input class="sr-only" type="file" id="importPhoto" accept="image/*" tabindex="-1" aria-hidden="true">
     </div>
@@ -736,7 +757,39 @@ button.stat{cursor:pointer}
       <h2 id="sheetTitle">Vêtement</h2>
       <button class="toggle" id="sheetClose" type="button">Fermer</button>
     </div>
-    <div class="sheet-pic"><img id="sPic" alt=""><button class="btn ghost small" id="sCrop" type="button">Recadrer</button></div>
+    <div class="sheet-pic" id="sPicBox">
+      <img id="sPic" alt="">
+      <div class="no-back" id="sNoBack" hidden>
+        <b>Pas encore de photo du dos</b>
+        <button class="btn small" id="sBackCam" type="button">Photographier le dos</button>
+        <button class="toggle" id="sBackPick" type="button">Depuis la galerie</button>
+      </div>
+      <div class="busy" id="sBusy" role="status" hidden><i></i><span id="sBusyText">Détourage…</span></div>
+      <button class="btn ghost small" id="sCrop" type="button">Recadrer</button>
+    </div>
+    <div class="seg faces" id="sFaces" role="radiogroup" aria-label="Face du vêtement">
+      <button type="button" role="radio" data-face="front">Devant</button>
+      <button type="button" role="radio" data-face="back">Dos</button>
+    </div>
+    <aside class="install" id="sBackHint" hidden>
+      <div><b>Et le dos ?</b><p>Retourne le vêtement et prends-le en photo : la cabine pourra l'utiliser sur une photo de toi de dos.</p></div>
+      <div class="install-actions">
+        <button class="btn small" id="sHintCam" type="button">Photographier</button>
+        <button class="toggle" id="sHintSkip" type="button">Plus tard</button>
+      </div>
+    </aside>
+    <div class="field" id="sBgField">
+      <span class="label" id="sBgLabel">Fond de la photo</span>
+      <div class="seg three" id="sBg" role="radiogroup" aria-labelledby="sBgLabel">
+        <button type="button" role="radio" data-bg="orig">Original</button>
+        <button type="button" role="radio" data-bg="cut">Sans fond</button>
+        <button type="button" role="radio" data-bg="white">Fond blanc</button>
+      </div>
+    </div>
+    <div class="row" id="sBackActions" hidden>
+      <button class="toggle" id="sBackRetake" type="button">Reprendre le dos</button>
+      <button class="toggle" id="sBackDelete" type="button">Retirer le dos</button>
+    </div>
     <div class="field">
       <label for="sName">Nom</label>
       <input id="sName" type="text" maxlength="40" autocomplete="off" enterkeyhint="done">
@@ -800,6 +853,39 @@ button.stat{cursor:pointer}
       <button class="btn ghost small" id="pickerNone" type="button">Garder ce que je porte</button>
       <button class="btn ghost small" id="pickerAdd" type="button">+ Ajouter un vêtement</button>
     </div>
+  </div>
+</div>
+
+<!-- Ajouter un vêtement -->
+<div class="sheet-wrap" id="addSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+    <div class="sheet-head">
+      <h2 id="addTitle">Ajouter</h2>
+      <button class="toggle" id="addClose" type="button">Fermer</button>
+    </div>
+    <div class="choices">
+      <button class="choice" id="addCam" type="button">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <span><b>Prendre en photo</b><span>Le devant, puis le dos si tu veux. Pose le vêtement à plat, sur un fond uni.</span></span>
+      </button>
+      <button class="choice" id="addGallery" type="button">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5-8 8"/></svg>
+        <span><b>Depuis la galerie</b><span>Une ou plusieurs photos d'un coup.</span></span>
+      </button>
+      <button class="choice" id="addShop" type="button">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+        <span><b>Depuis une boutique</b><span>Une capture d'écran de la fiche produit.</span></span>
+      </button>
+    </div>
+    <div class="field">
+      <span class="label" id="autoBgLabel">Fond des nouvelles photos</span>
+      <div class="seg three" id="autoBgSeg" role="radiogroup" aria-labelledby="autoBgLabel">
+        <button type="button" role="radio" data-bg="orig">Garder</button>
+        <button type="button" role="radio" data-bg="cut">Sans fond</button>
+        <button type="button" role="radio" data-bg="white">Fond blanc</button>
+      </div>
+    </div>
+    <p class="note">Le fond est retiré dans le téléphone par une IA de détourage, sans quota et sans envoyer tes photos. La première fois, elle se télécharge (environ 45 Mo), puis elle reste en mémoire.</p>
   </div>
 </div>
 
@@ -903,7 +989,7 @@ button.stat{cursor:pointer}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6</p>
+      <p class="note">Cabine Miroir · version 6.1</p>
     </div>
   </div>
 </div>
@@ -1090,6 +1176,13 @@ button.stat{cursor:pointer}
     const c=document.createElement('canvas'); c.width=w; c.height=h;
     const g=c.getContext('2d',{willReadFrequently:true}); g.drawImage(img,0,0,w,h);
     const d=g.getImageData(0,0,w,h).data;
+    // Image détourée (fond transparent) : la zone du vêtement est celle des pixels opaques.
+    if(edgeAlpha(d,w,h)<128){
+      let ax0=w,ay0=h,ax1=-1,ay1=-1;
+      for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(d[(y*w+x)*4+3]>64){ if(x<ax0)ax0=x; if(x>ax1)ax1=x; if(y<ay0)ay0=y; if(y>ay1)ay1=y; }
+      if(ax1<0) return {x:0,y:0,w:iw,h:ih};
+      return {x:ax0/s,y:ay0/s,w:Math.min(iw,(ax1-ax0+1)/s),h:Math.min(ih,(ay1-ay0+1)/s)};
+    }
     // Couleurs de fond : les teintes dominantes des bords (drap, fond de capture, barres d'interface…).
     const bins=new Map(); let bn=0;
     for(let y=0;y<h;y++) for(let x=0;x<w;x++){
@@ -1150,6 +1243,133 @@ button.stat{cursor:pointer}
     g.drawImage(img,b.x,b.y,b.w,b.h,(W-dw)/2,(H-dh)/2,dw,dh);
     return canvasBlob(c,0.93);
   }
+  // Opacité moyenne des bords : faible pour une image détourée.
+  function edgeAlpha(d,w,h){
+    let a=0,n=0;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(x<2||y<2||x>=w-2||y>=h-2){ a+=d[(y*w+x)*4+3]; n++; }
+    return n ? a/n : 255;
+  }
+  /* ---------- Fond des photos de vêtements : détourage dans le téléphone ---------- */
+  // IA de détourage RMBG-1.4 (Bria) via Transformers.js : téléchargée une fois (≈ 45 Mo), puis en cache.
+  // Si elle ne peut pas se charger (hors ligne, vieux téléphone), un détourage simple par couleur de fond prend le relais.
+  const TF_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
+  const RMBG='briaai/RMBG-1.4';
+  let rmbgP=null, rmbgStatus=null;
+  function getRmbg(){
+    if(!rmbgP){
+      rmbgP=(async()=>{
+        const T=await import(TF_URL);
+        T.env.allowLocalModels=false;
+        const files={};
+        const progress_callback=p=>{
+          if(!p || p.status!=='progress' || !p.file) return;
+          files[p.file]=[p.loaded||0,p.total||0];
+          const v=Object.values(files), l=v.reduce((a,x)=>a+x[0],0), t=v.reduce((a,x)=>a+x[1],0);
+          if(t>2e6 && rmbgStatus) rmbgStatus('Téléchargement du détoureur, une seule fois : '+Math.min(100,Math.round(100*l/t))+' %');
+        };
+        const model=await T.AutoModel.from_pretrained(RMBG,{config:{model_type:'custom'},progress_callback});
+        const processor=await T.AutoProcessor.from_pretrained(RMBG,{config:{do_normalize:true,do_pad:false,do_rescale:true,do_resize:true,
+          image_mean:[0.5,0.5,0.5],feature_extractor_type:'ImageFeatureExtractor',image_std:[1,1,1],resample:2,rescale_factor:0.00392156862745098,size:{width:1024,height:1024}}});
+        return {T,model,processor};
+      })();
+      rmbgP.catch(()=>{ rmbgP=null; });
+    }
+    return rmbgP;
+  }
+  function maskCanvas(data,w,h,ch){
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const g=c.getContext('2d'), id=g.createImageData(w,h);
+    for(let i=0,j=0;i<w*h;i++,j+=ch) id.data[i*4+3]=data[j];
+    g.putImageData(id,0,0); return c;
+  }
+  async function aiMask(blob){
+    const {T,model,processor}=await getRmbg();
+    if(rmbgStatus) rmbgStatus('Détourage en cours…');
+    const image=await T.RawImage.fromBlob(blob);
+    const {pixel_values}=await processor(image);
+    const {output}=await model({input:pixel_values});
+    const m=await T.RawImage.fromTensor(output[0].mul(255).to('uint8'));
+    return maskCanvas(m.data,m.width,m.height,m.channels||1);
+  }
+  // Détourage simple : on part des bords et on avance tant que la couleur reste proche du fond.
+  function classicMask(img){
+    const N=384, iw=img.naturalWidth, ih=img.naturalHeight, s=N/Math.max(iw,ih);
+    const w=Math.max(1,Math.round(iw*s)), h=Math.max(1,Math.round(ih*s));
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const g=c.getContext('2d',{willReadFrequently:true}); g.fillStyle='#ffffff'; g.fillRect(0,0,w,h); g.drawImage(img,0,0,w,h);
+    const d=g.getImageData(0,0,w,h).data;
+    const bins=new Map(); let bn=0;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(x<3||y<3||x>=w-3||y>=h-3){
+      const i=(y*w+x)*4, k=(d[i]>>4)+'-'+(d[i+1]>>4)+'-'+(d[i+2]>>4);
+      const e=bins.get(k)||{n:0,r:0,g:0,b:0}; e.n++; e.r+=d[i]; e.g+=d[i+1]; e.b+=d[i+2]; bins.set(k,e); bn++;
+    }
+    const bgs=[]; let covered=0;
+    for(const e of [...bins.values()].sort((a,b)=>b.n-a.n)){
+      if(covered/bn>0.9 || bgs.length>=5 || e.n/bn<0.02) break;
+      bgs.push([e.r/e.n,e.g/e.n,e.b/e.n]); covered+=e.n;
+    }
+    const bgDist=i=>{ let m=1e9; for(const c of bgs){ const v=Math.hypot(d[i]-c[0],d[i+1]-c[1],d[i+2]-c[2]); if(v<m) m=v; } return m; };
+    const bg=new Uint8Array(w*h), q=new Int32Array(w*h); let qh=0,qt=0;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(x===0||y===0||x===w-1||y===h-1){ const k=y*w+x; if(bgDist(k*4)<70){ bg[k]=1; q[qt++]=k; } }
+    while(qh<qt){
+      const k=q[qh++], x=k%w, y=(k/w)|0, i=k*4;
+      const nb=[x>0?k-1:-1, x<w-1?k+1:-1, y>0?k-w:-1, y<h-1?k+w:-1];
+      for(const n of nb){
+        if(n<0 || bg[n]) continue;
+        const j=n*4, step=Math.hypot(d[j]-d[i],d[j+1]-d[i+1],d[j+2]-d[i+2]);
+        if(step<24 && bgDist(j)<95){ bg[n]=1; q[qt++]=n; }
+      }
+    }
+    const a=new Uint8Array(w*h);
+    // Lissage : un pixel suit la majorité de ses voisins (retire les petits trous et les poussières).
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      let f=0,t=0;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ const xx=x+dx, yy=y+dy; if(xx<0||yy<0||xx>=w||yy>=h) continue; t++; if(!bg[yy*w+xx]) f++; }
+      a[y*w+x] = f*2>t ? 255 : 0;
+    }
+    return maskCanvas(a,w,h,1);
+  }
+  function maskBox(mc){
+    const w=mc.width, h=mc.height, d=mc.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;
+    let x0=w,y0=h,x1=-1,y1=-1,n=0;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(d[(y*w+x)*4+3]>100){ n++; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    if(x1<0 || n/(w*h)<0.02 || n/(w*h)>0.985) return null;
+    return {x0,y0,x1,y1};
+  }
+  function canvasBlobAlpha(c){
+    return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('Conversion impossible')),'image/webp',0.92));
+  }
+  // Retourne le vêtement seul sur fond transparent, recadré au plus près.
+  async function cutout(blob){
+    const img=await loadImage(blob), iw=img.naturalWidth, ih=img.naturalHeight;
+    let mc=null, how='ia';
+    try{ mc=await aiMask(blob); }catch(e){ how='simple'; }
+    let box=mc && maskBox(mc);
+    if(!box){ how=how==='ia'&&mc?'simple':how; mc=classicMask(img); box=maskBox(mc); }
+    if(!box) throw new Error('vêtement introuvable sur la photo');
+    const sx=iw/mc.width, sy=ih/mc.height, m=Math.round(0.025*Math.max(iw,ih));
+    const bx=Math.max(0,Math.floor(box.x0*sx)-m), by=Math.max(0,Math.floor(box.y0*sy)-m);
+    const bw=Math.min(iw,Math.ceil((box.x1+1)*sx)+m)-bx, bh=Math.min(ih,Math.ceil((box.y1+1)*sy)+m)-by;
+    const c=document.createElement('canvas'); c.width=bw; c.height=bh;
+    const g=c.getContext('2d');
+    g.drawImage(img,-bx,-by);
+    g.globalCompositeOperation='destination-in';
+    g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
+    g.drawImage(mc,0,0,mc.width,mc.height,-bx,-by,iw,ih);
+    return {blob:await canvasBlobAlpha(c),how};
+  }
+  // Pose un vêtement détouré au centre d'un fond blanc, au format des vignettes (4:5).
+  async function onWhite(blob){
+    const img=await loadImage(blob), w0=img.naturalWidth, h0=img.naturalHeight;
+    let W=w0/0.84, H=h0/0.84;
+    if(W/H>0.8) H=W/0.8; else W=H*0.8;
+    const k=Math.min(1,1280/H); W=Math.round(W*k); H=Math.round(H*k);
+    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const g=c.getContext('2d'); g.fillStyle='#ffffff'; g.fillRect(0,0,W,H);
+    const dw=w0*k, dh=h0*k; g.drawImage(img,(W-dw)/2,(H-dh)/2,dw,dh);
+    return canvasBlob(c,0.92);
+  }
+
   function nearestColor(r,g,b){
     let best=null, bd=Infinity;
     for(const c of COLORS){
@@ -1165,6 +1385,13 @@ button.stat{cursor:pointer}
       const c=document.createElement('canvas'); c.width=N; c.height=N;
       const g=c.getContext('2d',{willReadFrequently:true}); g.drawImage(img,0,0,N,N);
       const d=g.getImageData(0,0,N,N).data;
+      // Image détourée : on ne compte que les pixels du vêtement (opaques).
+      if(edgeAlpha(d,N,N)<128){
+        const counts={};
+        for(let i=0;i<d.length;i+=4) if(d[i+3]>200){ const k=nearestColor(d[i],d[i+1],d[i+2]); counts[k]=(counts[k]||0)+1; }
+        const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+        return top ? top[0] : null;
+      }
       let br=0,bgc=0,bb=0,bn=0;
       for(let y=0;y<N;y++) for(let x=0;x<N;x++){ if(x<3||y<3||x>=N-3||y>=N-3){ const i=(y*N+x)*4; br+=d[i]; bgc+=d[i+1]; bb+=d[i+2]; bn++; } }
       br/=bn; bgc/=bn; bb/=bn;
@@ -1570,11 +1797,112 @@ button.stat{cursor:pointer}
   /* ================= DRESSING ================= */
   const closetInput=$('closetInput'), shopInput=$('shopInput');
   let afterAdd=null; // action après ajout (ex. remplir une case de la cabine)
-  $('addGarment').addEventListener('click',()=>{ afterAdd=null; closetInput.click(); });
+  $('addGarment').addEventListener('click',()=>{ afterAdd=null; openAddSheet(); });
+  const autoBgMode = () => pref.get('autoBg','orig');
+  function renderAutoBg(){ document.querySelectorAll('#autoBgSeg button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.bg===autoBgMode()))); }
+  function openAddSheet(){ renderAutoBg(); $('addSheet').hidden=false; $('addCam').focus(); }
+  document.querySelectorAll('#autoBgSeg button').forEach(b=>b.addEventListener('click',()=>{ pref.set('autoBg',b.dataset.bg); renderAutoBg(); }));
+  $('addClose').addEventListener('click',()=>{ $('addSheet').hidden=true; });
+  $('addSheet').addEventListener('click',e=>{ if(e.target===$('addSheet')) $('addSheet').hidden=true; });
+  $('addCam').addEventListener('click',()=>{ $('addSheet').hidden=true; $('camInput').click(); });
+  $('addGallery').addEventListener('click',()=>{ $('addSheet').hidden=true; closetInput.click(); });
+  $('addShop').addEventListener('click',()=>{ $('addSheet').hidden=true; $('shopSheet').hidden=false; $('shopClose').focus(); });
   function blankGarment(blob,n){
     return {id:newId('g'),name:'Vêtement '+n,category:'haut',color:null,fav:false,blob,created:Date.now(),
-      brand:'',size:'',material:'',price:'',seasons:[],styles:[],link:'',notes:'',url:URL.createObjectURL(blob)};
+      brand:'',size:'',material:'',price:'',seasons:[],styles:[],link:'',notes:'',url:URL.createObjectURL(blob),
+      bg:'orig',origBlob:null,cutBlob:null,backBlob:null,backUrl:null,backOrig:null,backCut:null,backBg:'orig',colorManual:false};
   }
+
+  /* ---------- Faces (devant / dos) et fond de chaque photo ---------- */
+  // Pour chaque face : la photo d'origine, le fond choisi (original, sans fond, fond blanc) et l'image qui en découle.
+  const FACE={
+    front:{blob:'blob',url:'url',orig:'origBlob',cut:'cutBlob',bg:'bg'},
+    back:{blob:'backBlob',url:'backUrl',orig:'backOrig',cut:'backCut',bg:'backBg'}
+  };
+  const faceOrig = (g,f) => g[FACE[f].orig] || g[FACE[f].blob] || null;
+  const faceBg = (g,f) => g[FACE[f].bg] || 'orig';
+  function setFaceBlob(g,f,blob){
+    const k=FACE[f], old=g[k.url];
+    g[k.blob]=blob||null; g[k.url]=blob?URL.createObjectURL(blob):null;
+    if(old) setTimeout(()=>{ try{ URL.revokeObjectURL(old); }catch(e){} },4000);
+  }
+  async function applyBg(g,f,mode){
+    const k=FACE[f], orig=faceOrig(g,f); if(!orig) return '';
+    let how='';
+    if(mode==='orig'){ setFaceBlob(g,f,orig); g[k.orig]=null; }
+    else{
+      if(!g[k.cut]){ const r=await cutout(orig); g[k.cut]=r.blob; how=r.how; }
+      g[k.orig]=orig;
+      setFaceBlob(g,f,mode==='cut'?g[k.cut]:await onWhite(g[k.cut]));
+    }
+    g[k.bg]=mode;
+    if(f==='front'){
+      // Sur l'image détourée, couleur et forme se lisent mieux : on les redevine si tu ne les as pas choisies.
+      if(!g.colorManual) g.color=await detectColor(mode==='orig'?g.blob:g[k.cut]);
+      if(g._auto && !g._catTouched && mode!=='orig'){
+        const c=await guessCategory(g[k.cut]);
+        if(c!==g.category){
+          const rename=g.name===g._autoName;
+          g.category=c;
+          if(rename){ g.name=cat(c).label+' '+state.garments.filter(x=>x.category===c).length; g._autoName=g.name; }
+        }
+      }
+    }
+    saveGarment(g);
+    return how;
+  }
+  // Remplace la photo d'origine d'une face (recadrage, nouvelle prise) en gardant le fond choisi.
+  async function setFaceOrig(g,f,blob){
+    const k=FACE[f], mode=faceBg(g,f);
+    g[k.cut]=null; g[k.orig]=null; g[k.bg]='orig'; setFaceBlob(g,f,blob);
+    if(f==='front' && !g.colorManual) g.color=await detectColor(blob);
+    saveGarment(g);
+    if(mode!=='orig') queueBg(g,f,mode);
+  }
+  // Les détourages passent l'un après l'autre (un seul chargement de l'IA à la fois).
+  let bgChain=Promise.resolve();
+  function queueBg(g,f,mode){
+    g._busy=f;
+    if(state.editing===g.id){ $('sBusyText').textContent='Détourage…'; renderSheet(); }
+    bgChain=bgChain.then(()=>bgJob(g,f,mode));
+    return bgChain;
+  }
+  async function bgJob(g,f,mode){
+    g._busy=f;
+    rmbgStatus=t=>{ if(state.editing===g.id) $('sBusyText').textContent=t; };
+    try{
+      const how=await applyBg(g,f,mode);
+      if(how==='simple') toast('Détourage simple utilisé : l\'IA de détourage n\'a pas pu se charger');
+    }catch(e){ toast('Fond non retiré : '+errText(e)); }
+    finally{
+      g._busy=null; rmbgStatus=null;
+      if(state.editing===g.id) renderSheet();
+      renderDressing(); if(state.tab==='cabine') renderCabine();
+    }
+  }
+  function autoClean(g,f){ const m=autoBgMode(); if(m!=='orig') queueBg(g,f,m); }
+  async function setBack(g,file){
+    const blob=await shrink(file,1280);
+    g.backCut=null; g.backOrig=null; g.backBg='orig'; setFaceBlob(g,'back',blob);
+    g._askBack=false; saveGarment(g);
+    if(state.editing===g.id){ sheetFace='back'; renderSheet(); }
+    renderDressing();
+    // Le dos prend le même fond que le devant (ou le réglage d'ajout si le devant est d'origine).
+    const mode = faceBg(g,'front')!=='orig' ? faceBg(g,'front') : autoBgMode();
+    if(mode!=='orig') queueBg(g,'back',mode);
+  }
+  ['backCam','backPick'].forEach(id=>$(id).addEventListener('change',()=>{
+    const f=$(id).files && $(id).files[0]; $(id).value='';
+    const g=editing(); if(f && g) setBack(g,f);
+  }));
+  $('camInput').addEventListener('change',async()=>{
+    const f=$('camInput').files && $('camInput').files[0]; $('camInput').value='';
+    if(!f) return;
+    const g=await createGarment(f); g._askBack=true;
+    if(afterAdd){ afterAdd(g); afterAdd=null; }
+    renderDressing(); openSheet(g.id);
+    autoClean(g,'front');
+  });
   // Catégorie devinée d'après la forme du vêtement : large = chaussures, très haut = bas, sinon haut.
   async function guessCategory(blob){
     try{ const b=contentBox(await loadImage(blob)), r=b.w/b.h; return r>1.3 ? 'chaussures' : (r<1/1.6 ? 'bas' : 'haut'); }
@@ -1586,21 +1914,21 @@ button.stat{cursor:pointer}
     g.color=await detectColor(blob);
     g.category=await guessCategory(blob);
     g.name=cat(g.category).label+' '+(state.garments.filter(x=>x.category===g.category).length+1);
-    g._auto=true;
+    g._auto=true; g._autoName=g.name;
     state.garments.push(g); saveGarment(g); askPersist();
     return g;
   }
   closetInput.addEventListener('change',async()=>{
     const files=Array.from(closetInput.files||[]); closetInput.value='';
     if(!files.length) return;
-    let last=null;
-    for(const f of files) last=await createGarment(f);
+    let last=null; const made=[];
+    for(const f of files){ last=await createGarment(f); made.push(last); }
     if(afterAdd){ afterAdd(last); afterAdd=null; }
     renderDressing();
     if(files.length===1) openSheet(last.id);
     else toast(files.length+' vêtements ajoutés. Touche-les pour compléter leur fiche.');
+    made.forEach(g=>autoClean(g,'front'));
   });
-  $('importShop').addEventListener('click',()=>{ $('shopSheet').hidden=false; $('shopClose').focus(); });
   $('shopClose').addEventListener('click',()=>{ $('shopSheet').hidden=true; });
   $('shopSheet').addEventListener('click',e=>{ if(e.target===$('shopSheet')) $('shopSheet').hidden=true; });
   $('shopPick').addEventListener('click',()=>shopInput.click());
@@ -1613,8 +1941,8 @@ button.stat{cursor:pointer}
     renderDressing(); openSheet(g.id); openCrop(g.id,true);
   });
   function saveGarment(g){
-    dbPut('garments',{id:g.id,name:g.name,category:g.category,color:g.color,fav:!!g.fav,blob:g.blob,created:g.created,
-      brand:g.brand||'',size:g.size||'',material:g.material||'',price:g.price||'',seasons:g.seasons||[],styles:g.styles||[],link:g.link||'',notes:g.notes||''});
+    dbPut('garments',Object.assign(garmentRecord(g),{blob:g.blob,origBlob:g.origBlob||null,cutBlob:g.cutBlob||null,
+      backBlob:g.backBlob||null,backOrig:g.backOrig||null,backCut:g.backCut||null}));
   }
 
   const qInput=$('q'), qClear=$('qClear');
@@ -1735,9 +2063,10 @@ button.stat{cursor:pointer}
   function garmentCard(g,onClick,pressed,extra){
     const b=document.createElement('button'); b.type='button'; b.className='gcard';
     if(pressed!==undefined) b.setAttribute('aria-pressed',String(pressed));
-    const pic=document.createElement('span'); pic.className='pic';
+    const pic=document.createElement('span'); pic.className='pic'+(faceBg(g,'front')==='cut'?' cut':'');
     const img=document.createElement('img'); img.src=g.url; img.alt=''; img.loading='lazy'; pic.append(img);
     if(g.fav){ const f=document.createElement('span'); f.className='fav'; f.textContent='♥'; f.setAttribute('aria-hidden','true'); pic.append(f); }
+    if(g.backBlob){ const bk=document.createElement('span'); bk.className='back'; bk.textContent='+ dos'; bk.setAttribute('aria-hidden','true'); pic.append(bk); }
     const n=document.createElement('span'); n.className='name'; n.textContent=g.name;
     const m=document.createElement('span'); m.className='meta';
     const c=color(g.color);
@@ -1780,16 +2109,16 @@ button.stat{cursor:pointer}
   /* ---------- Fiche vêtement ---------- */
   const sheet=$('sheet'), sName=$('sName'), sFav=$('sFav'), sDelete=$('sDelete');
   const TEXT_FIELDS={sBrand:'brand',sSize:'size',sMaterial:'material',sPrice:'price',sLink:'link',sNotes:'notes'};
-  let sheetReturn=null;
+  let sheetReturn=null, sheetFace='front';
   function editing(){ return garmentById(state.editing); }
   function openSheet(id){
     sheetReturn=document.activeElement;
-    state.editing=id; state.confirmGarmentDelete=false;
+    state.editing=id; state.confirmGarmentDelete=false; sheetFace='front';
     sheet.hidden=false; renderSheet(true);
     $('sheetClose').focus();
   }
   function closeSheet(){
-    const g=editing(); if(g){ g._auto=false; saveGarment(g); }
+    const g=editing(); if(g){ g._auto=false; g._askBack=false; saveGarment(g); }
     sheet.hidden=true; state.editing=null;
     renderDressing(); if(state.tab==='cabine') renderCabine();
     if(sheetReturn && document.contains(sheetReturn)) sheetReturn.focus();
@@ -1804,14 +2133,30 @@ button.stat{cursor:pointer}
   }
   function renderSheet(fill){
     const g=editing(); if(!g){ sheet.hidden=true; return; }
-    $('sPic').src=g.url;
+    // Photo : devant ou dos, avec son fond
+    const f=sheetFace, hasBack=!!g.backBlob, noBack=f==='back' && !hasBack, busy=g._busy===f;
+    const url = f==='back' ? g.backUrl : g.url;
+    if(url && $('sPic').getAttribute('src')!==url) $('sPic').src=url;
+    $('sPic').hidden=noBack;
+    $('sPicBox').classList.toggle('cut',!noBack && faceBg(g,f)==='cut');
+    $('sNoBack').hidden=!noBack;
+    $('sBusy').hidden=!busy;
+    $('sCrop').hidden=noBack || busy;
+    document.querySelectorAll('#sFaces button').forEach(b=>{
+      b.setAttribute('aria-checked',String(b.dataset.face===f));
+      if(b.dataset.face==='back') b.textContent = hasBack ? 'Dos' : 'Dos +';
+    });
+    $('sBgField').hidden=noBack;
+    document.querySelectorAll('#sBg button').forEach(b=>{ b.setAttribute('aria-checked',String(faceBg(g,f)===b.dataset.bg)); b.disabled=!!g._busy; });
+    $('sBackActions').hidden=!(f==='back' && hasBack);
+    $('sBackHint').hidden=!(g._askBack && !hasBack && f==='front');
     if(fill || document.activeElement!==sName) sName.value=g.name;
     Object.entries(TEXT_FIELDS).forEach(([id,k])=>{ if(fill || document.activeElement!==$(id)) $(id).value=g[k]||''; });
     const cats=$('sCats'); cats.textContent='';
     CATS.forEach(c=>{
       const b=document.createElement('button'); b.type='button'; b.className='fchip'; b.setAttribute('role','radio');
       b.setAttribute('aria-checked',String(g.category===c.id)); b.textContent=c.label;
-      b.addEventListener('click',()=>{ g.category=c.id; saveGarment(g); renderSheet(); });
+      b.addEventListener('click',()=>{ g.category=c.id; g._catTouched=true; saveGarment(g); renderSheet(); });
       cats.append(b);
     });
     const cols=$('sColors'); cols.textContent='';
@@ -1819,7 +2164,7 @@ button.stat{cursor:pointer}
       const b=document.createElement('button'); b.type='button'; b.className='swatch'; b.setAttribute('role','radio');
       b.style.background=rgbCss(c); b.title=c.label; b.setAttribute('aria-label',c.label);
       b.setAttribute('aria-checked',String(g.color===c.id));
-      b.addEventListener('click',()=>{ g.color=c.id; saveGarment(g); renderSheet(); });
+      b.addEventListener('click',()=>{ g.color=c.id; g.colorManual=true; saveGarment(g); renderSheet(); });
       cols.append(b);
     });
     multiChips($('sSeasons'),SEASONS,g.seasons||[],v=>{ g.seasons=toggleIn(g.seasons||[],v); saveGarment(g); renderSheet(); });
@@ -1859,7 +2204,27 @@ button.stat{cursor:pointer}
     }catch(e){ toast('Collage refusé : appuie longuement dans le champ pour coller'); $('sLink').focus(); }
   });
   sFav.addEventListener('click',()=>{ const g=editing(); if(!g) return; g.fav=!g.fav; saveGarment(g); renderSheet(); });
-  $('sCrop').addEventListener('click',()=>{ if(state.editing) openCrop(state.editing,false); });
+  $('sCrop').addEventListener('click',()=>{ if(state.editing) openCrop(state.editing,false,sheetFace); });
+  document.querySelectorAll('#sFaces button').forEach(b=>b.addEventListener('click',()=>{ sheetFace=b.dataset.face; renderSheet(); }));
+  document.querySelectorAll('#sBg button').forEach(b=>b.addEventListener('click',()=>{
+    const g=editing(); if(!g || g._busy || faceBg(g,sheetFace)===b.dataset.bg) return;
+    queueBg(g,sheetFace,b.dataset.bg);
+  }));
+  $('sBackCam').addEventListener('click',()=>$('backCam').click());
+  $('sHintCam').addEventListener('click',()=>$('backCam').click());
+  $('sBackRetake').addEventListener('click',()=>$('backCam').click());
+  $('sBackPick').addEventListener('click',()=>$('backPick').click());
+  $('sHintSkip').addEventListener('click',()=>{ const g=editing(); if(g){ g._askBack=false; renderSheet(); } });
+  $('sBackDelete').addEventListener('click',()=>{
+    const g=editing(); if(!g || !g.backBlob) return;
+    const saved={backBlob:g.backBlob,backOrig:g.backOrig,backCut:g.backCut,backBg:g.backBg};
+    setFaceBlob(g,'back',null); g.backOrig=null; g.backCut=null; g.backBg='orig';
+    saveGarment(g); sheetFace='front'; renderSheet(); renderDressing();
+    toast('Photo du dos retirée',{
+      commit(){},
+      undo(){ Object.assign(g,{backOrig:saved.backOrig,backCut:saved.backCut,backBg:saved.backBg}); setFaceBlob(g,'back',saved.backBlob); saveGarment(g); if(state.editing===g.id){ sheetFace='back'; renderSheet(); } renderDressing(); }
+    });
+  });
   $('sheetClose').addEventListener('click',closeSheet);
   sheet.addEventListener('click',e=>{ if(e.target===sheet) closeSheet(); });
   $('sTry').addEventListener('click',()=>{
@@ -1881,7 +2246,7 @@ button.stat{cursor:pointer}
     renderDressing(); if(state.tab==='cabine') renderCabine();
     if(sheetReturn && document.contains(sheetReturn)) sheetReturn.focus();
     toast('« '+g.name+' » supprimé',{
-      commit(){ dbDelete('garments',g.id); try{ URL.revokeObjectURL(g.url); }catch(e){} },
+      commit(){ dbDelete('garments',g.id); try{ URL.revokeObjectURL(g.url); if(g.backUrl) URL.revokeObjectURL(g.backUrl); }catch(e){} },
       undo(){
         state.garments.splice(Math.min(idx,state.garments.length),0,g);
         slots.forEach(s=>{ if(!state.cab.picks[s]) state.cab.picks[s]=g.id; });
@@ -1891,12 +2256,14 @@ button.stat{cursor:pointer}
   });
 
   /* ---------- Recadrage ---------- */
-  const crop={id:null,img:null,scale:1,rect:null,drag:null,fromShop:false};
+  const crop={id:null,img:null,scale:1,rect:null,drag:null,fromShop:false,face:'front'};
   const cropCanvas=$('cropCanvas');
-  async function openCrop(id,fromShop){
+  // Le recadrage porte sur la photo d'origine de la face ; le fond choisi est ensuite réappliqué.
+  async function openCrop(id,fromShop,face){
     const g=garmentById(id); if(!g) return;
-    crop.id=id; crop.fromShop=fromShop;
-    crop.img=await loadImage(g.blob);
+    crop.id=id; crop.fromShop=fromShop; crop.face=face||'front';
+    const src=faceOrig(g,crop.face); if(!src) return;
+    crop.img=await loadImage(src);
     $('cropOverlay').hidden=false;
     const area=$('cropArea');
     const aw=area.clientWidth||320, ah=area.clientHeight||420;
@@ -1945,10 +2312,10 @@ button.stat{cursor:pointer}
     const gg=c.getContext('2d'); gg.fillStyle='#ffffff'; gg.fillRect(0,0,c.width,c.height);
     gg.drawImage(crop.img,r.x,r.y,r.w,r.h,0,0,c.width,c.height);
     const blob=await canvasBlob(c,0.92);
-    try{ URL.revokeObjectURL(g.url); }catch(e){}
-    g.blob=blob; g.url=URL.createObjectURL(blob);
-    g.color=await detectColor(blob);
-    saveGarment(g); closeCrop(); renderSheet(); renderDressing();
+    const fromShop=crop.fromShop;
+    await setFaceOrig(g,crop.face,blob);
+    if(fromShop && faceBg(g,'front')==='orig') autoClean(g,'front');
+    closeCrop(); renderSheet(); renderDressing();
     toast('Vêtement recadré');
   });
 
@@ -1982,16 +2349,18 @@ button.stat{cursor:pointer}
     return list;
   }
   function engineFor(slot){ return chainFor(slot)[0]; }
+  // Sur une photo de toi de dos, chaque pièce utilise la photo de son dos quand elle existe.
+  function faceFor(g){ const p=photoById(state.cab.photoId); return p && p.back && g && g.backBlob ? 'back' : 'front'; }
   // Liste des pièces à appliquer, dans l'ordre, et combien d'étapes déjà faites peuvent être réutilisées.
   function plan(mode){
     const cab=state.cab;
-    const seq=SLOTS.filter(s=>cab.picks[s.id] && garmentById(cab.picks[s.id])).map(s=>({slot:s.id,garmentId:cab.picks[s.id],want:engineFor(s.id)}));
+    const seq=SLOTS.filter(s=>cab.picks[s.id] && garmentById(cab.picks[s.id])).map(s=>({slot:s.id,garmentId:cab.picks[s.id],want:engineFor(s.id),face:faceFor(garmentById(cab.picks[s.id]))}));
     const sess=(cab.session && cab.session.photoId===cab.photoId) ? cab.session : null;
     let keep=0;
     if(sess){
       while(keep<seq.length && keep<sess.steps.length){
         const a=seq[keep], b=sess.steps[keep];
-        if(a.slot!==b.slot || a.garmentId!==b.garmentId || a.want!==(b.want||b.engine)) break;
+        if(a.slot!==b.slot || a.garmentId!==b.garmentId || a.want!==(b.want||b.engine) || a.face!==(b.face||'front')) break;
         if(mode==='variant' && !cab.locks[a.slot]) break;
         keep++;
       }
@@ -2020,13 +2389,14 @@ button.stat{cursor:pointer}
       const row=document.createElement('div'); row.className='slot'+(cab.locks[id]&&st?' locked':'');
       const pick=document.createElement('button'); pick.type='button'; pick.className='slot-pick';
       pick.setAttribute('aria-label','Choisir '+s.label.toLowerCase()+(g?', actuellement '+g.name:''));
-      const pic=document.createElement('span'); pic.className='slot-pic'+(g?' has':'');
-      if(g){ const im=document.createElement('img'); im.src=g.url; im.alt=''; pic.append(im); } else pic.textContent='+';
+      const face=g?faceFor(g):'front';
+      const pic=document.createElement('span'); pic.className='slot-pic'+(g?' has':'')+(g && faceBg(g,face)==='cut'?' cut':'');
+      if(g){ const im=document.createElement('img'); im.src=face==='back'?g.backUrl:g.url; im.alt=''; pic.append(im); } else pic.textContent='+';
       const tx=document.createElement('span'); tx.className='slot-txt';
       const sm=document.createElement('small'); sm.textContent=s.label;
       const b=document.createElement('b'); b.textContent=g?g.name:s.empty;
       const sp=document.createElement('span');
-      if(g){ sp.textContent = st ? 'Rendu prêt · '+engLabel(st.engine) : 'À générer · '+engLabel(engineFor(id)); if(st) sp.className='done'; }
+      if(g){ sp.textContent = (st ? 'Rendu prêt · '+engLabel(st.engine) : 'À générer · '+engLabel(engineFor(id)))+(face==='back'?' · dos':''); if(st) sp.className='done'; }
       else sp.textContent='Touche pour choisir';
       tx.append(sm,b,sp); pick.append(pic,tx);
       pick.addEventListener('click',()=>openPicker(id));
@@ -2052,6 +2422,15 @@ button.stat{cursor:pointer}
     $('tokenCard').hidden=!!state.token;
     // Boutons
     const photo=photoById(cab.photoId);
+    // Photo de dos
+    $('backRow').hidden=!photo;
+    $('backView').setAttribute('aria-pressed',String(!!(photo && photo.back)));
+    const picked=DISPLAY_ORDER.map(id=>garmentById(cab.picks[id])).filter(Boolean);
+    const noBack=picked.filter(g=>!g.backBlob);
+    $('backNote').hidden=!(photo && photo.back && picked.length);
+    $('backNote').textContent = !noBack.length ? 'Les photos du dos de tes vêtements seront utilisées.'
+      : noBack.length===picked.length ? 'Aucune pièce choisie n\'a de photo du dos : ajoute-la dans la fiche du vêtement, sinon l\'essai utilise le devant.'
+      : 'Sans photo du dos, le devant sera utilisé pour : '+noBack.map(g=>g.name).join(', ')+'.';
     const up=plan('update'), va=plan('variant');
     const busy=!!cab.job;
     const gen=$('generate'), varBtn=$('variant');
@@ -2294,10 +2673,16 @@ button.stat{cursor:pointer}
       const s=Math.min(rw*0.8/b.w,(rh-24)/b.h), dw=b.w*s, dh=b.h*s;
       const cx=W/2+(i%2?1:-1)*Math.min(30,(rw-dw)/4), cy=y+rh/2;
       x.save(); x.translate(cx,cy); x.rotate((i%2?1:-1)*0.022);
-      x.shadowColor='rgba(40,30,15,.28)'; x.shadowBlur=26; x.shadowOffsetY=12;
-      x.fillStyle='#ffffff'; x.fillRect(-dw/2-10,-dh/2-10,dw+20,dh+20);
-      x.shadowColor='rgba(0,0,0,0)'; x.shadowBlur=0; x.shadowOffsetY=0;
-      x.drawImage(img,b.x,b.y,b.w,b.h,-dw/2,-dh/2,dw,dh);
+      if(faceBg(p.g,'front')==='cut'){
+        // Pièce détourée : posée directement sur le fond, avec une ombre qui suit sa forme.
+        x.shadowColor='rgba(40,30,15,.32)'; x.shadowBlur=22; x.shadowOffsetY=10;
+        x.drawImage(img,b.x,b.y,b.w,b.h,-dw/2,-dh/2,dw,dh);
+      }else{
+        x.shadowColor='rgba(40,30,15,.28)'; x.shadowBlur=26; x.shadowOffsetY=12;
+        x.fillStyle='#ffffff'; x.fillRect(-dw/2-10,-dh/2-10,dw+20,dh+20);
+        x.shadowColor='rgba(0,0,0,0)'; x.shadowBlur=0; x.shadowOffsetY=0;
+        x.drawImage(img,b.x,b.y,b.w,b.h,-dw/2,-dh/2,dw,dh);
+      }
       x.restore();
       y+=rh+G;
     }
@@ -2330,6 +2715,11 @@ button.stat{cursor:pointer}
   document.querySelectorAll('#engineSeg button').forEach(b=>b.addEventListener('click',()=>{
     state.cab.engine=b.dataset.engine; pref.set('engine',state.cab.engine); renderCabine();
   }));
+  $('backView').addEventListener('click',()=>{
+    const p=photoById(state.cab.photoId); if(!p) return;
+    p.back=!p.back; dbPut('photos',{id:p.id,blob:p.blob,time:p.time,back:p.back});
+    renderCabine();
+  });
 
   /* ---------- Choix d'une pièce ---------- */
   const picker=$('picker');
@@ -2453,16 +2843,18 @@ button.stat{cursor:pointer}
     return canvasBlob(c,0.92);
   }
   const rnd = () => Math.floor(Math.random()*100000);
-  function qwenPrompt(g){
+  function qwenPrompt(g,personBack,garmentBack){
     const c=color(g.color), k=cat(g.category);
     const item=((c?c.en+' ':'')+k.en).trim();
     const where={shoes:'the shoes on their feet',trousers:'the trousers or skirt they are wearing',outfit:'the outfit they are wearing',top:'the top they are wearing',jacket:'the outer layer they are wearing',accessory:'the matching accessory'}[k.part]||'the matching garment';
-    return 'Image 1 shows a person. Image 2 shows a '+item+'. Edit image 1 so the person wears exactly the '+item+' from image 2, replacing '+where+'. '+
+    return 'Image 1 shows a person'+(personBack?' seen from behind':'')+'. Image 2 shows '+(garmentBack?'the back of ':'')+'a '+item+'. Edit image 1 so the person wears exactly the '+item+' from image 2'+(personBack?', seen from the back,':'')+' replacing '+where+'. '+
       'Keep the same person, face, hair, skin, body shape, pose, framing, background, lighting and every other piece of clothing unchanged. '+
       'Photorealistic photo, natural fit, realistic fabric folds and shadows.';
   }
-  async function runEngine(engineId,input,dims,garment,onStatus,job){
-    const garm=await garmentInput(garment.blob);
+  async function runEngine(engineId,input,dims,garment,onStatus,job,face){
+    const back = face==='back' && !!garment.backBlob;
+    const photo=photoById(state.cab.photoId), personBack=!!(photo && photo.back);
+    const garm=await garmentInput(back?garment.backBlob:garment.blob);
     if(job.cancelled) return null;
     onStatus('Connexion à '+engLabel(engineId)+'…');
     const client=await connect(engineId); job.client=client;
@@ -2496,7 +2888,7 @@ button.stat{cursor:pointer}
       }else{
         // La démo renvoie une image carrée : on envoie des images carrées, puis on recoupe au cadrage d'origine.
         const imgs=JSON.stringify([await toDataUrl(await squareInput(input)),await toDataUrl(await squareInput(garm))]);
-        out=await call(client,'/edit_image',[imgs,qwenPrompt(garment),'Unblur-Anything',0,true,1,hq?6:4],onStatus,job);
+        out=await call(client,'/edit_image',[imgs,qwenPrompt(garment,personBack,back),'Unblur-Anything',0,true,1,hq?6:4],onStatus,job);
         const r=Array.isArray(out)?out[0]:out;
         if(r && r.status==='blocked') throw new Error('image refusée par le filtre de sécurité de la démo');
       }
@@ -2615,7 +3007,7 @@ button.stat{cursor:pointer}
   function saveSession(){
     const s=state.cab.session; if(!s) return;
     dbPut('meta',{id:'session',photoId:s.photoId,base:s.base.blob,w:s.base.w,h:s.base.h,
-      steps:s.steps.map(x=>({slot:x.slot,garmentId:x.garmentId,engine:x.engine,want:x.want,blob:x.blob}))});
+      steps:s.steps.map(x=>({slot:x.slot,garmentId:x.garmentId,engine:x.engine,want:x.want,face:x.face||'front',blob:x.blob}))});
   }
   async function generate(mode){
     const cab=state.cab;
@@ -2640,7 +3032,7 @@ button.stat{cursor:pointer}
         // Si une démo est en pause, plante ou refuse, la suivante prend le relais.
         for(let k=0;k<chain.length;k++){
           try{
-            raw=await runEngine(chain[k],input,dims,g,t=>setStatus(prefix+t),job);
+            raw=await runEngine(chain[k],input,dims,g,t=>setStatus(prefix+t),job,step.face);
             used=chain[k]; break;
           }catch(e){
             const m=errText(e);
@@ -2650,7 +3042,7 @@ button.stat{cursor:pointer}
         }
         if(job.cancelled || !raw) break;
         const blob=await normalize(raw,used,dims.w,dims.h);
-        sess.steps[i]={slot:step.slot,garmentId:step.garmentId,want:step.want,engine:used,blob,url:URL.createObjectURL(blob)};
+        sess.steps[i]={slot:step.slot,garmentId:step.garmentId,want:step.want,face:step.face,engine:used,blob,url:URL.createObjectURL(blob)};
         sess.steps=sess.steps.slice(0,i+1);
         done++;
         cab.view=i; saveSession(); renderCabine();
@@ -2972,7 +3364,8 @@ button.stat{cursor:pointer}
   /* ---------- Sauvegarde : export et import de tout le contenu ---------- */
   function garmentRecord(g){
     return {id:g.id,name:g.name,category:g.category,color:g.color,fav:!!g.fav,created:g.created,brand:g.brand||'',size:g.size||'',material:g.material||'',
-      price:g.price||'',seasons:g.seasons||[],styles:g.styles||[],link:g.link||'',notes:g.notes||''};
+      price:g.price||'',seasons:g.seasons||[],styles:g.styles||[],link:g.link||'',notes:g.notes||'',
+      bg:g.bg||'orig',backBg:g.backBg||'orig',colorManual:!!g.colorManual};
   }
   $('exportBtn').addEventListener('click',async()=>{
     const btn=$('exportBtn'); btn.disabled=true; btn.textContent='Préparation…';
@@ -2980,8 +3373,10 @@ button.stat{cursor:pointer}
       // Écrit morceau par morceau pour ne pas tout garder en une seule chaîne géante.
       const parts=['{"app":"cabine-miroir","version":6,"exported":'+Date.now()];
       const add=async(key,items,map)=>{ parts.push(',"'+key+'":['); for(let i=0;i<items.length;i++) parts.push((i?',':'')+JSON.stringify(await map(items[i]))); parts.push(']'); };
-      await add('photos',state.photos,async p=>({id:p.id,time:p.time,data:await toDataUrl(p.blob)}));
-      await add('garments',state.garments,async g=>Object.assign(garmentRecord(g),{data:await toDataUrl(g.blob)}));
+      const opt64=async b=>b?await toDataUrl(b):null;
+      await add('photos',state.photos,async p=>({id:p.id,time:p.time,back:!!p.back,data:await toDataUrl(p.blob)}));
+      await add('garments',state.garments,async g=>Object.assign(garmentRecord(g),{data:await toDataUrl(g.blob),origData:await opt64(g.origBlob),
+        backData:await opt64(g.backBlob),backOrigData:await opt64(g.backOrig)}));
       await add('looks',state.looks,async l=>{ const r=lookRecord(l); delete r.blob; delete r.baseBlob; r.data=await toDataUrl(l.blob); r.baseData=l.baseBlob?await toDataUrl(l.baseBlob):null; return r; });
       parts.push('}');
       downloadFile(new Blob(parts,{type:'application/json'}),'cabine-sauvegarde-'+stamp()+'.json');
@@ -3002,13 +3397,18 @@ button.stat{cursor:pointer}
     try{
       for(const p of j.photos||[]){
         if(!p.data || photoById(p.id)){ skipped++; continue; }
-        const rec={id:p.id,blob:await blobOf(p.data),time:p.time||Date.now()};
+        const rec={id:p.id,blob:await blobOf(p.data),time:p.time||Date.now(),back:!!p.back};
         state.photos.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec)); await dbPut('photos',rec); added++;
       }
       for(const g of j.garments||[]){
         if(!g.data || garmentById(g.id)){ skipped++; continue; }
-        const item=Object.assign(garmentRecord(Object.assign({created:Date.now()},g)),{blob:await blobOf(g.data)});
-        item.url=URL.createObjectURL(item.blob); state.garments.push(item); saveGarment(item); added++;
+        const item=Object.assign(garmentRecord(Object.assign({created:Date.now()},g)),{blob:await blobOf(g.data),origBlob:await blobOf(g.origData),
+          cutBlob:null,backBlob:await blobOf(g.backData),backOrig:await blobOf(g.backOrigData),backCut:null});
+        // Le détourage n'est pas sauvegardé : les images « sans fond » sont déjà dans data.
+        item.url=URL.createObjectURL(item.blob); item.backUrl=item.backBlob?URL.createObjectURL(item.backBlob):null;
+        if(item.bg==='cut' && !item.cutBlob) item.cutBlob=item.blob;
+        if(item.backBg==='cut' && !item.backCut) item.backCut=item.backBlob;
+        state.garments.push(item); saveGarment(item); added++;
       }
       for(const l of j.looks||[]){
         if(!l.data || state.looks.some(x=>x.id===l.id)){ skipped++; continue; }
@@ -3033,7 +3433,9 @@ button.stat{cursor:pointer}
       ['La caméra ne s\'allume pas','Autorise la caméra pour ce site dans les réglages du navigateur. En attendant, le mode photo ouvre l\'appareil photo selfie du téléphone.']
     ]},
     dressing:{title:'Le dressing',items:[
-      ['Bien photographier un vêtement','Un vêtement par photo, à plat sur un drap uni, de face, sans pli, à la lumière du jour. La catégorie et la couleur sont devinées : corrige-les dans la fiche si besoin.'],
+      ['Bien photographier un vêtement','« + Ajouter », puis « Prendre en photo » : un vêtement par photo, à plat sur un fond uni, de face, sans pli, à la lumière du jour. La catégorie et la couleur sont devinées : corrige-les dans la fiche si besoin.'],
+      ['Le dos d\'un vêtement','Après la photo du devant, retourne le vêtement et touche « Photographier ». Plus tard, ouvre sa fiche et touche « Dos ». La cabine l\'utilise quand tu es de dos sur ta photo.'],
+      ['Retirer le fond','Dans la fiche, choisis « Sans fond » ou « Fond blanc » sous la photo. Une IA détoure le vêtement dans le téléphone, sans quota ni envoi. La première fois, elle se télécharge (environ 45 Mo). Pour que ce soit automatique, règle « Fond des nouvelles photos » quand tu ajoutes un vêtement.'],
       ['Recadrer un vêtement','Dans la fiche, touche « Recadrer » et dessine un cadre autour du vêtement. Les essais sont bien meilleurs.'],
       ['Les chiffres en haut','Le nombre de pièces, la valeur totale (si tu renseignes les prix), les pièces jamais portées (touche la case pour les afficher) et le coût moyen par port : le prix des pièces portées divisé par le nombre de fois où tu les as portées.'],
       ['Compter quand je porte un vêtement','Ouvre un look dans l\'onglet Looks et touche « Porté aujourd\'hui ». Chaque pièce du look compte une fois par jour. Un aperçu à plat suffit : pas besoin de rendu IA.'],
@@ -3045,6 +3447,7 @@ button.stat{cursor:pointer}
       ['« Inspire-moi »','Une tenue proposée à partir de ton dressing : saison ou météo du jour, accord des couleurs, favoris et pièces peu portées. Verrouille une pièce avec le cadenas pour construire la tenue autour d\'elle. Touche encore pour une autre idée.'],
       ['La météo','Ajoute ta ville (ou ta position) : la température ressentie oriente les idées (veste quand il fait frais, pas de veste en pleine chaleur) et la pluie est signalée.'],
       ['L\'accord des couleurs','Sous ta tenue, un indicateur juge l\'harmonie : tout en neutres, un seul accent de couleur, un duo audacieux, ou trop de couleurs vives. Les neutres sont noir, blanc, gris, beige, marine, marron et kaki.'],
+      ['Essayer une tenue de dos','Prends une photo de toi de dos, puis touche « Je suis de dos sur cette photo ». Les pièces qui ont une photo du dos l\'utilisent pour l\'essai.'],
       ['L\'aperçu à plat','Compose tout de suite une planche avec les photos de tes pièces, sans IA ni quota. Pratique pour préparer une tenue, la partager ou noter que tu l\'as portée.'],
       ['Pourquoi c\'est lent ou ça échoue ?','Les rendus passent par des démos gratuites sur Hugging Face : file d\'attente, pauses, et 2 min de calcul par jour sans compte. Un jeton gratuit (Réglages) passe à 5 min et débloque les chaussures et Leffa.'],
       ['Spécialisé ou Réaliste ?','Spécialisé utilise un modèle d\'essayage par pièce, fidèle au vêtement. Réaliste (Qwen Image Edit) retouche toute la photo : parfois plus naturel, parfois moins fidèle.']
@@ -3083,7 +3486,7 @@ button.stat{cursor:pointer}
     {art:ICON('<rect x="6" y="2.5" width="12" height="19" rx="6"/><circle cx="12" cy="9" r="1.8"/><path d="M12 11.5v4.5M9.5 13.2 12 12l2.5 1.2"/>'),title:'Ton miroir',
       text:'Pose le téléphone contre un meuble et recule : le coach te dit quand tu es en entier. Lève la main pour déclencher sans le toucher, ou passe en plein écran.'},
     {art:ICON('<path d="M10 6.5a2 2 0 1 1 2.6 1.9c-.4.1-.6.5-.6.9V11"/><path d="M12 11 3.6 17.2a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8z"/>'),title:'Ton dressing',
-      text:'Photographie tes vêtements à plat. Catégorie et couleur sont devinées ; ajoute marque, prix et saisons pour profiter des stats et du coût par port.'},
+      text:'Photographie tes vêtements, devant et dos. Le fond peut être retiré automatiquement ; catégorie et couleur sont devinées. Ajoute prix et saisons pour les stats.'},
     {art:ICON('<path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>'),title:'La cabine',
       text:'Choisis une photo et des pièces : l\'IA t\'habille. Pas d\'idée ? « Inspire-moi » compose une tenue selon la météo et l\'accord des couleurs.'},
     {art:ICON('<rect x="3.5" y="4" width="7" height="9" rx="1.5"/><rect x="13.5" y="4" width="7" height="6" rx="1.5"/><rect x="13.5" y="13" width="7" height="7" rx="1.5"/><rect x="3.5" y="16" width="7" height="4" rx="1.5"/>'),title:'Tes looks',
@@ -3167,11 +3570,11 @@ button.stat{cursor:pointer}
       if(g.color===undefined){ g.color=await detectColor(g.blob); changed=true; }
       ['brand','size','material','price','link','notes'].forEach(k=>{ if(g[k]===undefined){ g[k]=''; changed=true; } });
       ['seasons','styles'].forEach(k=>{ if(!Array.isArray(g[k])){ g[k]=[]; changed=true; } });
-      const item=Object.assign({},g,{fav:!!g.fav,created:g.created||Date.now(),url:URL.createObjectURL(g.blob)});
+      const item=Object.assign({},g,{fav:!!g.fav,created:g.created||Date.now(),url:URL.createObjectURL(g.blob),backUrl:g.backBlob?URL.createObjectURL(g.backBlob):null});
       state.garments.push(item);
       if(changed) saveGarment(item);
     }
-    ps.sort((a,b)=>a.time-b.time).forEach(p=>{ if(p.blob) state.photos.push({id:p.id,blob:p.blob,time:p.time,url:URL.createObjectURL(p.blob)}); });
+    ps.sort((a,b)=>a.time-b.time).forEach(p=>{ if(p.blob) state.photos.push({id:p.id,blob:p.blob,time:p.time,back:!!p.back,url:URL.createObjectURL(p.blob)}); });
     // Anciens essais (version 2) repris comme looks.
     for(const t of ts){
       if(!t.blob) continue;
@@ -3186,7 +3589,7 @@ button.stat{cursor:pointer}
     if(sess && sess.base && photoById(sess.photoId)){
       state.cab.photoId=sess.photoId;
       state.cab.session={photoId:sess.photoId,base:{blob:sess.base,url:URL.createObjectURL(sess.base),w:sess.w||0,h:sess.h||0},
-        steps:(sess.steps||[]).filter(s=>s.blob).map(s=>({slot:s.slot,garmentId:s.garmentId,engine:s.engine,want:s.want||s.engine,blob:s.blob,url:URL.createObjectURL(s.blob)}))};
+        steps:(sess.steps||[]).filter(s=>s.blob).map(s=>({slot:s.slot,garmentId:s.garmentId,engine:s.engine,want:s.want||s.engine,face:s.face||'front',blob:s.blob,url:URL.createObjectURL(s.blob)}))};
       sess.steps && sess.steps.forEach(s=>{ if(garmentById(s.garmentId)) state.cab.picks[s.slot]=s.garmentId; });
     }
     renderPhotos(); renderDressing(); renderCabine(); renderLooks();

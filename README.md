@@ -7,8 +7,8 @@ Site : https://hojicooks.github.io
 ## Fonctions
 
 - **Miroir** : retardateur avec bips, coach de cadrage en direct (MediaPipe Pose, dans le téléphone), déclenchement en levant la main, plein écran, lumière d'appoint, repères, grille, effet miroir désactivable, rafale de 3 photos. La photo reprend exactement le cadrage affiché (verticale même si la caméra filme en paysage).
-- **Dressing** : catégorie et couleur devinées à l'import, tri (récents, favoris, couleur, plus ou moins portés), 2 à 4 vignettes par ligne, statistiques (valeur, pièces jamais portées, coût par port).
-- **Cabine** : « Inspire-moi » propose une tenue selon la saison ou la météo du jour (Open-Meteo), l'accord des couleurs, les favoris et les pièces peu portées, en gardant les pièces verrouillées ; indicateur d'harmonie ; aperçu à plat instantané, sans IA.
+- **Dressing** : photo du devant et du dos, fond retiré ou fond blanc par une IA de détourage dans le téléphone (RMBG-1.4 de Bria via Transformers.js, usage non commercial ; détourage simple par couleur si l'IA ne se charge pas), catégorie et couleur devinées à l'import, tri (récents, favoris, couleur, plus ou moins portés), 2 à 4 vignettes par ligne, statistiques (valeur, pièces jamais portées, coût par port).
+- **Cabine** : essai de dos (photo de toi de dos + photo du dos des vêtements), « Inspire-moi » propose une tenue selon la saison ou la météo du jour (Open-Meteo), l'accord des couleurs, les favoris et les pièces peu portées, en gardant les pièces verrouillées ; indicateur d'harmonie ; aperçu à plat instantané, sans IA.
 - **Looks** : « Porté aujourd'hui », favoris, renommage, filtres (favoris, portés, IA, à plat), comparaison, partage.
 - **Confort** : suppression annulable 5 s, guide de démarrage, aide selon l'écran, thème sombre, clair ou auto, couleur d'accent, texte agrandi, sauvegarde et restauration (fichier JSON).
 
