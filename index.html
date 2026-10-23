@@ -438,9 +438,22 @@ body.immersive .stage .ai-out{object-fit:cover}
 .stage.noflip .ai-out{transform:none}
 .fx-bar{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;max-width:calc(100% - 20px);padding:4px;border-radius:999px;background:var(--scrim);box-shadow:0 4px 18px var(--shade)}
 .fx-nav{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--raise);color:var(--text);font-size:24px;line-height:1;padding:0 0 3px;cursor:pointer}
-.fx-name{display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 6px;text-align:center}
-.fx-name b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
-.fx-name small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+.fx-pick{display:flex;align-items:center;gap:8px;min-width:0;border:0;background:none;color:inherit;font:inherit;padding:0 4px 0 0;cursor:pointer;border-radius:12px}
+.fx-name{display:flex;flex-direction:column;align-items:flex-start;min-width:0;text-align:left}
+.fx-name b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+.fx-name small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+/* Miniature d'une tenue : les pièces empilées, du haut aux chaussures */
+.fx-mini{flex:none;width:34px;height:44px;border-radius:9px;background:var(--sheet);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px 4px;overflow:hidden;border:2px solid transparent}
+.fx-mini img{width:100%;min-height:0;flex:1 1 0;object-fit:contain}
+.fx-mini img.s{flex:.5 1 0}
+.fx-mini:empty{display:none}
+.fx-strip{position:absolute;top:116px;left:10px;right:10px;z-index:4;display:flex;gap:8px;overflow-x:auto;padding:7px;border-radius:16px;background:var(--scrim);box-shadow:0 4px 18px var(--shade);scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.fx-strip::-webkit-scrollbar{display:none}
+.fx-strip button{flex:none;width:60px;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;padding:0;color:var(--text);cursor:pointer;font:inherit}
+.fx-strip .fx-mini{width:54px;height:70px}
+.fx-strip button[aria-selected="true"] .fx-mini{border-color:var(--tape)}
+.fx-strip small{font-size:10.5px;line-height:1.2;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.immersive .fx-strip{top:calc(118px + env(safe-area-inset-top,0px))}
 .fx-bar.swl{animation:swl .35s ease-out}
 .fx-bar.swr{animation:swr .35s ease-out}
 @keyframes swl{from{transform:translateX(calc(-50% + 40px));opacity:.4}to{transform:translateX(-50%);opacity:1}}
@@ -536,9 +549,13 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       <div class="coach" id="coach" role="status" aria-live="polite" hidden><i></i><span id="coachText"></span></div>
       <div class="fx-bar" id="fxBar" hidden>
         <button class="fx-nav" id="fxPrev" type="button" aria-label="Tenue précédente">‹</button>
-        <div class="fx-name" aria-live="polite"><b id="fxName"></b><small id="fxStatus"></small></div>
+        <button class="fx-pick" id="fxPick" type="button" aria-expanded="false" aria-controls="fxStrip" aria-label="Choisir une tenue">
+          <span class="fx-mini" id="fxMini" aria-hidden="true"></span>
+          <span class="fx-name" aria-live="polite"><b id="fxName"></b><small id="fxStatus"></small></span>
+        </button>
         <button class="fx-nav" id="fxNext" type="button" aria-label="Tenue suivante">›</button>
       </div>
+      <div class="fx-strip" id="fxStrip" hidden role="listbox" aria-label="Tes tenues"></div>
       <div class="imm-bar" id="immBar" hidden>
         <button class="imm-btn" id="immTimer" type="button" aria-label="Changer le retardateur">5 s</button>
         <button class="shutter" id="immShutter" type="button" aria-label="Déclencher"><i></i></button>
@@ -1123,7 +1140,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.6</p>
+      <p class="note">Cabine Miroir · version 6.7</p>
     </div>
   </div>
 </div>
@@ -1272,6 +1289,70 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     const d=await db(); if(!d) return [];
     return new Promise(res=>{ try{ const rq=d.transaction(store,'readonly').objectStore(store).getAll(); rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>res([]); }catch(e){ res([]); } });
   }
+  async function dbGet(store,key){
+    const d=await db(); if(!d) return null;
+    return new Promise(res=>{ try{ const rq=d.transaction(store,'readonly').objectStore(store).get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }catch(e){ res(null); } });
+  }
+
+  /* ---------- Images lues depuis la base : rester lisibles sur iPhone ---------- */
+  // Dans Safari, une image lue depuis la base pointe vers un fichier du téléphone. Quand la fiche est
+  // réenregistrée (détourage, renommage, favori…), l'ancien fichier est supprimé et l'image en mémoire
+  // devient illisible jusqu'au redémarrage de l'app. Après chaque enregistrement, on reprend donc les
+  // fichiers à jour ; et si une image casse quand même, on la relit depuis la base.
+  const blobHome=new WeakMap(); // image → {store, id, path (dans la fiche), owner (objet en mémoire)}
+  const URL_KEY={blob:'url',backBlob:'backUrl'};
+  function homeRec(store,rec,owner){ if(rec && owner) walkHome(store,rec.id,rec,owner,[],0); }
+  function walkHome(store,id,o,owner,path,d){
+    if(!o || d>3) return;
+    Object.keys(o).forEach(k=>{
+      const v=o[k];
+      if(v instanceof Blob) blobHome.set(v,{store,id,path:path.concat(k),owner});
+      else if(v && typeof v==='object') walkHome(store,id,v,owner,path.concat(k),d+1);
+    });
+  }
+  function relink(o,uk,blob){
+    const old=o[uk], nu=URL.createObjectURL(blob); o[uk]=nu;
+    if(old){
+      document.querySelectorAll('img,video').forEach(e=>{ if(e.getAttribute('src')===old) e.src=nu; });
+      setTimeout(()=>URL.revokeObjectURL(old),5000);
+    }
+  }
+  // Remplace, partout dans l'objet, les images de la table (ancienne → nouvelle) et refait leurs adresses.
+  function swapBlobs(o,map,d){
+    d=d||0; if(!o || d>3) return;
+    Object.keys(o).forEach(k=>{
+      const v=o[k];
+      if(v instanceof Blob){ const nb=map.get(v); if(nb){ o[k]=nb; const uk=URL_KEY[k]; if(uk && typeof o[uk]==='string') relink(o,uk,nb); } }
+      else if(v && typeof v==='object' && !(v instanceof Node) && !(v instanceof Map)) swapBlobs(v,map,d+1);
+    });
+  }
+  function pairBlobs(a,b,map,d){
+    d=d||0; if(!a || !b || d>3) return;
+    Object.keys(a).forEach(k=>{ const x=a[k], y=b[k];
+      if(x instanceof Blob){ if(y instanceof Blob && y!==x) map.set(x,y); }
+      else if(x && typeof x==='object') pairBlobs(x,y,map,d+1);
+    });
+  }
+  // Enregistre puis reprend les fichiers à jour dans l'objet en mémoire.
+  async function dbPutFresh(store,value,owner){
+    const ok=await dbPut(store,value);
+    if(!ok || !owner) return ok;
+    const rec=await dbGet(store,value.id); if(!rec) return ok;
+    const map=new Map(); pairBlobs(value,rec,map);
+    if(map.size) swapBlobs(owner,map);
+    homeRec(store,rec,owner);
+    return ok;
+  }
+  async function blobOk(b){ try{ await b.slice(0,16).arrayBuffer(); return true; }catch(e){ return false; } }
+  // Relit une image cassée depuis la base. Renvoie la nouvelle image, ou null.
+  async function healBlob(b){
+    const h=blobHome.get(b); if(!h) return null;
+    const rec=await dbGet(h.store,h.id); if(!rec) return null;
+    let nb=rec; for(const k of h.path) nb=nb && nb[k];
+    if(!(nb instanceof Blob) || nb===b) return null;
+    swapBlobs(h.owner,new Map([[b,nb]])); homeRec(h.store,rec,h.owner);
+    return nb;
+  }
   const pref={
     get(k,def){ try{ const v=localStorage.getItem('cabine.'+k); return v===null?def:JSON.parse(v); }catch(e){ return def; } },
     set(k,v){ try{ localStorage.setItem('cabine.'+k,JSON.stringify(v)); }catch(e){} }
@@ -1283,14 +1364,47 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   }
 
   /* ================= IMAGES ================= */
-  function loadImage(blob){
+  function loadImage(blob,retried){
     return new Promise((resolve,reject)=>{
       const url=URL.createObjectURL(blob); const img=new Image();
       img.onload=()=>{ resolve(img); setTimeout(()=>URL.revokeObjectURL(url),2000); };
-      img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
+      img.onerror=()=>{
+        URL.revokeObjectURL(url);
+        // Image devenue illisible (voir plus haut) : on la relit depuis la base et on réessaie une fois.
+        const fail=()=>reject(new Error('Image illisible'));
+        if(retried || !blobHome.has(blob)) return fail();
+        healBlob(blob).then(nb=>nb ? loadImage(nb,true).then(resolve,reject) : fail(), fail);
+      };
       img.src=url;
     });
   }
+  // Une image affichée qui casse : nouvelle adresse si le fichier est lisible, sinon relecture depuis la base.
+  function ownerOfUrl(u){
+    for(const g of state.garments){ if(g.url===u) return {o:g,k:'blob',uk:'url'}; if(g.backUrl===u) return {o:g,k:'backBlob',uk:'backUrl'}; }
+    for(const list of [state.photos,state.looks]) for(const x of list) if(x.url===u) return {o:x,k:'blob',uk:'url'};
+    const s=state.cab.session;
+    if(s){ if(s.base && s.base.url===u) return {o:s.base,k:'blob',uk:'url'}; for(const st of s.steps) if(st.url===u) return {o:st,k:'blob',uk:'url'}; }
+    return null;
+  }
+  document.addEventListener('error',async e=>{
+    const el=e.target;
+    if(!(el instanceof HTMLImageElement || el instanceof HTMLVideoElement)) return;
+    const u=el.getAttribute('src')||'';
+    const n=Number(el.dataset.heals||0);
+    if(!u.startsWith('blob:') || n>=3) return;
+    el.dataset.heals=String(n+1);
+    if(el instanceof HTMLVideoElement){
+      const l=state.looks.find(x=>x.id===el.dataset.id); if(!l || !l.video) return;
+      const nb = (await blobOk(l.video)) ? l.video : await healBlob(l.video); if(!nb) return;
+      const nu=URL.createObjectURL(nb); el.dataset.url=nu; el.src=nu; return;
+    }
+    const w=ownerOfUrl(u); if(!w || !(w.o[w.k] instanceof Blob)) return;
+    const b=w.o[w.k];
+    // 1er échec : adresse perdue mais fichier lisible → nouvelle adresse. Sinon : relecture depuis la base.
+    if(n===0 && await blobOk(b)){ if(w.o[w.uk]===u) relink(w.o,w.uk,b); }
+    else await healBlob(b);
+  },true);
+  if(window.__cabineTest) window.__cabineHeal={blobHome,healBlob}; // tests automatisés uniquement
   function canvasBlob(c,q){ return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('Conversion impossible')),'image/jpeg',q||0.9)); }
   async function shrink(blob,max){
     try{
@@ -1655,6 +1769,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     $('aiBtn').setAttribute('aria-pressed',String(ai.on));
     fxCanvas.hidden=!(isLive && fx.on && !ai.on);
     $('fxBar').hidden=!(isLive && fx.on);
+    if(!(isLive && fx.on)) fxStripClose();
     if(isLive && fx.on) renderFxBar();
     $('immTimer').textContent = state.timer ? state.timer+' s' : 'Sans';
     if(isLive) hint.textContent=liveHint();
@@ -2167,9 +2282,41 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     // On prépare déjà la tenue suivante dans le même sens.
     outfitPieces(l[(fx.index+dir+l.length)%l.length]).forEach(x=>fxPrep(x.g));
     if(gesture){ buzz(30); showArrow(dir); }
-    // Direct IA : la tenue n'est envoyée qu'après 0,6 s sans nouveau geste (deux gestes rapides = une seule demande).
-    if(ai.on){ clearTimeout(ai.swT); ai.swT=setTimeout(()=>{ ai.swT=null; aiSwitch(); },600); }
+    aiQueueSwitch();
   }
+  // Direct IA : la tenue n'est envoyée qu'après 0,6 s sans nouveau geste (deux gestes rapides = une seule demande).
+  function aiQueueSwitch(){ if(ai.on){ clearTimeout(ai.swT); ai.swT=setTimeout(()=>{ ai.swT=null; aiSwitch(); },600); } }
+  // Miniature d'une tenue : ses pièces empilées comme sur les fiches tenue.
+  function fillMini(el,o){
+    const gs = o ? DISPLAY_ORDER.map(id=>[id,garmentById(o.pieces[id])]).filter(x=>x[1] && x[1].url) : [];
+    const k=gs.map(x=>x[1].id+'@'+x[1].url).join('|');
+    if(el.dataset.k===k && el.childElementCount===gs.length) return; // déjà à jour : pas de clignotement
+    el.dataset.k=k; el.textContent='';
+    gs.forEach(([id,g])=>{ const im=document.createElement('img'); im.src=g.url; im.alt=''; if(id==='chaussures') im.className='s'; el.append(im); });
+  }
+  // Bandeau de toutes les tenues, ouvert en touchant la tenue en cours : on choisit d'un coup d'œil.
+  function fxStripOpen(){
+    const strip=$('fxStrip'), l=fxOutfits(); fxCurrent();
+    strip.textContent='';
+    l.forEach((o,i)=>{
+      const b=document.createElement('button'); b.type='button'; b.setAttribute('role','option');
+      b.setAttribute('aria-selected',String(i===fx.index)); b.setAttribute('aria-label',o.name);
+      const m=document.createElement('span'); m.className='fx-mini'; fillMini(m,o);
+      const n=document.createElement('small'); n.textContent=o.name;
+      b.append(m,n); b.addEventListener('click',()=>fxGo(i)); strip.append(b);
+    });
+    strip.hidden=false; $('fxPick').setAttribute('aria-expanded','true');
+    const cur=strip.children[fx.index]; if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'nearest',inline:'center'});
+  }
+  function fxStripClose(){ const s=$('fxStrip'); if(s.hidden) return; s.hidden=true; s.textContent=''; $('fxPick').setAttribute('aria-expanded','false'); }
+  function fxGo(i){
+    const l=fxOutfits(); fxStripClose();
+    if(i===fx.index || !l[i]) return;
+    const dir=i>fx.index?1:-1; fx.index=i;
+    renderFxBar(dir);
+    aiQueueSwitch();
+  }
+  $('fxPick').addEventListener('click',()=>{ if($('fxStrip').hidden){ if(fxOutfits().length) fxStripOpen(); } else fxStripClose(); });
   let fxStatusTimer=null;
   function fxStatus(t,ms){
     $('fxStatus').textContent=t||'';
@@ -2178,6 +2325,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function renderFxBar(dir){
     const bar=$('fxBar'), l=fxOutfits(), o=fxCurrent();
     $('fxName').textContent = o ? (l.length>1?(fx.index+1)+'/'+l.length+' · ':'')+o.name : 'Aucune tenue';
+    fillMini($('fxMini'),o);
+    if(!$('fxStrip').hidden) [...$('fxStrip').children].forEach((b,i)=>b.setAttribute('aria-selected',String(i===fx.index)));
     $('fxPrev').disabled=$('fxNext').disabled=l.length<2;
     if(dir){ bar.classList.remove('swl','swr'); void bar.offsetWidth; bar.classList.add(dir>0?'swl':'swr'); }
     if(o) outfitPieces(o).forEach(x=>fxPrep(x.g));
@@ -2708,8 +2857,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     renderDressing(); openSheet(g.id); openCrop(g.id,true);
   });
   function saveGarment(g){
-    dbPut('garments',Object.assign(garmentRecord(g),{blob:g.blob,origBlob:g.origBlob||null,cutBlob:g.cutBlob||null,
-      backBlob:g.backBlob||null,backOrig:g.backOrig||null,backCut:g.backCut||null}));
+    return dbPutFresh('garments',Object.assign(garmentRecord(g),{blob:g.blob,origBlob:g.origBlob||null,cutBlob:g.cutBlob||null,
+      backBlob:g.backBlob||null,backOrig:g.backOrig||null,backCut:g.backCut||null}),g);
   }
 
   const qInput=$('q'), qClear=$('qClear');
@@ -3618,7 +3767,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   }));
   $('backView').addEventListener('click',()=>{
     const p=photoById(state.cab.photoId); if(!p) return;
-    p.back=!p.back; dbPut('photos',{id:p.id,blob:p.blob,time:p.time,back:p.back});
+    p.back=!p.back; dbPutFresh('photos',{id:p.id,blob:p.blob,time:p.time,back:p.back},p);
     renderCabine();
   });
 
@@ -3931,8 +4080,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   }
   function saveSession(){
     const s=state.cab.session; if(!s) return;
-    dbPut('meta',{id:'session',photoId:s.photoId,base:s.base.blob,w:s.base.w,h:s.base.h,
-      steps:s.steps.map(x=>({slot:x.slot,garmentId:x.garmentId,engine:x.engine,want:x.want,face:x.face||'front',blob:x.blob}))});
+    dbPutFresh('meta',{id:'session',photoId:s.photoId,base:s.base.blob,w:s.base.w,h:s.base.h,
+      steps:s.steps.map(x=>({slot:x.slot,garmentId:x.garmentId,engine:x.engine,want:x.want,face:x.face||'front',blob:x.blob}))},s);
   }
   async function generate(mode){
     const cab=state.cab;
@@ -4053,10 +4202,11 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     return {id:l.id,name:l.name,time:l.time,blob:l.blob,baseBlob:l.baseBlob||null,baseId:l.baseId||null,pieces:l.pieces||[],kind:l.kind||'ia',fav:!!l.fav,worn:l.worn||[],
       video:l.video||null,mime:l.mime||'',dur:l.dur||0,fixAspect:l.fixAspect||null,outfitId:l.outfitId||null};
   }
-  function saveLookRec(l){ return dbPut('looks',lookRecord(l)); }
+  function saveLookRec(l){ return dbPutFresh('looks',lookRecord(l),l); }
   function addLook(rec){
-    state.looks.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec));
-    saveLookRec(rec); askPersist();
+    const item=Object.assign({url:URL.createObjectURL(rec.blob)},rec);
+    state.looks.push(item);
+    saveLookRec(item); askPersist();
     if(state.tab==='looks') renderLooks();
   }
   const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['video','Vidéos'],['ia','IA'],['live','Direct IA'],['filtre','Filtre'],['flat','À plat']];
@@ -4410,7 +4560,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       for(const l of j.looks||[]){
         if(!l.data || state.looks.some(x=>x.id===l.id)){ skipped++; continue; }
         const rec=lookRecord(Object.assign({},l,{blob:await blobOf(l.data),baseBlob:await blobOf(l.baseData),video:await blobOf(l.videoData)}));
-        state.looks.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec)); await saveLookRec(rec); added++;
+        const item=Object.assign({url:URL.createObjectURL(rec.blob)},rec); state.looks.push(item); await saveLookRec(item); added++;
       }
     }catch(e){ toast('Import interrompu : '+errText(e)); }
     state.photos.sort((a,b)=>a.time-b.time); state.looks.sort((a,b)=>a.time-b.time); state.outfits.sort((a,b)=>a.created-b.created);
@@ -4424,7 +4574,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ['Comment bien cadrer ?','Pose le téléphone debout, à hauteur de hanche, contre un meuble, et recule de 2 à 3 m. Le coach de cadrage te dit d\'avancer, de reculer ou de te décaler ; quand il affiche « Cadrage parfait », tu es en entier.'],
       ['Prendre une photo sans toucher le téléphone','Active « Main levée » sous le retardateur, puis lève une main au-dessus de ta tête pendant une seconde : le compte à rebours démarre (3 s si le retardateur est sur « Sans »).'],
       ['L\'effet filtre','Touche « Tenue en filtre » : les pièces de tes tenues se posent sur toi en direct, gratuitement, dans le téléphone. C\'est un effet de type filtre (pas de vrais plis ni d\'ombres) ; pour un rendu réaliste, prends la photo puis touche « Rendu IA ». Les pièces sont détourées automatiquement la première fois.'],
-      ['Changer de tenue d\'un geste','Avec l\'effet filtre ou le Direct IA, lève une main à hauteur de poitrine (au-dessus du coude) et balaie franchement l\'air, sur au moins un tiers de l\'image : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Une grande flèche confirme le geste. Le retour de la main est ignoré : marque un temps d\'arrêt ou baisse la main avant le geste suivant. Les flèches en haut de l\'image marchent aussi. Reste en entier dans l\'image pour que tes mains soient vues.'],
+      ['Changer de tenue d\'un geste','Avec l\'effet filtre ou le Direct IA, lève une main à hauteur de poitrine (au-dessus du coude) et balaie franchement l\'air, sur au moins un tiers de l\'image : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Une grande flèche confirme le geste. Le retour de la main est ignoré : marque un temps d\'arrêt ou baisse la main avant le geste suivant. Les flèches en haut de l\'image marchent aussi, et en touchant la miniature de la tenue tu vois toutes tes tenues en vignettes pour choisir directement. Reste en entier dans l\'image pour que tes mains soient vues.'],
       ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. Rien n\'est facturé au démarrage : après l\'appui sur « Direct IA », l\'app attend de te voir en entier une seconde, lance ton retardateur avec les bips, et ne se connecte qu\'ensuite. Pour arrêter sans toucher le téléphone, lève les deux mains au-dessus de la tête une seconde (une seule main levée prend une photo). L\'app s\'arrête aussi seule au bout de la durée choisie (réglages), 3 s après ta sortie de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper : la tenue est envoyée une demi-seconde après le dernier geste. L\'image est envoyée à la verticale quand le téléphone est droit ; recule jusqu\'à être vu de la tête aux pieds. Chaque tenue essayée est enregistrée en vidéo (Looks → Vidéos, et sur la fiche du vêtement) : pas besoin de la refaire.'],
       ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
       ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
@@ -4573,10 +4723,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ['brand','size','material','price','link','notes'].forEach(k=>{ if(g[k]===undefined){ g[k]=''; changed=true; } });
       ['seasons','styles'].forEach(k=>{ if(!Array.isArray(g[k])){ g[k]=[]; changed=true; } });
       const item=Object.assign({},g,{fav:!!g.fav,created:g.created||Date.now(),url:URL.createObjectURL(g.blob),backUrl:g.backBlob?URL.createObjectURL(g.backBlob):null});
-      state.garments.push(item);
+      state.garments.push(item); homeRec('garments',g,item);
       if(changed) saveGarment(item);
     }
-    ps.sort((a,b)=>a.time-b.time).forEach(p=>{ if(p.blob) state.photos.push({id:p.id,blob:p.blob,time:p.time,back:!!p.back,url:URL.createObjectURL(p.blob)}); });
+    ps.sort((a,b)=>a.time-b.time).forEach(p=>{ if(p.blob){ const it={id:p.id,blob:p.blob,time:p.time,back:!!p.back,url:URL.createObjectURL(p.blob)}; state.photos.push(it); homeRec('photos',p,it); } });
     // Anciens essais (version 2) repris comme looks.
     for(const t of ts){
       if(!t.blob) continue;
@@ -4585,13 +4735,14 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ls.push(look); await dbPut('looks',look); dbDelete('tries',t.id);
     }
     ls.sort((a,b)=>a.time-b.time).forEach(l=>{
-      if(l.blob) state.looks.push(Object.assign({url:URL.createObjectURL(l.blob)},l,{kind:l.kind||'ia',fav:!!l.fav,worn:Array.isArray(l.worn)?l.worn:[]}));
+      if(l.blob){ const it=Object.assign({url:URL.createObjectURL(l.blob)},l,{kind:l.kind||'ia',fav:!!l.fav,worn:Array.isArray(l.worn)?l.worn:[]}); state.looks.push(it); homeRec('looks',l,it); }
     });
     const sess=meta.find(m=>m.id==='session');
     if(sess && sess.base && photoById(sess.photoId)){
       state.cab.photoId=sess.photoId;
       state.cab.session={photoId:sess.photoId,base:{blob:sess.base,url:URL.createObjectURL(sess.base),w:sess.w||0,h:sess.h||0},
         steps:(sess.steps||[]).filter(s=>s.blob).map(s=>({slot:s.slot,garmentId:s.garmentId,engine:s.engine,want:s.want||s.engine,face:s.face||'front',blob:s.blob,url:URL.createObjectURL(s.blob)}))};
+      homeRec('meta',sess,state.cab.session);
       sess.steps && sess.steps.forEach(s=>{ if(garmentById(s.garmentId)) state.cab.picks[s.slot]=s.garmentId; });
     }
     renderPhotos(); renderDressing(); renderCabine(); renderLooks();
