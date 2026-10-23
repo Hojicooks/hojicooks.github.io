@@ -1,6 +1,9 @@
-// Cabine Miroir : réseau d'abord, copie locale si le téléphone est hors ligne.
+// Cabine Miroir : réseau d'abord pour l'app, copie locale si le téléphone est hors ligne.
 // Change le numéro de version après une mise à jour pour vider l'ancienne copie.
-const CACHE = 'cabine-v5';
+const CACHE = 'cabine-v6';
+// Bibliothèques et modèles en version figée (client Gradio, détection du corps) :
+// gardés dans un cache à part, qui survit aux mises à jour, pour ne pas les retélécharger.
+const CDN_CACHE = 'cabine-cdn-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -20,15 +23,33 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== CDN_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
+
+function isPinnedCdn(url) {
+  if (url.hostname === 'cdn.jsdelivr.net') return /@\d+\.\d+\.\d+/.test(url.pathname);
+  return url.hostname === 'storage.googleapis.com' && url.pathname.startsWith('/mediapipe-models/');
+}
 
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+
+  if (isPinnedCdn(url)) {
+    event.respondWith(
+      caches.open(CDN_CACHE).then(cache =>
+        cache.match(req).then(hit => hit || fetch(req).then(res => {
+          if (res && res.ok) cache.put(req, res.clone()).catch(() => {});
+          return res;
+        }))
+      )
+    );
+    return;
+  }
+
   const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (url.origin !== self.location.origin && !isFont) return;
 

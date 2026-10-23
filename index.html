@@ -6,6 +6,10 @@
 <title>Cabine Miroir</title>
 <meta name="description" content="Miroir selfie, dressing détaillé et cabine d'essayage IA pour composer tes tenues.">
 <meta name="theme-color" content="#111214">
+<script>
+/* Thème appliqué avant l'affichage, pour éviter un flash de la mauvaise couleur. */
+(function(){try{var g=function(k,d){var v=localStorage.getItem('cabine.'+k);return v===null?d:JSON.parse(v);};var t=g('theme','dark');if(t==='auto')t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';var r=document.documentElement;r.setAttribute('data-theme',t);r.setAttribute('data-accent',g('accent','or')||'or');if(g('bigText',false))r.classList.add('big');document.querySelector('meta[name="theme-color"]').setAttribute('content',t==='light'?'#f4f1ea':'#111214');}catch(e){}})();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,6 +32,7 @@
   --muted:#a7a49b;
   --tape:#e8c35a;
   --tape-ink:#1b1606;
+  --tape-text:var(--tape);
   --sheet:#dcd6c8;
   --live:#f08c7c;
   --ok:#8fcf9a;
@@ -41,6 +46,29 @@
   padding-top:env(safe-area-inset-top,0px);
   background:var(--ink);
 }
+/* Thème clair et couleurs d'accent (choisis dans les réglages). */
+:root[data-theme="light"]{
+  color-scheme: light;
+  --ink:#f4f1ea;
+  --panel:#ffffff;
+  --raise:#ece8df;
+  --line:#d8d2c5;
+  --text:#1c1b18;
+  --muted:#6a665d;
+  --sheet:#e7e1d3;
+  --live:#c4513d;
+  --ok:#2e8547;
+  --scrim:rgba(250,248,243,.97);
+  --shade:rgba(20,18,14,.4);
+  --tape-text:#8a6a12;
+}
+:root[data-accent="corail"]{--tape:#f08c7c;--tape-ink:#2b0f0a}
+:root[data-accent="menthe"]{--tape:#7fd1b0;--tape-ink:#06261a}
+:root[data-accent="lilas"]{--tape:#b9a3f0;--tape-ink:#1b1238}
+:root[data-theme="light"][data-accent="corail"]{--tape-text:#b2442f}
+:root[data-theme="light"][data-accent="menthe"]{--tape-text:#1f7a57}
+:root[data-theme="light"][data-accent="lilas"]{--tape-text:#5f45b0}
+html.big{zoom:1.1}
 body{
   margin:0;background:var(--ink);color:var(--text);
   font-family:var(--f-body);font-size:15px;line-height:1.45;
@@ -53,8 +81,8 @@ body{
 [hidden]{display:none!important}
 img{max-width:100%}
 button,input,textarea{font:inherit;color:inherit}
-a{color:var(--tape)}
-:focus-visible{outline:2px solid var(--tape);outline-offset:2px}
+a{color:var(--tape-text)}
+:focus-visible{outline:2px solid var(--tape-text);outline-offset:2px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;margin:-1px}
 
 .app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
@@ -71,7 +99,7 @@ a{color:var(--tape)}
 .chip[data-mode="live"] .dot{background:var(--live);animation:pulse 1.6s ease-in-out infinite}
 .chip[data-mode="photo"] .dot{background:var(--tape)}
 .toggle{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
-.toggle[aria-pressed="true"]{color:var(--tape);border-color:var(--tape)}
+.toggle[aria-pressed="true"]{color:var(--tape-text);border-color:var(--tape-text)}
 .icon-btn{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;padding:0}
 
 /* Boutons */
@@ -94,7 +122,7 @@ a{color:var(--tape)}
 .stage video,.stage .still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:100%}
 .stage video{transform:scaleX(-1)}
 .state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;text-align:center}
-.state svg{color:var(--tape)}
+.state svg{color:var(--tape-text)}
 .state h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:34px;text-transform:uppercase;letter-spacing:.03em;line-height:1;text-wrap:balance}
 .state p{margin:0;color:var(--muted);max-width:32ch;text-wrap:pretty}
 .guide{position:absolute;inset:0;pointer-events:none}
@@ -134,7 +162,7 @@ a{color:var(--tape)}
 .head-actions{display:flex;gap:8px;flex-wrap:wrap}
 .note{margin:0;color:var(--muted);font-size:13px;max-width:62ch}
 .empty{margin:0;border:1px dashed var(--line);border-radius:12px;padding:18px;color:var(--muted);font-size:14px;text-align:center;text-wrap:balance}
-.warn{margin:0;color:var(--tape);font-size:13px}
+.warn{margin:0;color:var(--tape-text);font-size:13px}
 
 /* Grilles */
 .shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -159,7 +187,7 @@ a{color:var(--tape)}
 .row-label{font-size:11.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600;flex:none;align-self:center;margin-right:2px}
 .swatch{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
 .swatch[aria-pressed="true"],.swatch[aria-checked="true"]{border-color:var(--tape);box-shadow:0 0 0 2px var(--ink) inset}
-.closet{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.closet{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:10px}
 .gcard{display:flex;flex-direction:column;gap:5px;padding:0;border:0;background:none;text-align:left;cursor:pointer;min-width:0}
 .gcard .pic{position:relative;width:100%;aspect-ratio:4/5;border-radius:12px;background:var(--sheet);overflow:hidden;border:2px solid transparent}
 .gcard[aria-pressed="true"] .pic{border-color:var(--tape)}
@@ -229,7 +257,7 @@ a{color:var(--tape)}
   padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
 .tabs-inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;border-radius:12px;position:relative}
-.tab[aria-current="page"]{color:var(--tape)}
+.tab[aria-current="page"]{color:var(--tape-text)}
 .tab .badge{position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--tape)}
 
 /* Superpositions */
@@ -269,15 +297,121 @@ a{color:var(--tape)}
 .inline input{flex:1;min-width:0}
 .ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--text);font-size:14px}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-.toast{position:fixed;left:50%;bottom:calc(var(--tabs-h) + 22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--text);color:var(--ink);font-weight:600;font-size:14px;padding:10px 16px;border-radius:999px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 24px var(--shade)}
+.toast{position:fixed;left:50%;bottom:calc(var(--tabs-h) + 22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--text);color:var(--ink);font-weight:600;font-size:14px;padding:10px 16px;border-radius:999px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 24px var(--shade);display:flex;align-items:center;gap:14px;width:max-content}
+.toast-btn{flex:none;border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:4px 2px;cursor:pointer}
+.txt{min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--ink);color:var(--text);padding:0 12px;min-width:0}
+
+/* Viseur : options, coach, plein écran */
+.stage-top{position:absolute;top:10px;left:10px;right:10px;z-index:4;display:flex;align-items:flex-start;gap:8px;pointer-events:none}
+.stage-top>*{pointer-events:auto}
+.stage-top .icon-btn{margin-left:auto}
+.stage .chip{background:var(--scrim);border-color:transparent}
+.stage .icon-btn{width:40px;height:40px;background:var(--scrim);color:var(--text);border-color:transparent}
+.stage.noflip video{transform:none}
+.grid3{position:absolute;inset:0;pointer-events:none;z-index:1}
+.grid3::before,.grid3::after{content:"";position:absolute;border:0 solid rgba(255,255,255,.45)}
+.grid3::before{top:0;bottom:0;left:33.333%;right:33.333%;border-left-width:1px;border-right-width:1px}
+.grid3::after{left:0;right:0;top:33.333%;bottom:33.333%;border-top-width:1px;border-bottom-width:1px}
+.ring{position:absolute;inset:0;z-index:2;border:clamp(22px,8vw,60px) solid #fff7ea;border-radius:inherit;box-shadow:inset 0 0 50px 12px rgba(255,247,234,.55);pointer-events:none}
+.coach{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100% - 28px);padding:8px 14px;border-radius:999px;background:var(--scrim);color:var(--text);font-size:13.5px;font-weight:600;line-height:1.3;box-shadow:0 4px 18px var(--shade);pointer-events:none}
+.coach i{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.coach[data-level="ok"] i{background:var(--ok)}
+.coach[data-level="warn"] i{background:var(--tape)}
+.coach[data-level="wait"] i{background:var(--tape);animation:pulse 1s ease-in-out infinite}
+.stage.coach-ok .guide .mark{border-color:var(--ok)}
+.stage.coach-ok .guide .mark span{color:var(--ok)}
+.imm-bar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;
+  padding:18px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(0,0,0,.6),rgba(0,0,0,0))}
+.imm-btn{justify-self:start;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.55);background:rgba(0,0,0,.35);color:#fff;font-weight:600;font-size:13.5px;cursor:pointer;font-variant-numeric:tabular-nums}
+.imm-btn.end{justify-self:end}
+.imm-bar .shutter{border-color:#fff}
+.imm-bar .shutter i{background:#fff}
+.imm-bar .shutter.counting i{background:var(--tape)}
+body.immersive{overflow:hidden}
+body.immersive .stage{position:fixed;inset:0;z-index:22;height:auto;min-height:0;border-radius:0;border:0}
+body.immersive .stage-top{top:calc(10px + env(safe-area-inset-top,0px))}
+body.immersive #fullBtn{display:none}
+body.immersive .coach{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
+.quick{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.opt-list{display:flex;flex-direction:column}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:12px 2px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer}
+.opt:last-child{border-bottom:0}
+.opt b{display:block;font-size:14.5px;font-weight:600}
+.opt small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.35}
+.switch{position:relative;flex:none;width:46px;height:28px;border-radius:999px;background:var(--raise);border:1px solid var(--line);transition:background .15s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.opt[aria-checked="true"] .switch{background:var(--tape);border-color:var(--tape)}
+.opt[aria-checked="true"] .switch::after{transform:translateX(18px);background:var(--tape-ink)}
+
+/* Dressing : statistiques et tri */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.stat{display:flex;flex-direction:column;gap:3px;padding:10px 8px;border-radius:12px;background:var(--panel);border:1px solid var(--line);text-align:left;min-width:0;color:var(--text)}
+button.stat{cursor:pointer}
+.stat[aria-pressed="true"]{border-color:var(--tape-text)}
+.stat b{font-family:var(--f-display);font-weight:800;font-size:21px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat span{font-size:11px;color:var(--muted);line-height:1.2}
+.head-actions{align-items:center}
+.sort{min-height:34px;max-width:100%;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:0 10px;font-size:13px;font-weight:600}
+
+/* Cabine : idées, météo, harmonie */
+.step-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.wx{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-size:13px;color:var(--muted)}
+.wx>span{flex:1;min-width:0}
+.wx b{color:var(--text);font-weight:600}
+.wx button{flex:none}
+.idea{margin:0;padding:10px 12px;border-radius:12px;border:1px dashed var(--tape-text);font-size:13.5px;text-wrap:pretty}
+.harmony{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.harmony .dots{display:flex;flex:none}
+.harmony .dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink);box-shadow:0 0 0 1px var(--line);margin-left:-4px}
+.harmony .dots i:first-child{margin-left:0}
+.harmony b{color:var(--text)}
+.harmony[data-level="good"] b{color:var(--ok)}
+.harmony[data-level="warn"] b{color:var(--tape-text)}
+.results{display:flex;flex-direction:column;gap:6px}
+.results .btn{justify-content:flex-start;text-align:left}
+.results p{margin:0;color:var(--muted);font-size:13.5px}
+
+/* Looks et visionneuse */
+.kind{position:absolute;top:6px;left:6px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--scrim);color:var(--text);padding:2px 6px;border-radius:5px}
+.shots .fav{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--scrim);color:var(--tape-text);display:grid;place-items:center;font-size:12px}
+.viewer figure,.overlay figure{position:relative;flex:1;min-height:0;margin:0;display:flex;align-items:center;justify-content:center;touch-action:pan-y}
+.overlay figure img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:var(--scrim);color:var(--text);font-size:26px;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 12px var(--shade);padding:0 0 3px}
+.nav.prev{left:2px}
+.nav.next{right:2px}
+.nav:disabled{opacity:0;pointer-events:none}
+.look-info{display:flex;flex-direction:column;gap:2px;align-items:center}
+.name-input{width:min(100%,420px);text-align:center;font-weight:600;font-size:16px;background:transparent;border:1px dashed var(--line);border-radius:10px;padding:6px 10px;color:var(--text)}
+.name-input:focus{outline:none;border-style:solid;border-color:var(--tape-text);background:var(--panel)}
+#viewerFav[aria-pressed="true"]{color:var(--tape-text);border-color:var(--tape-text)}
+
+/* Aide et premier lancement */
+.faq{display:flex;flex-direction:column;gap:6px}
+.faq details{border:1px solid var(--line);border-radius:12px;background:var(--ink);padding:0 12px}
+.faq summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:14.5px;list-style:none;display:flex;justify-content:space-between;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--muted);font-weight:600}
+.faq details[open] summary::after{content:"–"}
+.faq p{margin:0 0 12px;color:var(--muted);font-size:14px}
+.onboard{position:fixed;inset:0;z-index:45;background:var(--ink);display:flex;align-items:center;justify-content:center;overflow-y:auto;
+  padding:calc(env(safe-area-inset-top,0px) + 20px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 20px) max(20px,env(safe-area-inset-left,0px))}
+.ob-card{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px}
+.ob-art{width:128px;height:128px;border-radius:36px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;color:var(--tape-text)}
+.ob-card h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:36px;line-height:1;text-transform:uppercase;letter-spacing:.03em;text-wrap:balance}
+.ob-card p{margin:0;color:var(--muted);max-width:34ch;text-wrap:pretty}
+.ob-dots{display:flex;gap:6px;align-items:center}
+.ob-dots i{width:7px;height:7px;border-radius:4px;background:var(--line);transition:width .2s}
+.ob-dots i.on{background:var(--tape);width:20px}
+.ob-actions{display:flex;justify-content:space-between;align-items:center;width:100%;gap:12px;margin-top:6px}
+.seg.three{grid-template-columns:repeat(3,1fr)}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes tick{from{transform:scale(1.25);opacity:.2}to{transform:scale(1);opacity:1}}
 @keyframes flash{from{opacity:.85}to{opacity:0}}
 @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 @media (prefers-reduced-motion:reduce){
-  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i{animation:none}
-  .shutter i{transition:none}
+  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i{animation:none}
+  .shutter i,.switch,.switch::after,.ob-dots i{transition:none}
 }
 </style>
 </head>
@@ -286,8 +420,9 @@ a{color:var(--tape)}
   <header class="top">
     <h1 class="brand">Cabine <small>Miroir</small></h1>
     <div class="top-actions">
-      <span class="chip" id="modeChip" data-mode="off"><span class="dot"></span><span id="modeText">Caméra coupée</span></span>
-      <button class="toggle" id="guideBtn" type="button" aria-pressed="true">Repères</button>
+      <button class="icon-btn" id="openHelp" type="button" aria-label="Aide">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg>
+      </button>
       <button class="icon-btn" id="openSettings" type="button" aria-label="Réglages">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
       </button>
@@ -310,6 +445,7 @@ a{color:var(--tape)}
     <div class="stage" id="stage">
       <video id="video" playsinline muted autoplay hidden></video>
       <img class="still" id="still" alt="Dernière photo prise" hidden>
+      <div class="grid3" id="grid3" hidden aria-hidden="true"></div>
       <div class="state" id="startState">
         <svg width="74" height="96" viewBox="0 0 74 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
           <path d="M2 14V2h12M60 2h12v12M72 82v12H60M14 94H2V82"/>
@@ -331,6 +467,19 @@ a{color:var(--tape)}
       </div>
       <div class="count" id="count" aria-live="assertive"></div>
       <div class="flash" id="flash"></div>
+      <div class="ring" id="ring" hidden aria-hidden="true"></div>
+      <div class="stage-top">
+        <span class="chip" id="modeChip" data-mode="off" hidden><span class="dot"></span><span id="modeText">Caméra coupée</span></span>
+        <button class="icon-btn" id="fullBtn" type="button" aria-label="Miroir en plein écran" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+      </div>
+      <div class="coach" id="coach" role="status" aria-live="polite" hidden><i></i><span id="coachText"></span></div>
+      <div class="imm-bar" id="immBar" hidden>
+        <button class="imm-btn" id="immTimer" type="button" aria-label="Changer le retardateur">5 s</button>
+        <button class="shutter" id="immShutter" type="button" aria-label="Déclencher"><i></i></button>
+        <button class="imm-btn end" id="immExit" type="button">Quitter</button>
+      </div>
     </div>
 
     <div class="controls">
@@ -339,6 +488,12 @@ a{color:var(--tape)}
         <button type="button" role="radio" data-s="3" aria-checked="false">3 s</button>
         <button type="button" role="radio" data-s="5" aria-checked="true">5 s</button>
         <button type="button" role="radio" data-s="10" aria-checked="false">10 s</button>
+      </div>
+      <div class="quick" id="quickRow" hidden>
+        <button class="toggle" type="button" data-opt="coach" aria-pressed="false">Coach</button>
+        <button class="toggle" type="button" data-opt="hand" aria-pressed="false">Main levée</button>
+        <button class="toggle" type="button" data-opt="ring" aria-pressed="false">Lumière</button>
+        <button class="toggle" type="button" id="mirrorOpts">Plus d'options</button>
       </div>
       <div class="rail">
         <button class="last" id="lastBtn" type="button" aria-label="Voir la dernière photo" disabled></button>
@@ -356,7 +511,7 @@ a{color:var(--tape)}
       </div>
       <div class="shots" id="shots"></div>
       <p class="empty" id="shotsEmpty">Aucune photo pour l'instant. Choisis un retardateur, appuie sur le déclencheur et recule.</p>
-      <p class="note">Pour habiller une photo, ouvre-la puis touche « Habiller ». Les pieds doivent être visibles pour changer le bas ou les chaussures.</p>
+      <p class="note">Pour habiller une photo, ouvre-la puis touche « Habiller ». Les pieds doivent être visibles pour changer le bas ou les chaussures : le plein écran (en haut à droite du miroir) aide à cadrer en pied.</p>
     </div>
   </section>
 
@@ -369,6 +524,7 @@ a{color:var(--tape)}
         <button class="btn small" id="addGarment" type="button">+ Ajouter</button>
       </div>
     </div>
+    <div class="stats" id="closetStats" hidden></div>
     <div class="search">
       <label class="sr-only" for="q">Rechercher un vêtement</label>
       <input id="q" type="search" placeholder="Nom, marque, matière, note…" autocomplete="off" enterkeyhint="search">
@@ -384,7 +540,21 @@ a{color:var(--tape)}
         <div class="chips" id="brandFilter" aria-label="Marque"></div>
       </div>
     </div>
-    <div class="section-head"><span id="closetCount"></span><button class="toggle" id="resetFilters" type="button" hidden>Effacer les filtres</button></div>
+    <div class="section-head">
+      <span id="closetCount"></span>
+      <div class="head-actions">
+        <button class="toggle" id="resetFilters" type="button" hidden>Effacer les filtres</button>
+        <label class="sr-only" for="sortSel">Trier les vêtements</label>
+        <select class="sort" id="sortSel">
+          <option value="recent">Plus récents</option>
+          <option value="fav">Favoris d'abord</option>
+          <option value="color">Par couleur</option>
+          <option value="most">Plus portés</option>
+          <option value="least">Moins portés</option>
+        </select>
+        <button class="toggle" id="colsBtn" type="button">3 par ligne</button>
+      </div>
+    </div>
     <div class="closet" id="closet"></div>
     <p class="empty" id="closetEmpty" hidden></p>
     <p class="note">Pour de bons essais : un vêtement par photo, posé à plat, de face, bien éclairé. La couleur est détectée toute seule ; touche un vêtement pour compléter sa fiche.</p>
@@ -408,9 +578,19 @@ a{color:var(--tape)}
     </div>
 
     <div class="step">
-      <h3 class="step-title"><b>2</b>Ta tenue</h3>
+      <div class="step-head">
+        <h3 class="step-title"><b>2</b>Ta tenue</h3>
+        <button class="btn small" id="inspire" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>
+          Inspire-moi
+        </button>
+      </div>
+      <div class="wx" id="wx"></div>
+      <p class="idea" id="idea" role="status" hidden></p>
       <div class="slots" id="slots"></div>
-      <p class="note">Le cadenas garde le rendu d'une pièce quand tu demandes une variante. Les pièces s'appliquent dans l'ordre bas, chaussures, puis haut : changer seulement le haut ne coûte qu'une génération.</p>
+      <div class="harmony" id="harmony" hidden></div>
+      <button class="btn ghost small" id="flatBtn" type="button" disabled>Aperçu à plat · instantané, sans quota</button>
+      <p class="note">Le cadenas garde une pièce : son rendu quand tu demandes une variante, et la pièce elle-même quand tu demandes une idée. Les pièces s'appliquent dans l'ordre bas, chaussures, puis haut : changer seulement le haut ne coûte qu'une génération.</p>
     </div>
 
     <div class="step">
@@ -469,6 +649,7 @@ a{color:var(--tape)}
       <button class="toggle" id="compareMode" type="button" aria-pressed="false">Comparer</button>
     </div>
     <p class="note" id="compareHint" hidden>Touche deux looks pour les mettre côte à côte.</p>
+    <div class="chips" id="looksFilter" aria-label="Filtrer les looks" hidden></div>
     <div class="shots" id="looks"></div>
     <p class="empty" id="looksEmpty">Tes looks enregistrés depuis la cabine apparaîtront ici.</p>
   </section>
@@ -502,14 +683,33 @@ a{color:var(--tape)}
     <p id="viewerMeta"></p>
     <button class="toggle" id="viewerClose" type="button">Fermer</button>
   </div>
-  <figure><img id="viewerImg" alt=""></figure>
-  <p class="pieces" id="viewerPieces" hidden></p>
+  <figure id="viewerFig">
+    <img id="viewerImg" alt="">
+    <button class="nav prev" id="viewerPrev" type="button" aria-label="Précédente">‹</button>
+    <button class="nav next" id="viewerNext" type="button" aria-label="Suivante">›</button>
+  </figure>
+  <div class="look-info" id="lookInfo" hidden>
+    <label class="sr-only" for="viewerName">Nom du look</label>
+    <input class="name-input" id="viewerName" type="text" maxlength="60" autocomplete="off" enterkeyhint="done">
+    <p class="pieces" id="viewerPieces"></p>
+    <p class="pieces" id="viewerWorn"></p>
+  </div>
   <div class="viewer-bar">
-    <button class="btn ghost small" id="viewerPrev" type="button">Précédente</button>
     <button class="btn small" id="viewerAction" type="button">Habiller</button>
-    <button class="btn ghost small" id="viewerSave" type="button">Dans ma galerie</button>
-    <button class="btn ghost small" id="viewerNext" type="button">Suivante</button>
+    <button class="btn ghost small" id="viewerWornBtn" type="button" aria-pressed="false" hidden>Porté aujourd'hui</button>
+    <button class="btn ghost small" id="viewerFav" type="button" aria-pressed="false" aria-label="Ajouter aux favoris" hidden>♡</button>
+    <button class="btn ghost small" id="viewerSave" type="button">Partager</button>
     <button class="btn danger small" id="viewerDelete" type="button">Supprimer</button>
+  </div>
+</div>
+
+<!-- Aperçu à plat -->
+<div class="overlay" id="flatOverlay" role="dialog" aria-modal="true" aria-label="Aperçu à plat" hidden>
+  <div class="viewer-top"><p><b>Aperçu à plat</b> · instantané, sans IA</p><button class="toggle" id="flatClose" type="button">Fermer</button></div>
+  <figure><img id="flatImg" alt="Tenue composée à plat"></figure>
+  <div class="viewer-bar">
+    <button class="btn small" id="flatSave" type="button">Enregistrer le look</button>
+    <button class="btn ghost small" id="flatShare" type="button">Partager</button>
   </div>
 </div>
 
@@ -549,6 +749,7 @@ a{color:var(--tape)}
       <span class="label" id="sColorLabel">Couleur</span>
       <div class="swatches" id="sColors" role="radiogroup" aria-labelledby="sColorLabel"></div>
     </div>
+    <p class="note" id="sAuto" hidden>Catégorie et couleur devinées automatiquement : touche-les pour corriger si besoin.</p>
     <div class="group">
       <h3>Détails</h3>
       <div class="grid2">
@@ -627,6 +828,28 @@ a{color:var(--tape)}
       <button class="toggle" id="settingsClose" type="button">Fermer</button>
     </div>
     <div class="group">
+      <h3>Apparence</h3>
+      <div class="field">
+        <span class="label" id="themeLabel">Thème</span>
+        <div class="seg three" id="themeSeg" role="radiogroup" aria-labelledby="themeLabel">
+          <button type="button" role="radio" data-t="auto">Auto</button>
+          <button type="button" role="radio" data-t="dark">Sombre</button>
+          <button type="button" role="radio" data-t="light">Clair</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label" id="accentLabel">Couleur d'accent</span>
+        <div class="swatches" id="accentRow" role="radiogroup" aria-labelledby="accentLabel"></div>
+      </div>
+      <div class="field">
+        <span class="label" id="textLabel">Taille du texte</span>
+        <div class="seg" id="textSeg" role="radiogroup" aria-labelledby="textLabel">
+          <button type="button" role="radio" data-big="0">Normale</button>
+          <button type="button" role="radio" data-big="1">Grande</button>
+        </div>
+      </div>
+    </div>
+    <div class="group">
       <h3>Qualité du rendu</h3>
       <div class="seg" id="qualitySeg" role="radiogroup" aria-label="Qualité">
         <button type="button" role="radio" data-q="standard">Standard</button>
@@ -664,6 +887,81 @@ a{color:var(--tape)}
       <h3>Confidentialité et stockage</h3>
       <p class="note">Tes photos, ton dressing et tes looks restent dans ce téléphone. Seul un rendu envoie la photo choisie et les vêtements concernés à la démo publique qui les traite.</p>
       <p class="note" id="storageInfo"></p>
+    </div>
+    <div class="group">
+      <h3>Sauvegarde</h3>
+      <p class="note">Tout est rangé dans ce téléphone : exporte une sauvegarde de temps en temps, ou pour passer sur un autre appareil. Le jeton Hugging Face n'y est pas inclus.</p>
+      <div class="row">
+        <button class="btn small" id="exportBtn" type="button">Exporter</button>
+        <button class="btn ghost small" id="importBtn" type="button">Importer</button>
+      </div>
+      <input class="sr-only" type="file" id="importFile" accept=".json,application/json" tabindex="-1" aria-hidden="true">
+    </div>
+    <div class="group">
+      <h3>Aide</h3>
+      <div class="row">
+        <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
+        <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
+      </div>
+      <p class="note">Cabine Miroir · version 6</p>
+    </div>
+  </div>
+</div>
+
+<!-- Options du miroir -->
+<div class="sheet-wrap" id="mirrorSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mirrorTitle">
+    <div class="sheet-head">
+      <h2 id="mirrorTitle">Options du miroir</h2>
+      <button class="toggle" id="mirrorClose" type="button">Fermer</button>
+    </div>
+    <div class="opt-list" id="optList"></div>
+  </div>
+</div>
+
+<!-- Aide de l'écran en cours -->
+<div class="sheet-wrap" id="helpSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="sheet-head">
+      <h2 id="helpTitle">Aide</h2>
+      <button class="toggle" id="helpClose" type="button">Fermer</button>
+    </div>
+    <div class="faq" id="helpBody"></div>
+    <button class="btn ghost wide" id="helpGuide" type="button">Revoir le guide de démarrage</button>
+  </div>
+</div>
+
+<!-- Ville pour la météo -->
+<div class="sheet-wrap" id="citySheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cityTitle">
+    <div class="sheet-head">
+      <h2 id="cityTitle">Ta ville</h2>
+      <button class="toggle" id="cityClose" type="button">Fermer</button>
+    </div>
+    <p class="note">La météo du jour aide « Inspire-moi » à choisir des pièces adaptées. Seul le nom de la ville, ou ta position, est envoyé au service gratuit Open-Meteo.</p>
+    <form class="inline" id="cityForm">
+      <label class="sr-only" for="cityQ">Ville</label>
+      <input class="txt" id="cityQ" type="search" placeholder="Paris, Lyon, Bruxelles…" autocomplete="off" enterkeyhint="search">
+      <button class="btn small" type="submit">Chercher</button>
+    </form>
+    <div class="results" id="cityResults"></div>
+    <div class="row">
+      <button class="btn ghost small" id="cityGeo" type="button">Utiliser ma position</button>
+      <button class="btn ghost small" id="cityRemove" type="button">Retirer la ville</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guide de démarrage -->
+<div class="onboard" id="onboard" role="dialog" aria-modal="true" aria-labelledby="obTitle" hidden>
+  <div class="ob-card">
+    <div class="ob-art" id="obArt" aria-hidden="true"></div>
+    <h2 id="obTitle"></h2>
+    <p id="obText"></p>
+    <div class="ob-dots" id="obDots" aria-hidden="true"></div>
+    <div class="ob-actions">
+      <button class="toggle" id="obSkip" type="button">Passer</button>
+      <button class="btn" id="obNext" type="button">Suivant</button>
     </div>
   </div>
 </div>
@@ -888,11 +1186,13 @@ a{color:var(--tape)}
 
   /* ================= ÉTAT ================= */
   const state={
-    tab:'miroir', mode:'off', stream:null, timer:pref.get('timer',5), countdown:null, guideOn:pref.get('guide',true),
+    tab:'miroir', mode:'off', stream:null, timer:pref.get('timer',5), countdown:null,
     wake:null, pending:false,
     photos:[], garments:[], looks:[],
-    filter:{q:'',cat:'all',color:null,fav:false,season:null,style:null,brand:null},
+    filter:{q:'',cat:'all',color:null,fav:false,season:null,style:null,brand:null,unworn:false},
     moreFilters:false,
+    dress:{sort:pref.get('sort','recent'),cols:pref.get('cols',3)},
+    looksFilter:'all',
     editing:null, confirmGarmentDelete:false,
     viewer:{list:'photos',index:-1,confirm:false},
     compareMode:false, compareSel:[],
@@ -906,10 +1206,16 @@ a{color:var(--tape)}
       engine:pref.get('engine','specialise'),
       session:null, // {photoId, base:{blob,url}, steps:[{slot,garmentId,engine,blob,url}]}
       view:-1,
-      job:null, error:null
+      job:null, error:null,
+      idea:null, lastIdea:'' // dernière suggestion « Inspire-moi »
     }
   };
   if(![0,3,5,10].includes(state.timer)) state.timer=5;
+  if(![2,3,4].includes(state.dress.cols)) state.dress.cols=3;
+  // Options du miroir, gardées dans le téléphone.
+  const opt=Object.assign({guide:pref.get('guide',true),grid:false,mirror:true,ring:false,coach:true,hand:false,sound:true,burst:false},pref.get('mirrorOpts',{}));
+  function setOpt(k,v){ opt[k]=v; pref.set('mirrorOpts',opt); }
+  if(window.__cabineTest) window.__cabineState=state; // tests automatisés uniquement
 
   function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
   function fmtDate(t){
@@ -917,11 +1223,26 @@ a{color:var(--tape)}
     return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   }
   function fmtShort(t){ return new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }
-  let toastTimer=null;
-  function toast(msg){
-    const t=$('toast'); t.textContent=msg; t.hidden=false;
-    clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ t.hidden=true; },2600);
+  function dayKey(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function fmtDay(k){ const p=String(k).split('-').map(Number); return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }
+  const cap = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : s;
+  // Message bref en bas de l'écran. Avec « undo », un bouton Annuler permet de revenir en arrière pendant 5 s ;
+  // passé ce délai (ou au message suivant), l'action est confirmée.
+  let toastTimer=null, pendingUndo=null;
+  function toast(msg,undo){
+    flushUndo();
+    const t=$('toast'); t.textContent='';
+    const s=document.createElement('span'); s.textContent=msg; t.append(s);
+    if(undo){
+      pendingUndo=undo;
+      const b=document.createElement('button'); b.type='button'; b.className='toast-btn'; b.textContent='Annuler';
+      b.addEventListener('click',()=>{ const u=pendingUndo; pendingUndo=null; clearTimeout(toastTimer); t.hidden=true; if(u && u.undo) u.undo(); });
+      t.append(b);
+    }
+    t.hidden=false;
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ t.hidden=true; flushUndo(); },undo?5000:2600);
   }
+  function flushUndo(){ const u=pendingUndo; pendingUndo=null; if(u && u.commit){ try{ u.commit(); }catch(e){} } }
   const garmentById = id => state.garments.find(g=>g.id===id)||null;
   const photoById = id => state.photos.find(p=>p.id===id)||null;
 
@@ -933,31 +1254,46 @@ a{color:var(--tape)}
     document.querySelectorAll('.tab').forEach(b=>{
       if(b.dataset.tab===name) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
     });
-    $('modeChip').hidden = name!=='miroir'; $('guideBtn').hidden = name!=='miroir';
-    if(name!=='miroir') cancelCountdown();
+    if(name!=='miroir'){ cancelCountdown(); exitImmersive(); }
+    syncLive();
     if(name==='dressing') renderDressing();
-    if(name==='cabine'){ $('cabBadge').hidden=true; renderCabine(); }
+    if(name==='cabine'){ $('cabBadge').hidden=true; renderCabine(); ensureWeather(false); }
     if(name==='looks') renderLooks();
     window.scrollTo(0,0);
   }
   document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
 
   /* ================= MIROIR ================= */
-  const video=$('video'), still=$('still'), startState=$('startState'), fallbackState=$('fallbackState');
-  const guide=$('guide'), guideBtn=$('guideBtn'), modeChip=$('modeChip'), modeText=$('modeText');
+  const stage=$('stage'), video=$('video'), still=$('still'), startState=$('startState'), fallbackState=$('fallbackState');
+  const guide=$('guide'), modeChip=$('modeChip'), modeText=$('modeText');
   const count=$('count'), flashEl=$('flash'), timerEl=$('timer'), shutter=$('shutter'), sideBtn=$('sideBtn');
+  const immShutter=$('immShutter'), shutters=[shutter,immShutter];
   const lastBtn=$('lastBtn'), hint=$('hint'), snapInput=$('snapInput');
   const HINTS={
     off:"Active la caméra, pose ton téléphone et recule jusqu'à voir tes pieds.",
     photo:"Le déclencheur ouvre l'appareil photo selfie du téléphone. Son propre retardateur fonctionne aussi."
   };
   function liveHint(){
+    if(opt.hand) return 'Lève une main au-dessus de ta tête une seconde : le retardateur ('+(state.timer||3)+' s) démarre. Le déclencheur marche aussi.';
     return state.timer===0 ? "Photo immédiate. Appuie sur le déclencheur."
       : "Retardateur "+state.timer+" s : appuie, puis recule. Appuie à nouveau pour annuler.";
   }
+  // Affichages liés aux options (repères, grille, lumière, effet miroir…).
+  function renderStageOpts(){
+    const isLive=state.mode==='live';
+    stage.classList.toggle('noflip',!opt.mirror);
+    guide.hidden=!(isLive && opt.guide);
+    $('grid3').hidden=!(isLive && opt.grid);
+    $('ring').hidden=!(isLive && opt.ring);
+    $('quickRow').hidden=!isLive;
+    document.querySelectorAll('#quickRow [data-opt]').forEach(b=>b.setAttribute('aria-pressed',String(!!opt[b.dataset.opt])));
+    $('fullBtn').hidden=!isLive;
+    $('immTimer').textContent = state.timer ? state.timer+' s' : 'Sans';
+    if(isLive) hint.textContent=liveHint();
+  }
   function setMode(m){
     state.mode=m;
-    modeChip.dataset.mode=m;
+    modeChip.dataset.mode=m; modeChip.hidden = m==='off';
     modeText.textContent={off:'Caméra coupée',live:'Direct',photo:'Mode photo'}[m];
     video.hidden = m!=='live';
     startState.hidden = m!=='off';
@@ -970,10 +1306,12 @@ a{color:var(--tape)}
     sideBtn.hidden = m==='off';
     sideBtn.textContent = m==='live' ? 'Couper' : 'Réessayer le direct';
     hint.textContent = m==='live' ? liveHint() : HINTS[m];
-    guide.hidden = !(m==='live' && state.guideOn);
+    if(m!=='live') exitImmersive();
+    renderStageOpts(); syncLive();
   }
   async function startCamera(){
     if(state.pending) return;
+    unlockAudio();
     if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){ setMode('photo'); return; }
     state.pending=true;
     const startBtn=$('startBtn'); startBtn.disabled=true; startBtn.textContent="En attente de l'autorisation…";
@@ -986,7 +1324,7 @@ a{color:var(--tape)}
     finally{ state.pending=false; startBtn.disabled=false; startBtn.textContent='Activer la caméra'; }
   }
   function stopCamera(){
-    cancelCountdown();
+    cancelCountdown(); stopLive();
     if(state.stream){ state.stream.getTracks().forEach(t=>t.stop()); state.stream=null; }
     video.srcObject=null; releaseWake(); setMode('off');
   }
@@ -995,55 +1333,211 @@ a{color:var(--tape)}
   }
   function releaseWake(){ try{ if(state.wake){ state.wake.release(); state.wake=null; } }catch(e){} }
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'){ if(state.mode==='live') requestWake(); }
-    else cancelCountdown();
+    if(document.visibilityState==='visible'){ if(state.mode==='live') requestWake(); syncLive(); }
+    else { cancelCountdown(); stopLive(); flushUndo(); }
   });
-  function showCount(n){ count.textContent=n; count.classList.remove('tick'); void count.offsetWidth; count.classList.add('tick'); }
-  function startCountdown(){
-    let n=state.timer;
-    shutter.classList.add('counting'); shutter.setAttribute('aria-label','Annuler le retardateur');
+
+  /* ---------- Sons et vibrations ---------- */
+  let actx=null;
+  // Le son doit être débloqué par un geste (appui) : on le fait à l'activation de la caméra et au déclencheur.
+  function unlockAudio(){
+    try{
+      if(!actx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) actx=new AC(); }
+      if(actx && actx.state==='suspended'){ const r=actx.resume(); if(r && r.catch) r.catch(()=>{}); }
+    }catch(e){}
+  }
+  function beep(freq,dur){
+    if(!opt.sound || !actx) return;
+    try{
+      const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+      o.type='sine'; o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.22,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur+0.03);
+    }catch(e){}
+  }
+  function buzz(ms){ if(!opt.sound) return; try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+
+  /* ---------- Retardateur et prise de vue ---------- */
+  function showCount(n){ count.textContent=n; count.classList.remove('tick'); void count.offsetWidth; count.classList.add('tick'); beep(880,0.12); buzz(25); }
+  function startCountdown(sec){
+    let n=sec||state.timer;
+    shutters.forEach(s=>{ s.classList.add('counting'); s.setAttribute('aria-label','Annuler le retardateur'); });
     showCount(n);
     state.countdown=setInterval(()=>{ n--; if(n>0) showCount(n); else { cancelCountdown(); capture(); } },1000);
   }
   function cancelCountdown(){
     if(state.countdown){ clearInterval(state.countdown); state.countdown=null; }
-    count.textContent=''; count.classList.remove('tick'); shutter.classList.remove('counting');
-    if(state.mode==='live') shutter.setAttribute('aria-label','Déclencher');
+    count.textContent=''; count.classList.remove('tick');
+    shutters.forEach(s=>s.classList.remove('counting'));
+    if(state.mode==='live') shutters.forEach(s=>s.setAttribute('aria-label','Déclencher'));
+  }
+  // Partie de l'image caméra réellement visible dans le miroir (l'image est recadrée pour remplir le cadre).
+  // La photo reprend exactement ce cadrage : verticale si le miroir est vertical, même si la caméra filme en paysage.
+  function visibleRect(){
+    const vw=video.videoWidth, vh=video.videoHeight, sw=stage.clientWidth, sh=stage.clientHeight;
+    if(!vw || !vh || !sw || !sh) return {x:0,y:0,w:1,h:1};
+    const s=Math.max(sw/vw,sh/vh), w=Math.min(1,sw/s/vw), h=Math.min(1,sh/s/vh);
+    return {x:(1-w)/2,y:(1-h)/2,w,h};
+  }
+  function snap(){
+    const vw=video.videoWidth, vh=video.videoHeight; if(!vw||!vh) return;
+    const r=visibleRect(), sx=r.x*vw, sy=r.y*vh, sw=r.w*vw, sh=r.h*vh;
+    const c=document.createElement('canvas'); c.width=Math.round(sw); c.height=Math.round(sh);
+    const g=c.getContext('2d');
+    if(opt.mirror){ g.translate(c.width,0); g.scale(-1,1); }
+    g.drawImage(video,sx,sy,sw,sh,0,0,c.width,c.height);
+    flashEl.classList.remove('go'); void flashEl.offsetWidth; flashEl.classList.add('go');
+    beep(1320,0.22); buzz(40);
+    c.toBlob(b=>{ if(b) addPhoto(b); },'image/jpeg',0.92);
   }
   function capture(){
-    const w=video.videoWidth, h=video.videoHeight; if(!w||!h) return;
-    const c=document.createElement('canvas'); c.width=w; c.height=h;
-    const g=c.getContext('2d'); g.translate(w,0); g.scale(-1,1); g.drawImage(video,0,0,w,h);
-    flashEl.classList.remove('go'); void flashEl.offsetWidth; flashEl.classList.add('go');
-    try{ if(navigator.vibrate) navigator.vibrate(40); }catch(e){}
-    c.toBlob(b=>{ if(b) addPhoto(b); },'image/jpeg',0.9);
+    live.cooldown=Date.now()+3500;
+    if(!opt.burst){ snap(); return; }
+    snap();
+    setTimeout(()=>{ if(state.mode==='live') snap(); },700);
+    setTimeout(()=>{ if(state.mode==='live'){ snap(); toast('Rafale : 3 photos ajoutées à « Tes photos »'); } },1400);
   }
-  shutter.addEventListener('click',()=>{
+  function onShutter(){
+    unlockAudio();
     if(state.mode==='off') return startCamera();
     if(state.mode==='photo') return snapInput.click();
     if(state.countdown) return cancelCountdown();
     if(state.timer===0) capture(); else startCountdown();
-  });
+  }
+  shutters.forEach(s=>s.addEventListener('click',onShutter));
   $('startBtn').addEventListener('click',startCamera);
   $('fallbackShoot').addEventListener('click',()=>snapInput.click());
   sideBtn.addEventListener('click',()=>{ if(state.mode==='live') stopCamera(); else startCamera(); });
-  guideBtn.addEventListener('click',()=>{
-    state.guideOn=!state.guideOn; pref.set('guide',state.guideOn);
-    guideBtn.setAttribute('aria-pressed',String(state.guideOn));
-    guide.hidden = !(state.mode==='live' && state.guideOn);
-  });
   function renderTimer(){ timerEl.querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',String(Number(x.dataset.s)===state.timer))); }
-  timerEl.addEventListener('click',e=>{
-    const b=e.target.closest('button[data-s]'); if(!b) return;
-    cancelCountdown(); state.timer=Number(b.dataset.s); pref.set('timer',state.timer); renderTimer();
-    if(state.mode==='live') hint.textContent=liveHint();
-  });
+  function setTimer(s){ cancelCountdown(); state.timer=s; pref.set('timer',s); renderTimer(); renderStageOpts(); }
+  timerEl.addEventListener('click',e=>{ const b=e.target.closest('button[data-s]'); if(b) setTimer(Number(b.dataset.s)); });
+  $('immTimer').addEventListener('click',()=>{ const v=[0,3,5,10]; setTimer(v[(v.indexOf(state.timer)+1)%v.length]); });
   snapInput.addEventListener('change',async()=>{
     const f=snapInput.files && snapInput.files[0]; snapInput.value='';
     if(!f) return;
     const b=await shrink(f,1600);
     await addPhoto(b); still.src=URL.createObjectURL(b); setMode('photo');
   });
+
+  /* ---------- Options du miroir ---------- */
+  const OPT_DEFS=[
+    {k:'coach',label:'Coach de cadrage',desc:'Te dit d\'avancer, de reculer ou de te décaler pour être en entier, de la tête aux pieds.'},
+    {k:'hand',label:'Déclencher en levant la main',desc:'Lève une main au-dessus de ta tête une seconde : le retardateur démarre sans toucher le téléphone.'},
+    {k:'ring',label:'Lumière d\'appoint',desc:'Un cadre blanc autour de l\'image éclaire ton visage. Monte la luminosité de l\'écran.'},
+    {k:'guide',label:'Repères tête et pieds',desc:'Deux lignes pour te placer au même endroit d\'une photo à l\'autre.'},
+    {k:'grid',label:'Grille de cadrage',desc:'Des tiers pour te centrer et garder le téléphone droit.'},
+    {k:'mirror',label:'Effet miroir',desc:'Désactivé, les écritures et les logos sont à l\'endroit, à l\'écran comme sur la photo.'},
+    {k:'sound',label:'Bips et vibrations',desc:'Un bip par seconde pendant le retardateur, puis au déclenchement.'},
+    {k:'burst',label:'Rafale de 3 photos',desc:'Trois photos à 0,7 s d\'intervalle : tu gardes la meilleure.'}
+  ];
+  function renderOpts(){
+    const list=$('optList'); list.textContent='';
+    OPT_DEFS.forEach(d=>{
+      const b=document.createElement('button'); b.type='button'; b.className='opt'; b.setAttribute('role','switch');
+      b.setAttribute('aria-checked',String(!!opt[d.k])); b.dataset.k=d.k;
+      const tx=document.createElement('span'); const t=document.createElement('b'); t.textContent=d.label;
+      const s=document.createElement('small'); s.textContent=d.desc; tx.append(t,s);
+      const sw=document.createElement('span'); sw.className='switch'; sw.setAttribute('aria-hidden','true');
+      b.append(tx,sw); b.addEventListener('click',()=>toggleOpt(d.k)); list.append(b);
+    });
+  }
+  function toggleOpt(k){
+    setOpt(k,!opt[k]);
+    if(k==='sound' && opt.sound) unlockAudio();
+    if(!$('mirrorSheet').hidden) renderOpts();
+    renderStageOpts(); syncLive();
+    if(k==='hand' && opt.hand && state.mode==='live') toast('Lève une main au-dessus de ta tête pour lancer le retardateur');
+    if(k==='ring' && opt.ring && state.mode==='live') toast('Monte la luminosité de l\'écran pour plus de lumière');
+  }
+  document.querySelectorAll('#quickRow [data-opt]').forEach(b=>b.addEventListener('click',()=>toggleOpt(b.dataset.opt)));
+  $('mirrorOpts').addEventListener('click',()=>{ renderOpts(); $('mirrorSheet').hidden=false; $('mirrorClose').focus(); });
+  $('mirrorClose').addEventListener('click',()=>{ $('mirrorSheet').hidden=true; });
+  $('mirrorSheet').addEventListener('click',e=>{ if(e.target===$('mirrorSheet')) $('mirrorSheet').hidden=true; });
+
+  /* ---------- Plein écran ---------- */
+  function enterImmersive(){
+    if(state.mode!=='live') return;
+    document.body.classList.add('immersive'); $('immBar').hidden=false; renderStageOpts();
+    try{ const el=document.documentElement; if(el.requestFullscreen){ const r=el.requestFullscreen({navigationUI:'hide'}); if(r && r.catch) r.catch(()=>{}); } }catch(e){}
+  }
+  function exitImmersive(){
+    if(!document.body.classList.contains('immersive')) return;
+    document.body.classList.remove('immersive'); $('immBar').hidden=true;
+    try{ if(document.fullscreenElement && document.exitFullscreen){ const r=document.exitFullscreen(); if(r && r.catch) r.catch(()=>{}); } }catch(e){}
+  }
+  $('fullBtn').addEventListener('click',enterImmersive);
+  $('immExit').addEventListener('click',exitImmersive);
+  // Geste « retour » en plein écran : on quitte aussi le mode immersif.
+  document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement) exitImmersive(); });
+
+  /* ---------- Coach de cadrage et main levée (détection du corps en direct) ---------- */
+  const live={on:false,gen:0,timer:null,lm:null,raise:0,cooldown:0,cand:'',candN:0,shown:''};
+  function wantLive(){ return state.mode==='live' && state.tab==='miroir' && (opt.coach||opt.hand) && document.visibilityState!=='hidden'; }
+  function syncLive(){ if(wantLive()) startLive(); else stopLive(); }
+  async function startLive(){
+    if(live.on) return;
+    live.on=true; const gen=++live.gen;
+    if(!live.lm){
+      showCoach('Chargement du coach…','wait');
+      try{ live.lm=await getPose('VIDEO'); }
+      catch(e){ if(gen===live.gen){ live.on=false; showCoach(''); toast('Le coach n\'a pas pu se charger : vérifie ta connexion.'); } return; }
+    }
+    if(!live.on || gen!==live.gen) return;
+    showCoach(''); tickLive(gen);
+  }
+  function stopLive(){
+    live.on=false; live.gen++; clearTimeout(live.timer); live.timer=null;
+    live.raise=0; live.cand=''; live.candN=0; showCoach('');
+  }
+  function tickLive(gen){
+    if(!live.on || gen!==live.gen) return;
+    if(video.readyState>=2 && video.videoWidth){
+      let p=null;
+      try{ const r=live.lm.detectForVideo(video,performance.now()); p=(r && r.landmarks && r.landmarks[0]) || null; }catch(e){}
+      readPose(p);
+    }
+    live.timer=setTimeout(()=>tickLive(gen),200);
+  }
+  function readPose(raw){
+    // Coordonnées ramenées à la zone visible du miroir.
+    const r=visibleRect();
+    const p=raw ? raw.map(q=>({x:(q.x-r.x)/r.w,y:(q.y-r.y)/r.h,visibility:q.visibility})) : null;
+    const vis=i=>!!(p && p[i] && (p[i].visibility==null || p[i].visibility>0.5) && p[i].x>=0 && p[i].x<=1 && p[i].y>=0 && p[i].y<=1);
+    // Main levée : un poignet au-dessus du nez pendant 0,6 s.
+    if(opt.hand && !state.countdown && Date.now()>live.cooldown){
+      const up = vis(0) && [15,16].some(i=>vis(i) && p[i].y < p[0].y-0.04);
+      if(up){
+        if(!live.raise) live.raise=Date.now();
+        if(Date.now()-live.raise>=600){ live.raise=0; live.cooldown=Date.now()+4000; unlockAudio(); startCountdown(state.timer||3); }
+      }else live.raise=0;
+    }else live.raise=0;
+    if(live.raise){ showCoach('Main levée : garde-la une seconde…','wait'); live.cand=''; return; }
+    if(!opt.coach){ showCoach(''); return; }
+    const advice=coachAdvice(p,vis);
+    // Le conseil ne change qu'après deux lectures identiques, pour éviter le clignotement.
+    if(advice[0]===live.cand) live.candN++; else { live.cand=advice[0]; live.candN=1; }
+    if(live.candN>=2) showCoach(advice[0],advice[1]);
+  }
+  function coachAdvice(p,vis){
+    if(!p || !vis(0)) return ['Place-toi face au téléphone, en entier dans l\'image','warn'];
+    if(p[0].y<0.05) return ['Ta tête est coupée : recule un peu','warn'];
+    const feet=[27,28,29,30,31,32].filter(vis);
+    if(!feet.length) return ['Recule : on ne voit pas encore tes pieds','warn'];
+    const fy=Math.max.apply(null,feet.map(i=>p[i].y));
+    if(fy>0.97) return ['Recule un peu : tes pieds touchent le bord','warn'];
+    if(fy-p[0].y<0.5) return ['Approche-toi un peu : tu es loin','warn'];
+    const hips=[23,24].filter(vis), cx=hips.length ? hips.reduce((a,i)=>a+p[i].x,0)/hips.length : p[0].x;
+    // L'image caméra n'est pas inversée : à droite de l'image, c'est ta gauche.
+    if(cx>0.65) return ['Décale-toi un peu vers ta droite','warn'];
+    if(cx<0.35) return ['Décale-toi un peu vers ta gauche','warn'];
+    return ['Cadrage parfait : tu es en pied','ok'];
+  }
+  function showCoach(msg,level){
+    const el=$('coach');
+    if(!msg){ el.hidden=true; live.shown=''; stage.classList.remove('coach-ok'); return; }
+    if(live.shown!==msg){ $('coachText').textContent=msg; live.shown=msg; }
+    el.dataset.level=level||''; el.hidden=false; stage.classList.toggle('coach-ok',level==='ok');
+  }
 
   async function addPhoto(blob){
     const rec={id:newId('p'),blob,time:Date.now()};
@@ -1060,7 +1554,7 @@ a{color:var(--tape)}
       b.setAttribute('aria-label','Photo '+(i+1)+' du '+fmtDate(p.time));
       const img=document.createElement('img'); img.src=p.url; img.alt=''; img.loading='lazy';
       const l=document.createElement('span'); l.className='lbl'; l.textContent=fmtShort(p.time);
-      b.append(img,l); b.addEventListener('click',()=>openViewer('photos',i));
+      b.append(img,l); b.addEventListener('click',()=>openViewer('photos',state.photos,i));
       shots.append(b);
     });
     $('shotsEmpty').hidden=state.photos.length>0;
@@ -1071,7 +1565,7 @@ a{color:var(--tape)}
     if(last){ const img=document.createElement('img'); img.src=last.url; img.alt=''; lastBtn.append(img); }
     if(state.tab==='cabine') renderCabine();
   }
-  lastBtn.addEventListener('click',()=>{ if(state.photos.length) openViewer('photos',state.photos.length-1); });
+  lastBtn.addEventListener('click',()=>{ if(state.photos.length) openViewer('photos',state.photos,state.photos.length-1); });
 
   /* ================= DRESSING ================= */
   const closetInput=$('closetInput'), shopInput=$('shopInput');
@@ -1081,10 +1575,18 @@ a{color:var(--tape)}
     return {id:newId('g'),name:'Vêtement '+n,category:'haut',color:null,fav:false,blob,created:Date.now(),
       brand:'',size:'',material:'',price:'',seasons:[],styles:[],link:'',notes:'',url:URL.createObjectURL(blob)};
   }
+  // Catégorie devinée d'après la forme du vêtement : large = chaussures, très haut = bas, sinon haut.
+  async function guessCategory(blob){
+    try{ const b=contentBox(await loadImage(blob)), r=b.w/b.h; return r>1.3 ? 'chaussures' : (r<1/1.6 ? 'bas' : 'haut'); }
+    catch(e){ return 'haut'; }
+  }
   async function createGarment(file){
     const blob=await shrink(file,1280);
     const g=blankGarment(blob,state.garments.length+1);
     g.color=await detectColor(blob);
+    g.category=await guessCategory(blob);
+    g.name=cat(g.category).label+' '+(state.garments.filter(x=>x.category===g.category).length+1);
+    g._auto=true;
     state.garments.push(g); saveGarment(g); askPersist();
     return g;
   }
@@ -1119,12 +1621,56 @@ a{color:var(--tape)}
   qInput.addEventListener('input',()=>{ state.filter.q=qInput.value; qClear.hidden=!qInput.value; renderCloset(); });
   qClear.addEventListener('click',()=>{ qInput.value=''; state.filter.q=''; qClear.hidden=true; renderCloset(); qInput.focus(); });
   $('resetFilters').addEventListener('click',()=>{
-    state.filter={q:'',cat:'all',color:null,fav:false,season:null,style:null,brand:null}; qInput.value=''; qClear.hidden=true; renderDressing();
+    state.filter={q:'',cat:'all',color:null,fav:false,season:null,style:null,brand:null,unworn:false}; qInput.value=''; qClear.hidden=true; renderDressing();
   });
   $('moreFilters').addEventListener('click',()=>{ state.moreFilters=!state.moreFilters; renderDressing(); });
+  $('sortSel').addEventListener('change',()=>{ state.dress.sort=$('sortSel').value; pref.set('sort',state.dress.sort); renderCloset(); });
+  $('colsBtn').addEventListener('click',()=>{ const c=state.dress.cols; state.dress.cols = c>=4 ? 2 : c+1; pref.set('cols',state.dress.cols); renderCloset(); });
+
+  /* ---------- Usage : combien de fois chaque pièce a été portée (via « Porté aujourd'hui » dans les looks) ---------- */
+  function wearStats(){
+    const m=new Map();
+    state.looks.forEach(l=>{
+      const w=l.worn||[]; if(!w.length) return;
+      (l.pieces||[]).forEach(p=>{
+        let e=m.get(p.garmentId); if(!e){ e={days:new Set(),n:0,last:''}; m.set(p.garmentId,e); }
+        w.forEach(d=>e.days.add(d));
+      });
+    });
+    m.forEach(e=>{ e.n=e.days.size; e.last=[...e.days].sort().pop()||''; });
+    return m;
+  }
+  let curWear=null;
+  function wearOf(id){ if(!curWear) curWear=wearStats(); return curWear.get(id)||{n:0,last:''}; }
+  function priceOf(g){ const v=parseFloat(String(g.price||'').replace(',','.').replace(/[^\d.]/g,'')); return isFinite(v) && v>0 ? v : 0; }
+  const euro = v => v.toLocaleString('fr-FR',{maximumFractionDigits:v<100?2:0})+' €';
+  function renderStats(){
+    const box=$('closetStats'), gs=state.garments, f=state.filter;
+    box.hidden=!gs.length; box.textContent='';
+    if(!gs.length) return;
+    const tile=(val,label,btn)=>{
+      const d=document.createElement(btn?'button':'div'); d.className='stat';
+      const b=document.createElement('b'); b.textContent=val; const s=document.createElement('span'); s.textContent=label;
+      d.append(b,s); return d;
+    };
+    const total=gs.reduce((a,g)=>a+priceOf(g),0);
+    const ws=gs.map(g=>({g,n:wearOf(g.id).n}));
+    const never=ws.filter(x=>!x.n).length;
+    const paid=ws.filter(x=>x.n && priceOf(x.g));
+    const cpw=paid.length ? paid.reduce((a,x)=>a+priceOf(x.g),0)/paid.reduce((a,x)=>a+x.n,0) : 0;
+    box.append(tile(String(gs.length),gs.length>1?'pièces':'pièce'));
+    box.append(tile(total?euro(total):'—',total?'de valeur':'ajoute les prix'));
+    const nb=tile(String(never),never>1?'jamais portées':'jamais portée',true);
+    nb.type='button'; nb.setAttribute('aria-pressed',String(!!f.unworn));
+    nb.setAttribute('aria-label',never+' pièces jamais portées : '+(f.unworn?'afficher tout':'les afficher'));
+    nb.addEventListener('click',()=>{ f.unworn=!f.unworn; renderDressing(); });
+    box.append(nb);
+    box.append(tile(cpw?euro(cpw):'—',cpw?'par port':'coût par port'));
+  }
 
   function matches(g,ignore){
     const f=state.filter;
+    if(f.unworn && wearOf(g.id).n>0) return false;
     if(ignore!=='cat' && f.cat!=='all' && g.category!==f.cat) return false;
     if(ignore!=='color' && f.color && g.color!==f.color) return false;
     if(ignore!=='season' && f.season && !(g.seasons||[]).includes(f.season)) return false;
@@ -1153,6 +1699,7 @@ a{color:var(--tape)}
   }
   function renderDressing(){
     const f=state.filter;
+    curWear=null; renderStats();
     const catRow=$('catFilter'); catRow.textContent='';
     const base=state.garments.filter(g=>matches(g,'cat'));
     catRow.append(chip('Tout',f.cat==='all',()=>{ f.cat='all'; renderDressing(); },base.length));
@@ -1185,7 +1732,7 @@ a{color:var(--tape)}
     if(bl.length){ bRow.append(rowLabel('Marque')); bl.forEach(b=>bRow.append(chip(b,!!f.brand && f.brand.toLowerCase()===b.toLowerCase(),()=>{ f.brand = (f.brand && f.brand.toLowerCase()===b.toLowerCase())?null:b; renderDressing(); }))); }
     renderCloset();
   }
-  function garmentCard(g,onClick,pressed){
+  function garmentCard(g,onClick,pressed,extra){
     const b=document.createElement('button'); b.type='button'; b.className='gcard';
     if(pressed!==undefined) b.setAttribute('aria-pressed',String(pressed));
     const pic=document.createElement('span'); pic.className='pic';
@@ -1196,7 +1743,7 @@ a{color:var(--tape)}
     const c=color(g.color);
     if(c){ const d=document.createElement('i'); d.className='dot-c'; d.style.background=rgbCss(c); m.append(d); }
     const t=document.createElement('span');
-    t.textContent=[g.brand||cat(g.category).label, g.size].filter(Boolean).join(' · ');
+    t.textContent=[g.brand||cat(g.category).label, g.size, extra].filter(Boolean).join(' · ');
     m.append(t);
     b.append(pic,n,m);
     b.setAttribute('aria-label',[g.name,cat(g.category).label,c?c.label:'',g.brand,g.size?('taille '+g.size):'',g.fav?'favori':''].filter(Boolean).join(', '));
@@ -1205,10 +1752,24 @@ a{color:var(--tape)}
   }
   function renderCloset(){
     const grid=$('closet'); grid.textContent='';
-    const list=state.garments.filter(g=>matches(g)).sort((a,b)=>(b.fav-a.fav)||(b.created-a.created));
-    list.forEach(g=>grid.append(garmentCard(g,()=>openSheet(g.id))));
+    const sort=state.dress.sort, W=g=>wearOf(g.id), ci=g=>{ const i=COLORS.findIndex(c=>c.id===g.color); return i<0?99:i; };
+    const recent=(a,b)=>b.created-a.created;
+    const cmp={
+      recent,
+      fav:(a,b)=>(b.fav-a.fav)||recent(a,b),
+      color:(a,b)=>(ci(a)-ci(b))||recent(a,b),
+      most:(a,b)=>(W(b).n-W(a).n)||(W(b).last>W(a).last?1:W(b).last<W(a).last?-1:0)||recent(a,b),
+      least:(a,b)=>(W(a).n-W(b).n)||(W(a).last>W(b).last?1:W(a).last<W(b).last?-1:0)||recent(a,b)
+    }[sort]||recent;
+    const list=state.garments.filter(g=>matches(g)).sort(cmp);
+    const usage = sort==='most'||sort==='least';
+    list.forEach(g=>grid.append(garmentCard(g,()=>openSheet(g.id),undefined,usage?(W(g).n?'porté '+W(g).n+'×':'jamais porté'):'')));
+    grid.style.setProperty('--cols',state.dress.cols);
+    $('colsBtn').textContent=state.dress.cols+' par ligne';
+    $('colsBtn').setAttribute('aria-label','Taille des vignettes : '+state.dress.cols+' par ligne. Touche pour changer.');
+    $('sortSel').value=sort;
     const f=state.filter;
-    const filtered = f.q || f.cat!=='all' || f.color || f.fav || f.season || f.style || f.brand;
+    const filtered = f.q || f.cat!=='all' || f.color || f.fav || f.season || f.style || f.brand || f.unworn;
     const empty=$('closetEmpty');
     empty.hidden = list.length>0;
     empty.textContent = state.garments.length ? 'Aucun vêtement ne correspond à ces filtres.' : 'Ton dressing est vide. Touche « + Ajouter » et photographie un vêtement posé à plat, ou importe-le depuis une boutique.';
@@ -1228,7 +1789,7 @@ a{color:var(--tape)}
     $('sheetClose').focus();
   }
   function closeSheet(){
-    const g=editing(); if(g) saveGarment(g);
+    const g=editing(); if(g){ g._auto=false; saveGarment(g); }
     sheet.hidden=true; state.editing=null;
     renderDressing(); if(state.tab==='cabine') renderCabine();
     if(sheetReturn && document.contains(sheetReturn)) sheetReturn.focus();
@@ -1267,10 +1828,14 @@ a{color:var(--tape)}
     const link=safeLink(g.link);
     $('sLinkOpen').hidden=!link; if(link) $('sLinkOpen').href=link;
     const used=state.looks.filter(l=>(l.pieces||[]).some(p=>p.garmentId===g.id)).length;
-    $('sUsage').textContent = 'Ajouté le '+fmtShort(g.created)+(used? ' · porté dans '+used+(used>1?' looks':' look') : ' · pas encore dans un look');
+    curWear=null; const w=wearOf(g.id), price=priceOf(g);
+    $('sUsage').textContent = 'Ajouté le '+fmtShort(g.created)
+      + (w.n ? ' · porté '+w.n+' fois, dernière fois le '+fmtDay(w.last) : ' · jamais porté')
+      + (used ? ' · dans '+used+(used>1?' looks':' look') : '')
+      + (price && w.n ? ' · '+euro(price/w.n)+' par port' : '');
+    $('sAuto').hidden=!g._auto;
     sFav.setAttribute('aria-pressed',String(!!g.fav));
     sFav.textContent = g.fav ? '♥ Dans tes favoris' : '♡ Ajouter aux favoris';
-    sDelete.textContent = state.confirmGarmentDelete ? 'Confirmer la suppression' : 'Supprimer ce vêtement';
   }
   function toggleIn(arr,v){ return arr.includes(v) ? arr.filter(x=>x!==v) : arr.concat(v); }
   function safeLink(v){
@@ -1305,15 +1870,24 @@ a{color:var(--tape)}
     closeSheet(); setTab('cabine');
     toast(g.name+' placé dans la case '+s.label.toLowerCase());
   });
+  // Suppression immédiate, annulable pendant 5 s depuis le message en bas de l'écran.
   sDelete.addEventListener('click',()=>{
     const g=editing(); if(!g) return;
-    if(!state.confirmGarmentDelete){ state.confirmGarmentDelete=true; renderSheet(); return; }
-    state.garments=state.garments.filter(x=>x.id!==g.id);
-    dbDelete('garments',g.id);
-    try{ URL.revokeObjectURL(g.url); }catch(e){}
-    SLOTS.forEach(s=>{ if(state.cab.picks[s.id]===g.id) state.cab.picks[s.id]=null; });
+    const idx=state.garments.indexOf(g);
+    const slots=SLOTS.filter(s=>state.cab.picks[s.id]===g.id).map(s=>s.id);
+    state.garments.splice(idx,1);
+    slots.forEach(s=>{ state.cab.picks[s]=null; state.cab.locks[s]=false; });
     state.editing=null; sheet.hidden=true;
-    renderDressing(); toast('Vêtement supprimé');
+    renderDressing(); if(state.tab==='cabine') renderCabine();
+    if(sheetReturn && document.contains(sheetReturn)) sheetReturn.focus();
+    toast('« '+g.name+' » supprimé',{
+      commit(){ dbDelete('garments',g.id); try{ URL.revokeObjectURL(g.url); }catch(e){} },
+      undo(){
+        state.garments.splice(Math.min(idx,state.garments.length),0,g);
+        slots.forEach(s=>{ if(!state.cab.picks[s]) state.cab.picks[s]=g.id; });
+        renderDressing(); if(state.tab==='cabine') renderCabine();
+      }
+    });
   });
 
   /* ---------- Recadrage ---------- */
@@ -1488,8 +2062,271 @@ a{color:var(--tape)}
     varBtn.disabled = busy || !photo || !up.seq.length || va.todo===0 || up.todo>0;
     varBtn.textContent = (va.todo>0 && up.todo===0) ? 'Variante · '+va.todo : 'Variante';
     $('cabEstimate').textContent = up.seq.length ? up.seq.length+(up.seq.length>1?' pièces':' pièce') : '';
+    // Idée, météo, harmonie, aperçu à plat
+    const pieces=DISPLAY_ORDER.map(id=>garmentById(cab.picks[id])).filter(Boolean);
+    renderHarmony(pieces);
+    $('flatBtn').disabled=!pieces.length;
+    const idea=$('idea'), showIdea=!!(cab.idea && cab.idea.key===picksKey());
+    idea.hidden=!showIdea; if(showIdea) idea.textContent=cab.idea.text;
+    $('inspire').disabled = inspiring || !state.garments.some(g=>SLOTS.some(s=>s.cats.includes(g.category)));
+    renderWeather();
     renderResult();
   }
+  const picksKey = () => DISPLAY_ORDER.map(id=>state.cab.picks[id]||'-').join('|');
+
+  /* ---------- Météo du jour (Open-Meteo, gratuit, sans compte) ---------- */
+  const wx={data:null,status:'idle',p:null};
+  function wText(c){
+    if(c==null) return '';
+    if(c===0) return 'ciel dégagé'; if(c<=2) return 'peu nuageux'; if(c===3) return 'couvert'; if(c<=48) return 'brouillard';
+    if(c<=57) return 'bruine'; if(c<=67) return 'pluie'; if(c<=77) return 'neige'; if(c<=82) return 'averses'; if(c<=86) return 'averses de neige';
+    return 'orage';
+  }
+  const rainy = c => (c>=51 && c<=67) || (c>=80 && c<=82) || c>=95;
+  async function ensureWeather(force){
+    const city=pref.get('city',null);
+    if(!city){ wx.data=null; wx.status='idle'; return null; }
+    const key=Number(city.lat).toFixed(2)+','+Number(city.lon).toFixed(2);
+    const c=pref.get('wxCache',null);
+    if(!force && c && c.key===key && Date.now()-c.t<30*60000){ wx.data=c.d; wx.status='ok'; return c.d; }
+    if(wx.p) return wx.p;
+    wx.status='loading'; if(state.tab==='cabine') renderWeather();
+    wx.p=(async()=>{
+      try{
+        const url='https://api.open-meteo.com/v1/forecast?latitude='+city.lat+'&longitude='+city.lon+
+          '&current=temperature_2m,apparent_temperature,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=1&timezone=auto';
+        const r=await fetch(url); if(!r.ok) throw new Error('météo '+r.status);
+        const j=await r.json(), cur=j.current||{}, day=j.daily||{};
+        const first=a=>Array.isArray(a)?a[0]:null;
+        const d={temp:cur.temperature_2m,feels:cur.apparent_temperature!=null?cur.apparent_temperature:cur.temperature_2m,code:cur.weather_code,
+          max:first(day.temperature_2m_max),min:first(day.temperature_2m_min),rain:first(day.precipitation_probability_max)};
+        if(typeof d.temp!=='number') throw new Error('météo vide');
+        wx.data=d; wx.status='ok'; pref.set('wxCache',{key,t:Date.now(),d});
+        return d;
+      }catch(e){ wx.status='error'; return null; }
+      finally{ wx.p=null; if(state.tab==='cabine') renderWeather(); }
+    })();
+    return wx.p;
+  }
+  function renderWeather(){
+    const el=$('wx'); el.textContent='';
+    const city=pref.get('city',null);
+    const txt=document.createElement('span'), btn=document.createElement('button');
+    btn.type='button'; btn.className='toggle';
+    const b=document.createElement('b');
+    if(!city){
+      b.textContent='Météo'; txt.append(b,' · ajoute ta ville : « Inspire-moi » tiendra compte du temps qu\'il fait.');
+      btn.textContent='Ajouter'; btn.addEventListener('click',openCity);
+    }else if(wx.status==='ok' && wx.data){
+      const d=wx.data;
+      b.textContent=Math.round(d.temp)+' °C';
+      txt.append(b,' · '+wText(d.code)+' · '+city.name+(d.rain!=null && d.rain>=30?' · pluie '+d.rain+' %':'')+(d.max!=null?' · max '+Math.round(d.max)+' °C':''));
+      btn.textContent='Changer'; btn.addEventListener('click',openCity);
+    }else if(wx.status==='error'){
+      b.textContent='Météo indisponible'; txt.append(b,' pour '+city.name+'.');
+      btn.textContent='Réessayer'; btn.addEventListener('click',()=>ensureWeather(true));
+    }else{
+      txt.append('Météo de '+city.name+'…');
+      btn.textContent='Changer'; btn.addEventListener('click',openCity);
+    }
+    el.append(txt,btn);
+  }
+  function openCity(){
+    const c=pref.get('city',null);
+    $('cityResults').textContent=''; $('cityQ').value = c && c.name!=='Ma position' ? c.name : '';
+    $('cityRemove').hidden=!c; $('citySheet').hidden=false; $('cityQ').focus();
+  }
+  function setCity(c){
+    pref.set('city',c); pref.set('wxCache',null); wx.data=null; wx.status='idle';
+    $('citySheet').hidden=true; ensureWeather(true); renderWeather();
+    toast('Météo activée : '+c.name);
+  }
+  $('cityForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const q=$('cityQ').value.trim(); if(!q) return;
+    const box=$('cityResults'); box.textContent='';
+    const msg=t=>{ const p=document.createElement('p'); p.textContent=t; box.textContent=''; box.append(p); };
+    msg('Recherche…');
+    try{
+      const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=5&language=fr&format=json&name='+encodeURIComponent(q));
+      const j=await r.json(), res=(j && j.results)||[];
+      if(!res.length){ msg('Aucune ville trouvée. Vérifie l\'orthographe.'); return; }
+      box.textContent='';
+      res.forEach(x=>{
+        const b=document.createElement('button'); b.type='button'; b.className='btn ghost small';
+        b.textContent=x.name+(x.admin1 && x.admin1!==x.name?', '+x.admin1:'')+(x.country?' ('+x.country+')':'');
+        b.addEventListener('click',()=>setCity({name:x.name,lat:x.latitude,lon:x.longitude}));
+        box.append(b);
+      });
+    }catch(err){ msg('Recherche impossible : vérifie ta connexion.'); }
+  });
+  $('cityGeo').addEventListener('click',()=>{
+    if(!navigator.geolocation){ toast('Localisation indisponible sur ce navigateur'); return; }
+    const b=$('cityGeo'); b.disabled=true;
+    navigator.geolocation.getCurrentPosition(
+      pos=>{ b.disabled=false; setCity({name:'Ma position',lat:Math.round(pos.coords.latitude*100)/100,lon:Math.round(pos.coords.longitude*100)/100}); },
+      ()=>{ b.disabled=false; toast('Position refusée : tape plutôt le nom de ta ville'); },
+      {timeout:12000,maximumAge:3600000});
+  });
+  $('cityRemove').addEventListener('click',()=>{ pref.set('city',null); pref.set('wxCache',null); wx.data=null; wx.status='idle'; $('citySheet').hidden=true; renderWeather(); });
+  $('cityClose').addEventListener('click',()=>{ $('citySheet').hidden=true; });
+  $('citySheet').addEventListener('click',e=>{ if(e.target===$('citySheet')) $('citySheet').hidden=true; });
+
+  /* ---------- Accord des couleurs ---------- */
+  const NEUTRALS=['noir','blanc','gris','beige','marine','marron','kaki'];
+  const GOOD_PAIRS=['bleu|rose','bleu|jaune','bleu|orange','bleu|rouge','rose|vert','jaune|violet','rose|violet'];
+  const lcColor = id => { const c=color(id); return c ? c.label.toLowerCase() : ''; };
+  function harmony(gs){
+    const vividAll=gs.map(g=>g.color).filter(c=>c && !NEUTRALS.includes(c));
+    const vivid=[...new Set(vividAll)];
+    if(!vivid.length) return {score:0.6,level:'ok',label:'Classique',text:'Tout en neutres : facile à porter partout.'};
+    if(vivid.length===1) return vividAll.length>1
+      ? {score:0.7,level:'good',label:'Ton sur ton',text:'Plusieurs pièces '+lcColor(vivid[0])+' : effet monochrome assumé.'}
+      : {score:1,level:'good',label:'Réussi',text:'Un seul accent de couleur ('+lcColor(vivid[0])+'), le reste en neutres.'};
+    if(vivid.length===2){
+      const pair=vivid.slice().sort(), a=lcColor(pair[0]), b=lcColor(pair[1]);
+      return GOOD_PAIRS.includes(pair.join('|'))
+        ? {score:0.5,level:'good',label:'Audacieux',text:'Duo '+a+' et '+b+' : un contraste qui fonctionne.'}
+        : {score:-0.4,level:'warn',label:'Osé',text:cap(a)+' et '+b+' se disputent l\'attention : une pièce neutre calmerait l\'ensemble.'};
+    }
+    return {score:-1,level:'warn',label:'Chargé',text:vivid.length+' couleurs vives : remplace une pièce par un neutre (noir, blanc, beige, marine…).'};
+  }
+  function renderHarmony(pieces){
+    const el=$('harmony'); el.textContent='';
+    if(pieces.length<2){ el.hidden=true; return; }
+    const h=harmony(pieces); el.hidden=false; el.dataset.level=h.level;
+    const dots=document.createElement('span'); dots.className='dots'; dots.setAttribute('aria-hidden','true');
+    pieces.forEach(g=>{ const i=document.createElement('i'); const c=color(g.color); i.style.background=c?rgbCss(c):'var(--raise)'; dots.append(i); });
+    const t=document.createElement('span'), b=document.createElement('b'); b.textContent='Accord '+h.label.toLowerCase();
+    t.append(b,' · '+h.text);
+    el.append(dots,t);
+  }
+
+  /* ---------- Inspire-moi : une tenue proposée à partir du dressing ---------- */
+  const SIB={Printemps:'Automne',Automne:'Printemps'};
+  function seasonOfMonth(){ const m=new Date().getMonth(); return (m<2||m===11)?'Hiver':m<5?'Printemps':m<8?'Été':'Automne'; }
+  function seasonOfTemp(t){ return t<8 ? 'Hiver' : t<17 ? (new Date().getMonth()<6?'Printemps':'Automne') : t<23 ? 'Printemps' : 'Été'; }
+  function scoreGarment(g,ctx){
+    let s=Math.random()*0.6;
+    const ss=g.seasons||[];
+    if(!ss.length) s+=0.3; else if(ss.includes(ctx.season)) s+=1; else if(ss.includes(SIB[ctx.season])) s+=0.6; else s-=0.6;
+    if(g.fav) s+=0.35;
+    const w=ctx.wear.get(g.id), n=w?w.n:0;
+    s+=0.5*(1-n/ctx.maxWear);
+    if(w && w.last && w.last>=ctx.recent) s-=0.5; // porté ces deux derniers jours
+    if(ctx.temp!=null){
+      if(g.category==='veste') s += ctx.temp<14 ? 0.7 : (ctx.temp>22 ? -0.9 : 0);
+      if(g.category==='robe' && ctx.temp<8) s-=0.3;
+    }
+    return s;
+  }
+  let inspiring=false;
+  async function inspire(){
+    if(inspiring) return;
+    const cab=state.cab;
+    inspiring=true; renderCabine();
+    let w=null;
+    if(pref.get('city',null)){ try{ w=await Promise.race([ensureWeather(false),new Promise(r=>setTimeout(()=>r(null),4000))]); }catch(e){} }
+    inspiring=false;
+    const temp = w ? w.feels : null;
+    const ctx={season: temp!=null ? seasonOfTemp(temp) : seasonOfMonth(), temp, wear:wearStats(), recent:dayKey(new Date(Date.now()-2*864e5))};
+    ctx.maxWear=Math.max(1,...[...ctx.wear.values()].map(x=>x.n));
+    const cands={}, locked=[];
+    SLOTS.forEach(s=>{
+      const cur=garmentById(cab.picks[s.id]);
+      if(cab.locks[s.id] && cur){ cands[s.id]=[{g:cur,s:0}]; locked.push(cur); return; }
+      const list=state.garments.filter(g=>s.cats.includes(g.category)).map(g=>({g,s:scoreGarment(g,ctx)})).sort((a,b)=>b.s-a.s).slice(0,5);
+      cands[s.id]=list.length ? list : [{g:null,s:0}];
+    });
+    // Avec une robe, le haut peut rester vide.
+    if(!locked.some(g=>SLOTS[2].cats.includes(g.category))) cands.haut.push({g:null,s:-0.2});
+    let best=null;
+    for(const b of cands.bas) for(const c of cands.chaussures) for(const h of cands.haut){
+      const dress=b.g && b.g.category==='robe';
+      if(dress && h.g && h.g.category==='haut') continue;
+      if(!dress && !h.g && cands.haut.some(x=>x.g)) continue;
+      const gs=[h.g,b.g,c.g].filter(Boolean); if(!gs.length) continue;
+      const key=[h.g,b.g,c.g].map(x=>x?x.id:'-').join('|');
+      let sc=h.s+b.s+c.s+harmony(gs).score*1.2+Math.random()*0.3;
+      if(key===cab.lastIdea) sc-=3;
+      if(!best || sc>best.sc) best={sc,h:h.g,b:b.g,c:c.g,gs,key};
+    }
+    if(!best){ renderCabine(); toast('Ajoute au moins un haut ou un bas dans ton dressing'); return; }
+    cab.picks.haut=best.h?best.h.id:null; cab.picks.bas=best.b?best.b.id:null; cab.picks.chaussures=best.c?best.c.id:null;
+    SLOTS.forEach(s=>{ if(!cab.picks[s.id]) cab.locks[s.id]=false; });
+    cab.lastIdea=best.key;
+    cab.idea={key:picksKey(),text:ideaText(best,ctx,w,locked)};
+    renderCabine();
+  }
+  function ideaText(best,ctx,w,locked){
+    const city=pref.get('city',null), h=harmony(best.gs);
+    let s = w ? 'Pour '+Math.round(w.feels)+' °C ressentis'+(w.code!=null?', '+wText(w.code):'')+(city && city.name!=='Ma position'?' à '+city.name:'')
+              : 'Idée de saison ('+ctx.season.toLowerCase()+')';
+    s+=' : '+h.text.charAt(0).toLowerCase()+h.text.slice(1);
+    const extras=[];
+    if(locked.length) extras.push('construite autour de « '+locked.map(g=>g.name).join(' » et « ')+' »');
+    if(ctx.wear.size){
+      const fresh=best.gs.filter(g=>!locked.includes(g) && !(ctx.wear.get(g.id)||{n:0}).n);
+      if(fresh.length) extras.push(fresh.length>1?'avec des pièces jamais portées':'avec une pièce jamais portée');
+    }
+    if(best.gs.some(g=>g.fav && !locked.includes(g))) extras.push('avec un de tes favoris');
+    if(extras.length) s+=' Tenue '+extras.join(', ')+'.';
+    if(w && (rainy(w.code) || (w.rain!=null && w.rain>=50))) s+=' Pluie prévue'+(w.rain!=null?' ('+w.rain+' %)':'')+' : pense au parapluie.';
+    else if(w && w.feels<5) s+=' Il fait froid : ajoute une couche chaude.';
+    return s;
+  }
+  $('inspire').addEventListener('click',inspire);
+
+  /* ---------- Aperçu à plat : planche instantanée avec les photos des pièces ---------- */
+  async function flatLay(pieces){
+    const W=900, H=1200, P=44, G=26, CAP=40;
+    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const x=c.getContext('2d');
+    const bg=x.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#efe9dd'); bg.addColorStop(1,'#e2dbcc');
+    x.fillStyle=bg; x.fillRect(0,0,W,H);
+    const WEIGHT={haut:1,bas:1.2,chaussures:0.55};
+    const total=pieces.reduce((a,p)=>a+WEIGHT[p.slot],0);
+    const avail=H-2*P-G*(pieces.length-1)-CAP;
+    let y=P;
+    for(let i=0;i<pieces.length;i++){
+      const p=pieces[i], rh=avail*WEIGHT[p.slot]/total, rw=W-2*P;
+      const img=await loadImage(p.g.blob), b=contentBox(img);
+      const s=Math.min(rw*0.8/b.w,(rh-24)/b.h), dw=b.w*s, dh=b.h*s;
+      const cx=W/2+(i%2?1:-1)*Math.min(30,(rw-dw)/4), cy=y+rh/2;
+      x.save(); x.translate(cx,cy); x.rotate((i%2?1:-1)*0.022);
+      x.shadowColor='rgba(40,30,15,.28)'; x.shadowBlur=26; x.shadowOffsetY=12;
+      x.fillStyle='#ffffff'; x.fillRect(-dw/2-10,-dh/2-10,dw+20,dh+20);
+      x.shadowColor='rgba(0,0,0,0)'; x.shadowBlur=0; x.shadowOffsetY=0;
+      x.drawImage(img,b.x,b.y,b.w,b.h,-dw/2,-dh/2,dw,dh);
+      x.restore();
+      y+=rh+G;
+    }
+    x.fillStyle='rgba(40,34,24,.55)'; x.font='600 22px "Instrument Sans", system-ui, sans-serif'; x.textAlign='right';
+    x.fillText('Cabine Miroir · '+new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'}),W-P,H-P+8);
+    return canvasBlob(c,0.9);
+  }
+  let flatCur=null;
+  $('flatBtn').addEventListener('click',async()=>{
+    const pieces=DISPLAY_ORDER.map(id=>({slot:id,g:garmentById(state.cab.picks[id])})).filter(p=>p.g);
+    if(!pieces.length) return;
+    const btn=$('flatBtn'); btn.disabled=true;
+    try{
+      const blob=await flatLay(pieces);
+      if(flatCur) try{ URL.revokeObjectURL(flatCur.url); }catch(e){}
+      flatCur={blob,url:URL.createObjectURL(blob),pieces};
+      $('flatImg').src=flatCur.url; $('flatOverlay').hidden=false; $('flatClose').focus();
+    }catch(e){ toast('Aperçu impossible pour le moment'); }
+    finally{ btn.disabled=false; }
+  });
+  $('flatClose').addEventListener('click',()=>{ $('flatOverlay').hidden=true; });
+  $('flatShare').addEventListener('click',()=>{ if(flatCur) saveBlob(flatCur.blob,'a-plat',Date.now()); });
+  $('flatSave').addEventListener('click',()=>{
+    if(!flatCur) return;
+    const pieces=flatCur.pieces.map(p=>({slot:p.slot,garmentId:p.g.id,garmentName:p.g.name,engine:'flat'}));
+    addLook({id:newId('l'),name:pieces.map(p=>p.garmentName).join(' + '),time:Date.now(),blob:flatCur.blob,baseBlob:null,baseId:null,pieces,kind:'flat',fav:false,worn:[]});
+    $('flatOverlay').hidden=true;
+    toast('Look à plat enregistré dans l\'onglet Looks');
+  });
   document.querySelectorAll('#engineSeg button').forEach(b=>b.addEventListener('click',()=>{
     state.cab.engine=b.dataset.engine; pref.set('engine',state.cab.engine); renderCabine();
   }));
@@ -1525,7 +2362,13 @@ a{color:var(--tape)}
   $('pickerNone').addEventListener('click',()=>{ state.cab.picks[pickerSlot]=null; state.cab.locks[pickerSlot]=false; closePicker(); });
   $('pickerAdd').addEventListener('click',()=>{
     const slot=pickerSlot;
-    afterAdd=g=>{ g.category=slotDef(slot).cats[0]; saveGarment(g); state.cab.picks[slot]=g.id; };
+    afterAdd=g=>{
+      if(!slotDef(slot).cats.includes(g.category)){
+        g.category=slotDef(slot).cats[0];
+        g.name=cat(g.category).label+' '+state.garments.filter(x=>x.category===g.category).length;
+      }
+      saveGarment(g); state.cab.picks[slot]=g.id;
+    };
     picker.hidden=true; closetInput.click();
   });
 
@@ -1702,16 +2545,26 @@ a{color:var(--tape)}
   /* ---------- Cadrage (détection du corps dans le téléphone) ---------- */
   const MP='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34';
   const POSE_MODEL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
-  let posePromise=null;
-  function getPose(){
-    if(!posePromise){
-      posePromise=(async()=>{
+  // Un détecteur pour les photos (IMAGE) et un pour le direct (VIDEO), qui partagent le même chargement.
+  let mpBase=null; const poseByMode={};
+  function mpLoad(){
+    if(!mpBase){
+      mpBase=(async()=>{
         const m=await import(MP+'/vision_bundle.mjs');
         const files=await m.FilesetResolver.forVisionTasks(MP+'/wasm');
-        return m.PoseLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:POSE_MODEL,delegate:'CPU'},runningMode:'IMAGE',numPoses:1});
+        return {m,files};
       })();
+      mpBase.catch(()=>{ mpBase=null; }); // nouvel essai possible plus tard
     }
-    return posePromise;
+    return mpBase;
+  }
+  function getPose(mode){
+    mode=mode||'IMAGE';
+    if(!poseByMode[mode]){
+      poseByMode[mode]=mpLoad().then(({m,files})=>m.PoseLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:POSE_MODEL,delegate:'CPU'},runningMode:mode,numPoses:1}));
+      poseByMode[mode].catch(()=>{ poseByMode[mode]=null; });
+    }
+    return poseByMode[mode];
   }
   async function analyseFraming(photo){
     photo.framing=null; // analyse en cours, ou impossible
@@ -1862,13 +2715,24 @@ a{color:var(--tape)}
     const steps=currentSteps(); if(!steps.length) return;
     const sess=state.cab.session, last=steps[steps.length-1];
     const pieces=steps.map(s=>{ const g=garmentById(s.garmentId); return {slot:s.slot,garmentId:s.garmentId,garmentName:g?g.name:'Vêtement',engine:s.engine}; });
-    const look={id:newId('l'),name:pieces.map(p=>p.garmentName).join(' + '),time:Date.now(),blob:last.blob,baseBlob:sess.base.blob,baseId:sess.photoId,pieces};
-    state.looks.push(Object.assign({url:URL.createObjectURL(look.blob)},look));
-    dbPut('looks',look); askPersist();
+    addLook({id:newId('l'),name:pieces.map(p=>p.garmentName).join(' + '),time:Date.now(),blob:last.blob,baseBlob:sess.base.blob,baseId:sess.photoId,pieces,kind:'ia',fav:false,worn:[]});
     toast('Look enregistré dans l\'onglet Looks');
   });
 
   /* ================= LOOKS ================= */
+  function lookRecord(l){
+    return {id:l.id,name:l.name,time:l.time,blob:l.blob,baseBlob:l.baseBlob||null,baseId:l.baseId||null,pieces:l.pieces||[],kind:l.kind||'ia',fav:!!l.fav,worn:l.worn||[]};
+  }
+  function saveLookRec(l){ return dbPut('looks',lookRecord(l)); }
+  function addLook(rec){
+    state.looks.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec));
+    saveLookRec(rec); askPersist();
+    if(state.tab==='looks') renderLooks();
+  }
+  const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['ia','IA'],['flat','À plat']];
+  function lookMatches(l,f){
+    return f==='all' || (f==='fav' && l.fav) || (f==='worn' && (l.worn||[]).length>0) || (f==='ia' && (l.kind||'ia')==='ia') || (f==='flat' && l.kind==='flat');
+  }
   $('compareMode').addEventListener('click',()=>{
     state.compareMode=!state.compareMode; state.compareSel=[]; renderLooks();
   });
@@ -1877,25 +2741,39 @@ a{color:var(--tape)}
     $('compareMode').setAttribute('aria-pressed',String(state.compareMode));
     $('compareMode').hidden = state.looks.length<2;
     $('compareHint').hidden = !state.compareMode;
-    state.looks.slice().reverse().forEach(l=>{
-      const i=state.looks.indexOf(l);
+    const fr=$('looksFilter'); fr.textContent=''; fr.hidden=state.looks.length<2;
+    if(!state.looks.some(l=>lookMatches(l,state.looksFilter))) state.looksFilter='all';
+    LOOK_FILTERS.forEach(([id,label])=>{
+      const n=state.looks.filter(l=>lookMatches(l,id)).length;
+      if(id!=='all' && !n) return;
+      fr.append(chip(label,state.looksFilter===id,()=>{ state.looksFilter=id; renderLooks(); },n));
+    });
+    const list=state.looks.filter(l=>lookMatches(l,state.looksFilter)).reverse();
+    list.forEach((l,i)=>{
       const b=document.createElement('button'); b.type='button';
       const sel=state.compareSel.indexOf(l.id);
       if(state.compareMode) b.setAttribute('aria-pressed',String(sel>=0));
-      b.setAttribute('aria-label','Look '+l.name+' du '+fmtDate(l.time));
+      const worn=(l.worn||[]).length;
+      b.setAttribute('aria-label','Look '+l.name+' du '+fmtDate(l.time)+(l.fav?', favori':'')+(worn?', porté '+worn+' fois':''));
       const img=document.createElement('img'); img.src=l.url; img.alt=''; img.loading='lazy';
-      const lb=document.createElement('span'); lb.className='lbl'; lb.textContent=l.name;
+      const lb=document.createElement('span'); lb.className='lbl'; lb.textContent=l.name+(worn?' · '+worn+'×':'');
       b.append(img,lb);
       if(sel>=0){ const n=document.createElement('span'); n.className='pickno'; n.textContent=sel+1; b.append(n); }
+      else if(!state.compareMode){
+        const k=document.createElement('span'); k.className='kind'; k.textContent=l.kind==='flat'?'À plat':'IA'; k.setAttribute('aria-hidden','true'); b.append(k);
+      }
+      if(l.fav){ const f=document.createElement('span'); f.className='fav'; f.textContent='♥'; f.setAttribute('aria-hidden','true'); b.append(f); }
       b.addEventListener('click',()=>{
-        if(!state.compareMode) return openViewer('looks',i);
+        if(!state.compareMode) return openViewer('looks',list,i);
         if(sel>=0) state.compareSel.splice(sel,1); else state.compareSel.push(l.id);
         if(state.compareSel.length===2){ openCompare(state.compareSel.slice()); state.compareSel=[]; }
         renderLooks();
       });
       grid.append(b);
     });
-    $('looksEmpty').hidden=state.looks.length>0;
+    const empty=$('looksEmpty');
+    empty.hidden=list.length>0;
+    empty.textContent = state.looks.length ? 'Aucun look dans ce filtre.' : 'Tes looks enregistrés depuis la cabine apparaîtront ici : rendu IA, ou aperçu à plat instantané.';
   }
   function openCompare(ids){
     const grid=$('cmpGrid'); grid.textContent='';
@@ -1912,10 +2790,12 @@ a{color:var(--tape)}
   const viewer=$('viewer'), viewerImg=$('viewerImg'), viewerMeta=$('viewerMeta');
   const viewerPrev=$('viewerPrev'), viewerNext=$('viewerNext'), viewerDelete=$('viewerDelete'), viewerAction=$('viewerAction');
   let viewerReturn=null;
-  const vlist=()=> state.viewer.list==='looks' ? state.looks : state.photos;
-  function openViewer(list,i){
+  // La visionneuse parcourt la liste telle qu'elle est affichée (filtre et ordre compris).
+  const vitems = () => state.viewer.items||[];
+  const vcur = () => vitems()[state.viewer.index];
+  function openViewer(list,items,i){
     viewerReturn=document.activeElement;
-    state.viewer={list,index:i,confirm:false};
+    state.viewer={list,items:items.slice(),index:i};
     viewer.hidden=false; renderViewer(); $('viewerClose').focus();
   }
   function closeViewer(){
@@ -1923,7 +2803,7 @@ a{color:var(--tape)}
     if(viewerReturn && document.contains(viewerReturn)) viewerReturn.focus();
   }
   function renderViewer(){
-    const items=vlist(), it=items[state.viewer.index];
+    const items=vitems(), it=vcur();
     if(!it){ closeViewer(); return; }
     const isLook=state.viewer.list==='looks';
     viewerImg.src=it.url; viewerImg.alt=(isLook?'Look ':'Photo ')+(state.viewer.index+1);
@@ -1931,51 +2811,96 @@ a{color:var(--tape)}
     const b=document.createElement('b');
     b.textContent=(isLook?'Look ':'Photo ')+(state.viewer.index+1)+' sur '+items.length;
     viewerMeta.append(b,document.createTextNode(' · '+fmtDate(it.time)));
-    const pc=$('viewerPieces');
-    pc.hidden=!isLook;
-    if(isLook) pc.textContent=(it.pieces||[]).map(p=>p.garmentName+' ('+slotDef(p.slot).label.toLowerCase()+')').join(' · ');
-    viewerAction.textContent = isLook ? 'Ouvrir dans la cabine' : 'Habiller';
+    $('lookInfo').hidden=!isLook;
+    $('viewerWornBtn').hidden=!isLook; $('viewerFav').hidden=!isLook;
+    if(isLook){
+      if(document.activeElement!==$('viewerName')) $('viewerName').value=it.name;
+      $('viewerPieces').textContent=(it.pieces||[]).map(p=>p.garmentName+' ('+slotDef(p.slot).label.toLowerCase()+')').join(' · ');
+      const w=it.worn||[], today=w.includes(dayKey());
+      $('viewerWorn').textContent = w.length ? 'Porté '+w.length+' fois · dernière fois le '+fmtDay(w[w.length-1]) : 'Pas encore porté';
+      $('viewerWornBtn').setAttribute('aria-pressed',String(today));
+      $('viewerWornBtn').textContent = today ? 'Porté aujourd\'hui ✓' : 'Porté aujourd\'hui';
+      $('viewerFav').setAttribute('aria-pressed',String(!!it.fav));
+      $('viewerFav').textContent = it.fav ? '♥' : '♡';
+      $('viewerFav').setAttribute('aria-label',it.fav?'Retirer des favoris':'Ajouter aux favoris');
+    }
+    viewerAction.textContent = isLook ? (it.kind==='flat' ? 'Mettre dans la cabine' : 'Ouvrir dans la cabine') : 'Habiller';
     viewerPrev.disabled=state.viewer.index<=0;
     viewerNext.disabled=state.viewer.index>=items.length-1;
-    viewerDelete.textContent=state.viewer.confirm?'Confirmer':'Supprimer';
   }
-  async function saveBlob(blob,prefix,time){
-    const d=new Date(time||Date.now()), pad=n=>String(n).padStart(2,'0');
-    const name='cabine-'+prefix+'-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'.jpg';
+  async function shareFile(blob,name){
     try{
-      const file=new File([blob],name,{type:blob.type||'image/jpeg'});
+      const file=new File([blob],name,{type:blob.type||'application/octet-stream'});
       if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
     }catch(e){ if(e && e.name==='AbortError') return; }
+    downloadFile(blob,name);
+  }
+  function downloadFile(blob,name){
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a'); a.href=url; a.download=name; document.body.append(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
   }
-  $('viewerSave').addEventListener('click',()=>{ const it=vlist()[state.viewer.index]; if(it) saveBlob(it.blob,state.viewer.list==='looks'?'look':'photo',it.time); });
+  function stamp(t){
+    const d=new Date(t||Date.now()), pad=n=>String(n).padStart(2,'0');
+    return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+  }
+  function saveBlob(blob,prefix,time){ return shareFile(blob,'cabine-'+prefix+'-'+stamp(time)+'.jpg'); }
+  $('viewerSave').addEventListener('click',()=>{ const it=vcur(); if(it) saveBlob(it.blob,state.viewer.list==='looks'?'look':'photo',it.time); });
   $('viewerClose').addEventListener('click',closeViewer);
-  viewerPrev.addEventListener('click',()=>{ if(state.viewer.index>0){ state.viewer.index--; state.viewer.confirm=false; renderViewer(); } });
-  viewerNext.addEventListener('click',()=>{ if(state.viewer.index<vlist().length-1){ state.viewer.index++; state.viewer.confirm=false; renderViewer(); } });
+  viewerPrev.addEventListener('click',()=>{ if(state.viewer.index>0){ state.viewer.index--; renderViewer(); } });
+  viewerNext.addEventListener('click',()=>{ if(state.viewer.index<vitems().length-1){ state.viewer.index++; renderViewer(); } });
+  // Glisser l'image vers la gauche ou la droite pour passer à la suivante.
+  let swipe=null;
+  $('viewerFig').addEventListener('pointerdown',e=>{ if(e.target.closest('button')) return; swipe={x:e.clientX,y:e.clientY}; });
+  $('viewerFig').addEventListener('pointerup',e=>{
+    if(!swipe) return; const dx=e.clientX-swipe.x, dy=e.clientY-swipe.y; swipe=null;
+    if(Math.abs(dx)>50 && Math.abs(dy)<Math.abs(dx)) (dx<0?viewerNext:viewerPrev).click();
+  });
+  $('viewerFig').addEventListener('pointercancel',()=>{ swipe=null; });
   viewerAction.addEventListener('click',()=>{
-    const it=vlist()[state.viewer.index]; if(!it) return;
+    const it=vcur(); if(!it) return;
     if(state.viewer.list==='photos'){ state.cab.photoId=it.id; closeViewer(); setTab('cabine'); return; }
-    if(!photoById(it.baseId)){ toast('La photo d\'origine de ce look a été supprimée'); return; }
-    state.cab.photoId=it.baseId;
+    const hasPhoto=!!photoById(it.baseId);
+    if(hasPhoto) state.cab.photoId=it.baseId;
     SLOTS.forEach(s=>{ state.cab.picks[s.id]=null; state.cab.locks[s.id]=false; });
     let missing=0;
     (it.pieces||[]).forEach(p=>{ if(garmentById(p.garmentId)) state.cab.picks[p.slot]=p.garmentId; else missing++; });
     closeViewer(); setTab('cabine');
-    if(missing) toast(missing+' pièce(s) de ce look ne sont plus dans ton dressing');
+    if(missing) toast(missing+(missing>1?' pièces de ce look ne sont plus dans ton dressing':' pièce de ce look n\'est plus dans ton dressing'));
+    else if(it.kind!=='flat' && !hasPhoto) toast('La photo d\'origine a été supprimée : choisis-en une autre');
   });
+  $('viewerWornBtn').addEventListener('click',()=>{
+    const it=vcur(); if(!it) return;
+    const t=dayKey(), w=(it.worn||[]).slice(), i=w.indexOf(t);
+    if(i>=0) w.splice(i,1); else { w.push(t); w.sort(); }
+    it.worn=w; saveLookRec(it); renderViewer(); renderLooks();
+    if(i<0) toast('Noté : porté aujourd\'hui. Les stats du dressing sont à jour.');
+  });
+  $('viewerFav').addEventListener('click',()=>{ const it=vcur(); if(!it) return; it.fav=!it.fav; saveLookRec(it); renderViewer(); renderLooks(); });
+  $('viewerName').addEventListener('change',()=>{
+    const it=vcur(); if(!it) return;
+    const v=$('viewerName').value.trim();
+    if(v){ it.name=v; saveLookRec(it); renderLooks(); } else $('viewerName').value=it.name;
+  });
+  $('viewerName').addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
+  // Suppression immédiate, annulable pendant 5 s.
   viewerDelete.addEventListener('click',()=>{
-    if(!state.viewer.confirm){ state.viewer.confirm=true; renderViewer(); return; }
-    const items=vlist();
-    const [gone]=items.splice(state.viewer.index,1);
-    try{ URL.revokeObjectURL(gone.url); }catch(e){}
-    dbDelete(state.viewer.list,gone.id);
-    if(state.cab.photoId===gone.id) state.cab.photoId=null;
-    state.viewer.confirm=false;
-    if(state.viewer.index>=items.length) state.viewer.index=items.length-1;
+    const v=state.viewer, it=vcur(); if(!it) return;
+    const store=v.list, arr=store==='looks'?state.looks:state.photos;
+    const pos=arr.indexOf(it); if(pos>=0) arr.splice(pos,1);
+    v.items.splice(v.index,1);
+    const wasCab=state.cab.photoId===it.id; if(wasCab) state.cab.photoId=null;
+    if(v.index>=v.items.length) v.index=v.items.length-1;
     renderPhotos(); renderLooks();
-    if(state.viewer.index<0) closeViewer(); else renderViewer();
+    if(v.index<0) closeViewer(); else renderViewer();
+    toast(store==='looks'?'Look supprimé':'Photo supprimée',{
+      commit(){ dbDelete(store,it.id); try{ URL.revokeObjectURL(it.url); }catch(e){} },
+      undo(){
+        arr.splice(pos<0?arr.length:Math.min(pos,arr.length),0,it);
+        if(wasCab && !state.cab.photoId) state.cab.photoId=it.id;
+        renderPhotos(); renderLooks(); if(state.tab==='cabine') renderCabine();
+      }
+    });
   });
 
   /* ================= RÉGLAGES ================= */
@@ -1985,6 +2910,7 @@ a{color:var(--tape)}
   $('settingsClose').addEventListener('click',()=>{ settings.hidden=true; });
   settings.addEventListener('click',e=>{ if(e.target===settings) settings.hidden=true; });
   function renderSettings(){
+    renderAppearance();
     document.querySelectorAll('#qualitySeg button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.q===state.quality)));
     [['haut','engHaut'],['bas','engBas']].forEach(([slot,id])=>{
       const box=$(id); box.textContent='';
@@ -2014,22 +2940,192 @@ a{color:var(--tape)}
   });
   $('clearToken').addEventListener('click',()=>{ state.token=''; pref.set('hfToken',''); $('hfToken').value=''; toast('Jeton effacé'); renderSettings(); renderCabine(); });
 
+  /* ---------- Apparence ---------- */
+  const ap={theme:pref.get('theme','dark'),accent:pref.get('accent','or'),big:!!pref.get('bigText',false)};
+  const ACCENTS=[{id:'or',label:'Or',c:'#e8c35a'},{id:'corail',label:'Corail',c:'#f08c7c'},{id:'menthe',label:'Menthe',c:'#7fd1b0'},{id:'lilas',label:'Lilas',c:'#b9a3f0'}];
+  if(!ACCENTS.some(a=>a.id===ap.accent)) ap.accent='or';
+  const lightQuery=window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;
+  function applyAppearance(){
+    const root=document.documentElement;
+    const t = ap.theme==='auto' ? (lightQuery && lightQuery.matches ? 'light' : 'dark') : ap.theme;
+    root.setAttribute('data-theme',t); root.setAttribute('data-accent',ap.accent); root.classList.toggle('big',ap.big);
+    const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',t==='light'?'#f4f1ea':'#111214');
+  }
+  if(lightQuery){
+    const onScheme=()=>{ if(ap.theme==='auto') applyAppearance(); };
+    if(lightQuery.addEventListener) lightQuery.addEventListener('change',onScheme); else if(lightQuery.addListener) lightQuery.addListener(onScheme);
+  }
+  function renderAppearance(){
+    document.querySelectorAll('#themeSeg button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.t===ap.theme)));
+    document.querySelectorAll('#textSeg button').forEach(b=>b.setAttribute('aria-checked',String((b.dataset.big==='1')===ap.big)));
+    const row=$('accentRow'); row.textContent='';
+    ACCENTS.forEach(a=>{
+      const b=document.createElement('button'); b.type='button'; b.className='swatch'; b.setAttribute('role','radio');
+      b.style.background=a.c; b.title=a.label; b.setAttribute('aria-label',a.label); b.setAttribute('aria-checked',String(ap.accent===a.id));
+      b.addEventListener('click',()=>{ ap.accent=a.id; pref.set('accent',a.id); applyAppearance(); renderAppearance(); });
+      row.append(b);
+    });
+  }
+  document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>{ ap.theme=b.dataset.t; pref.set('theme',ap.theme); applyAppearance(); renderAppearance(); }));
+  document.querySelectorAll('#textSeg button').forEach(b=>b.addEventListener('click',()=>{ ap.big=b.dataset.big==='1'; pref.set('bigText',ap.big); applyAppearance(); renderAppearance(); }));
+
+  /* ---------- Sauvegarde : export et import de tout le contenu ---------- */
+  function garmentRecord(g){
+    return {id:g.id,name:g.name,category:g.category,color:g.color,fav:!!g.fav,created:g.created,brand:g.brand||'',size:g.size||'',material:g.material||'',
+      price:g.price||'',seasons:g.seasons||[],styles:g.styles||[],link:g.link||'',notes:g.notes||''};
+  }
+  $('exportBtn').addEventListener('click',async()=>{
+    const btn=$('exportBtn'); btn.disabled=true; btn.textContent='Préparation…';
+    try{
+      // Écrit morceau par morceau pour ne pas tout garder en une seule chaîne géante.
+      const parts=['{"app":"cabine-miroir","version":6,"exported":'+Date.now()];
+      const add=async(key,items,map)=>{ parts.push(',"'+key+'":['); for(let i=0;i<items.length;i++) parts.push((i?',':'')+JSON.stringify(await map(items[i]))); parts.push(']'); };
+      await add('photos',state.photos,async p=>({id:p.id,time:p.time,data:await toDataUrl(p.blob)}));
+      await add('garments',state.garments,async g=>Object.assign(garmentRecord(g),{data:await toDataUrl(g.blob)}));
+      await add('looks',state.looks,async l=>{ const r=lookRecord(l); delete r.blob; delete r.baseBlob; r.data=await toDataUrl(l.blob); r.baseData=l.baseBlob?await toDataUrl(l.baseBlob):null; return r; });
+      parts.push('}');
+      downloadFile(new Blob(parts,{type:'application/json'}),'cabine-sauvegarde-'+stamp()+'.json');
+      pref.set('lastBackup',Date.now());
+      toast('Sauvegarde exportée : '+state.photos.length+' photos, '+state.garments.length+' vêtements, '+state.looks.length+' looks');
+    }catch(e){ toast('Export impossible : '+errText(e)); }
+    finally{ btn.disabled=false; btn.textContent='Exporter'; }
+  });
+  $('importBtn').addEventListener('click',()=>$('importFile').click());
+  $('importFile').addEventListener('change',async()=>{
+    const f=$('importFile').files && $('importFile').files[0]; $('importFile').value='';
+    if(!f) return;
+    let j;
+    try{ j=JSON.parse(await f.text()); }catch(e){ toast('Fichier illisible'); return; }
+    if(!j || j.app!=='cabine-miroir'){ toast('Ce fichier n\'est pas une sauvegarde de Cabine Miroir'); return; }
+    const blobOf=async d=>d ? await (await fetch(d)).blob() : null;
+    let added=0, skipped=0;
+    try{
+      for(const p of j.photos||[]){
+        if(!p.data || photoById(p.id)){ skipped++; continue; }
+        const rec={id:p.id,blob:await blobOf(p.data),time:p.time||Date.now()};
+        state.photos.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec)); await dbPut('photos',rec); added++;
+      }
+      for(const g of j.garments||[]){
+        if(!g.data || garmentById(g.id)){ skipped++; continue; }
+        const item=Object.assign(garmentRecord(Object.assign({created:Date.now()},g)),{blob:await blobOf(g.data)});
+        item.url=URL.createObjectURL(item.blob); state.garments.push(item); saveGarment(item); added++;
+      }
+      for(const l of j.looks||[]){
+        if(!l.data || state.looks.some(x=>x.id===l.id)){ skipped++; continue; }
+        const rec=lookRecord(Object.assign({},l,{blob:await blobOf(l.data),baseBlob:await blobOf(l.baseData)}));
+        state.looks.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec)); await saveLookRec(rec); added++;
+      }
+    }catch(e){ toast('Import interrompu : '+errText(e)); }
+    state.photos.sort((a,b)=>a.time-b.time); state.looks.sort((a,b)=>a.time-b.time);
+    askPersist(); renderPhotos(); renderDressing(); renderLooks(); renderSettings();
+    toast(added+(added>1?' éléments importés':' élément importé')+(skipped?' ('+skipped+' déjà présents)':''));
+  });
+
+  /* ================= AIDE ================= */
+  const HELP={
+    miroir:{title:'Le miroir',items:[
+      ['Comment bien cadrer ?','Pose le téléphone debout, à hauteur de hanche, contre un meuble, et recule de 2 à 3 m. Le coach de cadrage te dit d\'avancer, de reculer ou de te décaler ; quand il affiche « Cadrage parfait », tu es en entier.'],
+      ['Prendre une photo sans toucher le téléphone','Active « Main levée » sous le retardateur, puis lève une main au-dessus de ta tête pendant une seconde : le compte à rebours démarre (3 s si le retardateur est sur « Sans »).'],
+      ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
+      ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
+      ['Les écritures de mon t-shirt sont à l\'envers','C\'est l\'effet miroir. Désactive-le dans « Plus d\'options » : l\'écran et la photo seront à l\'endroit.'],
+      ['La photo est-elle comme le miroir ?','Oui : la photo reprend exactement le cadrage affiché, en vertical. En plein écran, elle est plus haute, idéale pour une photo en pied.'],
+      ['La caméra ne s\'allume pas','Autorise la caméra pour ce site dans les réglages du navigateur. En attendant, le mode photo ouvre l\'appareil photo selfie du téléphone.']
+    ]},
+    dressing:{title:'Le dressing',items:[
+      ['Bien photographier un vêtement','Un vêtement par photo, à plat sur un drap uni, de face, sans pli, à la lumière du jour. La catégorie et la couleur sont devinées : corrige-les dans la fiche si besoin.'],
+      ['Recadrer un vêtement','Dans la fiche, touche « Recadrer » et dessine un cadre autour du vêtement. Les essais sont bien meilleurs.'],
+      ['Les chiffres en haut','Le nombre de pièces, la valeur totale (si tu renseignes les prix), les pièces jamais portées (touche la case pour les afficher) et le coût moyen par port : le prix des pièces portées divisé par le nombre de fois où tu les as portées.'],
+      ['Compter quand je porte un vêtement','Ouvre un look dans l\'onglet Looks et touche « Porté aujourd\'hui ». Chaque pièce du look compte une fois par jour. Un aperçu à plat suffit : pas besoin de rendu IA.'],
+      ['Trier et changer la taille des vignettes','Le menu de tri classe par date, favoris, couleur ou usage. Le bouton « par ligne » passe de 2 à 4 vignettes par ligne.'],
+      ['Importer depuis une boutique','Fais une capture d\'écran de la photo produit, importe-la avec « Depuis une boutique », recadre, puis colle le lien dans la fiche.']
+    ]},
+    cabine:{title:'La cabine',items:[
+      ['Comment marche l\'essayage ?','Choisis une photo en pied et des pièces. L\'IA applique le bas, puis les chaussures, puis le haut. Si tu ne changes que le haut, seule cette étape est recalculée.'],
+      ['« Inspire-moi »','Une tenue proposée à partir de ton dressing : saison ou météo du jour, accord des couleurs, favoris et pièces peu portées. Verrouille une pièce avec le cadenas pour construire la tenue autour d\'elle. Touche encore pour une autre idée.'],
+      ['La météo','Ajoute ta ville (ou ta position) : la température ressentie oriente les idées (veste quand il fait frais, pas de veste en pleine chaleur) et la pluie est signalée.'],
+      ['L\'accord des couleurs','Sous ta tenue, un indicateur juge l\'harmonie : tout en neutres, un seul accent de couleur, un duo audacieux, ou trop de couleurs vives. Les neutres sont noir, blanc, gris, beige, marine, marron et kaki.'],
+      ['L\'aperçu à plat','Compose tout de suite une planche avec les photos de tes pièces, sans IA ni quota. Pratique pour préparer une tenue, la partager ou noter que tu l\'as portée.'],
+      ['Pourquoi c\'est lent ou ça échoue ?','Les rendus passent par des démos gratuites sur Hugging Face : file d\'attente, pauses, et 2 min de calcul par jour sans compte. Un jeton gratuit (Réglages) passe à 5 min et débloque les chaussures et Leffa.'],
+      ['Spécialisé ou Réaliste ?','Spécialisé utilise un modèle d\'essayage par pièce, fidèle au vêtement. Réaliste (Qwen Image Edit) retouche toute la photo : parfois plus naturel, parfois moins fidèle.']
+    ]},
+    looks:{title:'Les looks',items:[
+      ['Noter quand je porte une tenue','Ouvre un look et touche « Porté aujourd\'hui ». Le dressing compte alors combien de fois tu portes chaque pièce et calcule son coût par port.'],
+      ['Renommer, mettre en favori','Dans un look ouvert, touche son nom pour le modifier, et le cœur pour le mettre en favori. Les filtres en haut trient par favoris, portés, IA ou à plat.'],
+      ['Passer d\'un look à l\'autre','Glisse l\'image vers la gauche ou la droite, ou utilise les flèches.'],
+      ['Comparer deux looks','Touche « Comparer », puis deux looks : ils s\'affichent côte à côte.'],
+      ['Retoucher un look','« Ouvrir dans la cabine » remet la photo et les pièces du look dans la cabine, pour changer une pièce ou générer une variante.'],
+      ['Supprimé par erreur ?','Après une suppression, touche « Annuler » dans le message en bas de l\'écran, pendant 5 secondes.']
+    ]}
+  };
+  function openHelp(tab){
+    const h=HELP[tab||state.tab]||HELP.miroir;
+    $('helpTitle').textContent=h.title;
+    const body=$('helpBody'); body.textContent='';
+    h.items.forEach(([q,a],i)=>{
+      const d=document.createElement('details'); if(i===0) d.open=true;
+      const s=document.createElement('summary'); s.textContent=q;
+      const p=document.createElement('p'); p.textContent=a;
+      d.append(s,p); body.append(d);
+    });
+    $('helpSheet').hidden=false; $('helpClose').focus();
+  }
+  $('openHelp').addEventListener('click',()=>openHelp());
+  $('settingsHelp').addEventListener('click',()=>{ settings.hidden=true; openHelp(); });
+  $('helpClose').addEventListener('click',()=>{ $('helpSheet').hidden=true; });
+  $('helpSheet').addEventListener('click',e=>{ if(e.target===$('helpSheet')) $('helpSheet').hidden=true; });
+  $('helpGuide').addEventListener('click',()=>{ $('helpSheet').hidden=true; openOnboard(); });
+  $('replayGuide').addEventListener('click',()=>{ settings.hidden=true; openOnboard(); });
+
+  /* ---------- Guide de démarrage (premier lancement) ---------- */
+  const ICON=d=>'<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';
+  const OB=[
+    {art:ICON('<rect x="6" y="2.5" width="12" height="19" rx="6"/><circle cx="12" cy="9" r="1.8"/><path d="M12 11.5v4.5M9.5 13.2 12 12l2.5 1.2"/>'),title:'Ton miroir',
+      text:'Pose le téléphone contre un meuble et recule : le coach te dit quand tu es en entier. Lève la main pour déclencher sans le toucher, ou passe en plein écran.'},
+    {art:ICON('<path d="M10 6.5a2 2 0 1 1 2.6 1.9c-.4.1-.6.5-.6.9V11"/><path d="M12 11 3.6 17.2a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8z"/>'),title:'Ton dressing',
+      text:'Photographie tes vêtements à plat. Catégorie et couleur sont devinées ; ajoute marque, prix et saisons pour profiter des stats et du coût par port.'},
+    {art:ICON('<path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>'),title:'La cabine',
+      text:'Choisis une photo et des pièces : l\'IA t\'habille. Pas d\'idée ? « Inspire-moi » compose une tenue selon la météo et l\'accord des couleurs.'},
+    {art:ICON('<rect x="3.5" y="4" width="7" height="9" rx="1.5"/><rect x="13.5" y="4" width="7" height="6" rx="1.5"/><rect x="13.5" y="13" width="7" height="7" rx="1.5"/><rect x="3.5" y="16" width="7" height="4" rx="1.5"/>'),title:'Tes looks',
+      text:'Garde tes tenues, note quand tu les portes et compare-les. Une question ? Le bouton « ? » en haut répond selon l\'écran où tu es.'}
+  ];
+  let obIndex=0, obReturn=null;
+  function openOnboard(){ obIndex=0; obReturn=document.activeElement; $('onboard').hidden=false; renderOnboard(); $('obNext').focus(); }
+  function closeOnboard(){
+    $('onboard').hidden=true; pref.set('onboarded',true);
+    if(obReturn && document.contains(obReturn) && obReturn!==document.body) obReturn.focus();
+  }
+  function renderOnboard(){
+    const s=OB[obIndex];
+    $('obArt').innerHTML=s.art; $('obTitle').textContent=s.title; $('obText').textContent=s.text;
+    const dots=$('obDots'); dots.textContent='';
+    OB.forEach((_,i)=>{ const d=document.createElement('i'); if(i===obIndex) d.className='on'; dots.append(d); });
+    $('obNext').textContent = obIndex===OB.length-1 ? 'C\'est parti' : 'Suivant';
+    $('obSkip').style.visibility = obIndex===OB.length-1 ? 'hidden' : '';
+  }
+  $('obNext').addEventListener('click',()=>{ if(obIndex<OB.length-1){ obIndex++; renderOnboard(); } else closeOnboard(); });
+  $('obSkip').addEventListener('click',closeOnboard);
+
   /* ================= CLAVIER ================= */
   document.addEventListener('keydown',e=>{
     if(e.key!=='Escape' && viewer.hidden) return;
+    if(!$('onboard').hidden){ if(e.key==='Escape') closeOnboard(); return; }
     if(!$('cropOverlay').hidden){ if(e.key==='Escape') closeCrop(); return; }
+    if(!$('flatOverlay').hidden){ if(e.key==='Escape') $('flatOverlay').hidden=true; return; }
     if(!$('cmpOverlay').hidden){ if(e.key==='Escape') $('cmpOverlay').hidden=true; return; }
     if(!viewer.hidden){
-      if(e.key==='Escape') closeViewer();
+      if(e.key==='Escape') return closeViewer();
+      if(e.target && e.target.id==='viewerName') return; // saisie du nom : les flèches restent dans le champ
       if(e.key==='ArrowLeft') viewerPrev.click();
       if(e.key==='ArrowRight') viewerNext.click();
       return;
     }
     if(e.key==='Escape'){
-      if(!picker.hidden) closePicker();
-      else if(!sheet.hidden) closeSheet();
-      else if(!settings.hidden) settings.hidden=true;
-      else if(!$('shopSheet').hidden) $('shopSheet').hidden=true;
+      if(!picker.hidden) return closePicker();
+      if(!sheet.hidden) return closeSheet();
+      if(!settings.hidden){ settings.hidden=true; return; }
+      for(const id of ['shopSheet','mirrorSheet','helpSheet','citySheet']) if(!$(id).hidden){ $(id).hidden=true; return; }
+      if(document.body.classList.contains('immersive')) exitImmersive();
     }
   });
 
@@ -2056,8 +3152,11 @@ a{color:var(--tape)}
   $('installClose').addEventListener('click',()=>{ install.hidden=true; pref.set('installDismissed',true); });
 
   /* ================= DÉMARRAGE ================= */
-  guideBtn.setAttribute('aria-pressed',String(state.guideOn));
+  applyAppearance();
   renderTimer(); renderPhotos(); setMode('off'); showInstall(); renderDressing(); setCmp(50);
+  $('viewerSave').textContent = navigator.share ? 'Partager' : 'Télécharger';
+  $('flatShare').textContent = navigator.share ? 'Partager' : 'Télécharger';
+  if(!pref.get('onboarded',false)) openOnboard();
 
   Promise.all([dbAll('garments'),dbAll('photos'),dbAll('looks'),dbAll('tries'),dbAll('meta')]).then(async([gs,ps,ls,ts,meta])=>{
     for(const g of gs.sort((a,b)=>(a.created||0)-(b.created||0))){
@@ -2080,7 +3179,9 @@ a{color:var(--tape)}
         pieces:t.garmentId?[{slot:'haut',garmentId:t.garmentId,garmentName:t.garmentName||'Vêtement',engine:'idm'}]:[]};
       ls.push(look); await dbPut('looks',look); dbDelete('tries',t.id);
     }
-    ls.sort((a,b)=>a.time-b.time).forEach(l=>{ if(l.blob) state.looks.push(Object.assign({url:URL.createObjectURL(l.blob)},l)); });
+    ls.sort((a,b)=>a.time-b.time).forEach(l=>{
+      if(l.blob) state.looks.push(Object.assign({url:URL.createObjectURL(l.blob)},l,{kind:l.kind||'ia',fav:!!l.fav,worn:Array.isArray(l.worn)?l.worn:[]}));
+    });
     const sess=meta.find(m=>m.id==='session');
     if(sess && sess.base && photoById(sess.photoId)){
       state.cab.photoId=sess.photoId;
