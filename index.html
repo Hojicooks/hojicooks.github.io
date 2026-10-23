@@ -459,6 +459,29 @@ body.immersive .fx-strip{top:calc(118px + env(safe-area-inset-top,0px))}
 @keyframes swl{from{transform:translateX(calc(-50% + 40px));opacity:.4}to{transform:translateX(-50%);opacity:1}}
 @keyframes swr{from{transform:translateX(calc(-50% - 40px));opacity:.4}to{transform:translateX(-50%);opacity:1}}
 body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
+/* Clip IA */
+.work-video{position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1}
+.chip.rec{color:var(--text)}
+.chip.rec .dot{background:var(--live);animation:pulse 1s ease-in-out infinite}
+.clip-view{position:relative;width:min(180px,52%);margin:0 auto;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:9/16}
+.clip-view video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#000}
+.clip-view video:not([src]):not(.on){visibility:hidden}
+.clip-empty{position:absolute;inset:0;display:grid;place-items:center;padding:18px;margin:0;text-align:center;font-size:13px;background:var(--sheet);color:var(--muted)}
+.clip-row{display:flex;gap:8px;flex-wrap:wrap}
+.clip-row .btn{flex:1 1 120px}
+.clip-outfits{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.clip-outfits button{flex:none;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;padding:0;color:var(--text);cursor:pointer;font:inherit}
+.clip-outfits .fx-mini{width:58px;height:74px;border-width:2px}
+.clip-outfits button[aria-pressed="true"] .fx-mini{border-color:var(--tape)}
+.clip-outfits button{position:relative}
+.clip-outfits button[aria-pressed="true"]::after{content:"✓";position:absolute;top:-3px;right:-1px;width:19px;height:19px;border-radius:50%;background:var(--tape);color:var(--tape-ink);font-size:11px;font-weight:800;display:grid;place-items:center}
+.clip-outfits button:disabled{opacity:.55;cursor:default}
+.clip-outfits small{font-size:11px;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.clip-cost{margin:0;font-size:13.5px;font-weight:600}
+.clip-cost.warn{color:var(--live)}
+.clip-prog{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.clip-prog .track{display:block;height:4px;border-radius:4px;background:var(--raise);overflow:hidden}
+.clip-prog .track i{display:block;width:33%;height:100%;background:var(--tape);animation:slide 1.4s linear infinite}
 /* Flèche affichée quand un balayage de la main est reconnu */
 .swipe-arrow{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;z-index:3;opacity:0;color:var(--tape)}
 .swipe-arrow svg{width:clamp(96px,30vw,170px);height:auto;filter:drop-shadow(0 4px 18px var(--shade))}
@@ -475,7 +498,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
 @keyframes flash{from{opacity:.85}to{opacity:0}}
 @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 @media (prefers-reduced-motion:reduce){
-  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i,.busy i,.fx-bar.swl,.fx-bar.swr{animation:none}
+  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i,.busy i,.fx-bar.swl,.fx-bar.swr,.chip.rec .dot,.clip-prog .track i{animation:none}
   .swipe-arrow.l,.swipe-arrow.r{animation-name:arrf}
   .shutter i,.switch,.switch::after,.ob-dots i{transition:none}
 }
@@ -542,6 +565,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       <div class="ring" id="ring" hidden aria-hidden="true"></div>
       <div class="stage-top">
         <span class="chip" id="modeChip" data-mode="off" hidden><span class="dot"></span><span id="modeText">Caméra coupée</span></span>
+        <span class="chip rec" id="recChip" hidden aria-live="polite"><span class="dot"></span><span id="recText"></span></span>
         <button class="icon-btn" id="fullBtn" type="button" aria-label="Miroir en plein écran" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
         </button>
@@ -573,6 +597,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       <div class="quick" id="quickRow" hidden>
         <button class="toggle" type="button" id="fxBtn" aria-pressed="false">Tenue en filtre</button>
         <button class="toggle" type="button" id="aiBtn" aria-pressed="false">Direct IA</button>
+        <button class="toggle" type="button" id="clipBtn">Clip IA</button>
         <button class="toggle" type="button" data-opt="coach" aria-pressed="false">Coach</button>
         <button class="toggle" type="button" data-opt="hand" aria-pressed="false">Main levée</button>
         <button class="toggle" type="button" data-opt="ring" aria-pressed="false">Lumière</button>
@@ -954,8 +979,49 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     </div>
     <div class="sheet-actions">
       <button class="btn" id="oLive" type="button">Essayer en direct (filtre)</button>
+      <button class="btn ghost" id="oClip" type="button">Essayer sur un clip (Clip IA)</button>
       <button class="btn ghost" id="oCabin" type="button">Mettre dans la cabine</button>
       <button class="btn danger" id="oDelete" type="button">Supprimer cette tenue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clip IA : un clip filmé une fois, les tenues essayées dessus par Decart -->
+<div class="sheet-wrap" id="clipSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="clipTitle">
+    <div class="sheet-head">
+      <h2 id="clipTitle">Clip IA</h2>
+      <button class="toggle" id="clipClose" type="button">Fermer</button>
+    </div>
+    <p class="note">Filme-toi une fois, puis essaie tes tenues sur ce clip sans te replacer devant le téléphone. Chaque tenue donne une vidéo rangée dans les Looks.</p>
+    <div class="clip-view" id="clipView">
+      <video id="clipVideo" muted playsinline loop aria-label="Aperçu du clip"></video>
+      <p class="clip-empty" id="clipEmpty">Pas encore de clip : filme-toi 5 s en pied, ou choisis une vidéo de ta galerie.</p>
+    </div>
+    <div class="strip" id="clipStrip" aria-label="Tes clips"></div>
+    <div class="clip-row">
+      <button class="btn small" id="clipShoot" type="button">Filmer 5 s</button>
+      <button class="btn ghost small" id="clipPick" type="button">Choisir une vidéo</button>
+      <button class="btn ghost small" id="clipDel" type="button">Supprimer</button>
+    </div>
+    <input class="sr-only" type="file" id="clipFile" accept="video/*" tabindex="-1" aria-hidden="true">
+    <div class="field">
+      <span class="label">Tenues à essayer</span>
+      <div class="clip-outfits" id="clipOutfits"></div>
+      <p class="note" id="clipNoOutfit" hidden>Crée d'abord une tenue dans Dressing → Tenues.</p>
+    </div>
+    <div class="field">
+      <span class="label" id="clipModeLabel">Rendu</span>
+      <div class="seg" id="clipMode" role="radiogroup" aria-labelledby="clipModeLabel">
+        <button type="button" role="radio" data-m="live">Rapide</button>
+        <button type="button" role="radio" data-m="video">Qualité</button>
+      </div>
+      <p class="note" id="clipModeNote"></p>
+    </div>
+    <p class="clip-cost" id="clipCost"></p>
+    <div class="clip-prog" id="clipProg" hidden role="status"><span class="track" aria-hidden="true"><i></i></span><span id="clipProgText"></span></div>
+    <div class="sheet-actions">
+      <button class="btn" id="clipGo" type="button">Lancer</button>
     </div>
   </div>
 </div>
@@ -1140,7 +1206,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.7</p>
+      <p class="note">Cabine Miroir · version 6.8</p>
     </div>
   </div>
 </div>
@@ -1267,10 +1333,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function openDb(){
     return new Promise((resolve,reject)=>{
       if(!('indexedDB' in window)) return reject(new Error('indexedDB indisponible'));
-      const r=indexedDB.open('cabine-miroir',4);
+      const r=indexedDB.open('cabine-miroir',5);
       r.onupgradeneeded=()=>{
         const d=r.result;
-        ['photos','garments','tries','looks','meta','outfits'].forEach(s=>{ if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'}); });
+        ['photos','garments','tries','looks','meta','outfits','clips'].forEach(s=>{ if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'}); });
       };
       r.onsuccess=()=>resolve(r.result);
       r.onerror=()=>reject(r.error);
@@ -1300,7 +1366,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   // devient illisible jusqu'au redémarrage de l'app. Après chaque enregistrement, on reprend donc les
   // fichiers à jour ; et si une image casse quand même, on la relit depuis la base.
   const blobHome=new WeakMap(); // image → {store, id, path (dans la fiche), owner (objet en mémoire)}
-  const URL_KEY={blob:'url',backBlob:'backUrl'};
+  const URL_KEY={blob:'url',backBlob:'backUrl',poster:'purl'};
   function homeRec(store,rec,owner){ if(rec && owner) walkHome(store,rec.id,rec,owner,[],0); }
   function walkHome(store,id,o,owner,path,d){
     if(!o || d>3) return;
@@ -1382,6 +1448,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function ownerOfUrl(u){
     for(const g of state.garments){ if(g.url===u) return {o:g,k:'blob',uk:'url'}; if(g.backUrl===u) return {o:g,k:'backBlob',uk:'backUrl'}; }
     for(const list of [state.photos,state.looks]) for(const x of list) if(x.url===u) return {o:x,k:'blob',uk:'url'};
+    for(const x of state.clips) if(x.purl===u) return {o:x,k:'poster',uk:'purl'};
     const s=state.cab.session;
     if(s){ if(s.base && s.base.url===u) return {o:s.base,k:'blob',uk:'url'}; for(const st of s.steps) if(st.url===u) return {o:st,k:'blob',uk:'url'}; }
     return null;
@@ -1663,7 +1730,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   const state={
     tab:'miroir', mode:'off', stream:null, timer:pref.get('timer',5), countdown:null,
     wake:null, pending:false,
-    photos:[], garments:[], looks:[], outfits:[], dressPane:'pieces',
+    photos:[], garments:[], looks:[], outfits:[], clips:[], dressPane:'pieces',
     filter:{q:'',cat:'all',color:null,fav:false,season:null,style:null,brand:null,unworn:false},
     moreFilters:false,
     dress:{sort:pref.get('sort','recent'),cols:pref.get('cols',3)},
@@ -1820,7 +1887,12 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function releaseWake(){ try{ if(state.wake){ state.wake.release(); state.wake=null; } }catch(e){} }
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible'){ if(state.mode==='live') requestWake(); syncLive(); }
-    else { cancelCountdown(); if(ai.on) aiStop('Direct IA arrêté (app en arrière-plan)'); stopLive(); flushUndo(); }
+    else {
+      cancelCountdown(); if(ai.on) aiStop('Direct IA arrêté (app en arrière-plan)');
+      if(clip.rec) clip.rec.cancel=true;
+      if(clip.job && clip.job.mode==='live') clipAbort('Clip IA arrêté (app en arrière-plan)');
+      stopLive(); flushUndo();
+    }
   });
 
   /* ---------- Sons et vibrations ---------- */
@@ -1904,6 +1976,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(state.mode==='off') return startCamera();
     if(state.mode==='photo') return snapInput.click();
     if(state.countdown) return cancelCountdown();
+    if(clip.rec && !clip.importing){ clip.rec.cancel=true; return; } // annule le clip en cours
     if(ai.on && ai.phase!=='live'){ toast('Attends que le Direct IA démarre pour prendre une photo'); return; }
     if(state.timer===0) capture(); else startCountdown();
   }
@@ -2381,10 +2454,13 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   const dcKey = () => pref.get('decartKey','');
   const dcMax = () => { const v=pref.get('decartMax',60); return [30,60,120].includes(v)?v:60; };
   const dcUsedSec = () => pref.get('decartUsedSec',0);
+  const dcUsedCr = () => pref.get('decartUsedCr',0); // crédits du mode vidéo (Clip IA qualité)
+  const dcUsedCredits = () => Math.round(dcUsedSec()*CREDITS_PER_S+dcUsedCr());
+  const dcLeft = () => Math.max(0,dcBudget()-dcUsedCredits());
   const dcBudget = () => { const v=Number(pref.get('decartBudget',1000)); return isFinite(v)&&v>=0?v:1000; };
   function aiUsageText(){
-    const used=Math.round(dcUsedSec()*CREDITS_PER_S), left=Math.max(0,dcBudget()-used);
-    return 'Utilisé avec cette app : '+Math.round(dcUsedSec())+' s, soit '+used+' crédits. Restant estimé : '+left+' crédits, environ '+Math.floor(left/CREDITS_PER_S/60)+' min '+String(Math.round(left/CREDITS_PER_S%60)).padStart(2,'0')+' de direct.';
+    const used=dcUsedCredits(), left=dcLeft(), cr=Math.round(dcUsedCr());
+    return 'Utilisé avec cette app : '+Math.round(dcUsedSec())+' s de direct'+(cr?' + '+cr+' crédits de vidéos':'')+', soit '+used+' crédits. Restant estimé : '+left+' crédits, environ '+Math.floor(left/CREDITS_PER_S/60)+' min '+String(Math.round(left/CREDITS_PER_S%60)).padStart(2,'0')+' de direct.';
   }
   function aiLiveSecs(){ return ai.phase==='live' && ai.start ? Math.max(ai.secs,(Date.now()-ai.start)/1000) : ai.secs; }
   function aiStatus(text){
@@ -2431,8 +2507,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(!key){ openSettingsAt('dcKey'); toast('Colle d\'abord ta clé Decart dans les réglages'); return; }
     if(!fxOutfits().length){ setFx(true); return; } // invite à créer une tenue
     if(state.mode!=='live'){ await startCamera(); if(state.mode!=='live') return; }
-    const used=Math.round(dcUsedSec()*CREDITS_PER_S);
-    if(dcBudget()-used<CREDITS_PER_S*10){ toast('Crédits Decart presque épuisés d\'après le compteur (réglages pour le corriger)'); }
+    if(clip.job || clip.rec){ toast('Clip IA en cours : attends la fin ou arrête-le'); return; }
+    if(dcLeft()<CREDITS_PER_S*10){ toast('Crédits Decart presque épuisés d\'après le compteur (réglages pour le corriger)'); }
     unlockAudio(); cancelCountdown();
     ai.prevFx=fx.on; ai.on=true; ai.phase='armed'; ai.secs=0; ai.start=0; ai.armSince=0; ai.armAt=Date.now(); ai.armMsg=''; ai.sent=''; ai.sentO=null; ++ai.gen;
     fx.on=true; renderStageOpts(); syncLive();
@@ -2442,10 +2518,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     ai.timer=setInterval(aiWatch,1000);
   }
   // Accès de courte durée : limité à ce site, à ce modèle et à la durée maximale choisie.
-  async function aiToken(sdk){
+  async function aiToken(sdk,maxSecs){
     const base=sdk.createDecartClient({apiKey:dcKey(),telemetry:false});
     try{
-      const tok=await base.tokens.create({expiresIn:120,allowedModels:[DECART_MODEL],allowedOrigins:[location.origin],constraints:{realtime:{maxSessionDuration:dcMax()}}});
+      const tok=await base.tokens.create({expiresIn:120,allowedModels:[DECART_MODEL],allowedOrigins:[location.origin],constraints:{realtime:{maxSessionDuration:maxSecs||dcMax()}}});
       if(tok && tok.apiKey) return {key:tok.apiKey,at:Date.now()};
     }catch(e){ if(/401|403|invalid/i.test(errText(e))) throw e; }
     return {key:dcKey(),at:Date.now(),direct:true}; // jeton impossible (réseau) : la clé sert directement
@@ -2594,22 +2670,33 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   // en paysage même téléphone vertical. L'image est alors recadrée au centre en 9:16.
   function aiInput(){
     const sw=stage.clientWidth||innerWidth, sh=stage.clientHeight||innerHeight;
-    const portrait=sh>=sw, W=portrait?720:1280, H=portrait?1280:720;
+    const portrait=sh>=sw;
+    return cropStream(video, portrait?720:1280, portrait?1280:720);
+  }
+  // Image recadrée au centre (sans étirement) au format W×H, redessinée en continu depuis une vidéo.
+  // timer : redessine 30 fois par seconde même si la vidéo est en pause (sinon : à chaque nouvelle image).
+  // hold : image affichée tant que la vidéo source est en pause ou se recharge (Clip IA).
+  function cropStream(src,W,H,opt){
+    opt=opt||{};
     const c=document.createElement('canvas'); c.width=W; c.height=H;
     const g=c.getContext('2d');
-    let stopped=false, handle=0, usesRvfc=!!video.requestVideoFrameCallback;
+    let stopped=false, handle=0;
+    const usesRvfc=!opt.timer && !!src.requestVideoFrameCallback;
+    const api={w:W,h:H,canvas:c,hold:null};
     const draw=()=>{
-      const vw=video.videoWidth, vh=video.videoHeight;
-      if(vw && vh){ const k=Math.max(W/vw,H/vh), sw=W/k, sh=H/k; g.drawImage(video,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,W,H); }
+      if(api.hold && (src.paused || src.readyState<2)){ g.drawImage(api.hold,0,0,W,H); return; }
+      const vw=src.videoWidth, vh=src.videoHeight;
+      if(vw && vh && src.readyState>=2){ const k=Math.max(W/vw,H/vh), sw=W/k, sh=H/k; g.drawImage(src,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,W,H); }
     };
-    const loop=()=>{ if(stopped) return; draw(); handle = usesRvfc ? video.requestVideoFrameCallback(loop) : setTimeout(loop,33); };
+    const loop=()=>{ if(stopped) return; draw(); handle = usesRvfc ? src.requestVideoFrameCallback(loop) : setTimeout(loop,33); };
     loop();
-    const stream=c.captureStream(30);
-    return {stream,w:W,h:H,stop(){
+    api.stream=c.captureStream(30);
+    api.stop=()=>{
       stopped=true;
-      try{ if(usesRvfc && video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(handle); else clearTimeout(handle); }catch(e){}
-      stream.getTracks().forEach(t=>{ try{ t.stop(); }catch(e){} });
-    }};
+      try{ if(usesRvfc && src.cancelVideoFrameCallback) src.cancelVideoFrameCallback(handle); else clearTimeout(handle); }catch(e){}
+      api.stream.getTracks().forEach(t=>{ try{ t.stop(); }catch(e){} });
+    };
+    return api;
   }
   // Si l'image renvoyée n'a pas les proportions de l'image envoyée, on les rétablit à l'affichage.
   function aiFit(){
@@ -2677,6 +2764,388 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     ai.recSaved++;
     if(ai.on) aiStatus('Vidéo de « '+seg.outfit.name+' » enregistrée');
   }
+
+  /* ---------- Clip IA : un clip filmé une fois, toutes les tenues essayées dessus ---------- */
+  // Decart ne fait pas la différence entre la caméra et une vidéo : le clip est rejoué image par image comme
+  // si c'était la caméra (« Rapide », tarif du direct), ou envoyé à son mode vidéo (« Qualité », traité sans
+  // contrainte de temps réel, deux fois plus cher). Le clip reste dans le téléphone.
+  const CLIP_SECS=5, CLIP_MAX=10, CLIP_HOLD=[1200,1500], CREDITS_PER_S_VIDEO=4;
+  const clip={sel:null,picks:new Set(),mode:pref.get('clipMode','live')==='video'?'video':'live',job:null,rec:null,url:null};
+  if(window.__cabineTest) window.__cabineClip=clip; // tests automatisés uniquement
+  const clipById = id => state.clips.find(c=>c.id===id)||null;
+  const clipChosen = () => fxOutfits().filter(o=>clip.picks.has(o.id));
+  function clipCost(n,dur,mode){
+    return mode==='video' ? Math.round(n*dur*CREDITS_PER_S_VIDEO) : Math.round(CREDITS_PER_S*(n*(dur+1.6)+1.5));
+  }
+  const euros = cr => (cr/100).toFixed(2).replace('.',',')+' $';
+  function recChip(t){ $('recChip').hidden=!t; $('recText').textContent=t||''; }
+  function clipStatus(t){ $('clipProgText').textContent=t||''; }
+  // Vidéo de travail (lecture du clip pour le redessiner) : gardée dans la page mais invisible,
+  // car Safari sur iPhone ne décode pas toujours une vidéo détachée de la page.
+  function mkVideo(){
+    const v=document.createElement('video'); v.muted=true; v.playsInline=true; v.setAttribute('playsinline',''); v.setAttribute('muted',''); v.preload='auto';
+    v.setAttribute('aria-hidden','true'); v.className='work-video'; document.body.append(v); return v;
+  }
+  function mediaReady(v,ms){
+    return new Promise((res,rej)=>{
+      if(v.readyState>=2) return res();
+      const t=setTimeout(()=>{ done(); rej(new Error('vidéo trop longue à charger')); },ms||15000);
+      const ok=()=>{ done(); res(); }, ko=()=>{ done(); rej(new Error('vidéo illisible')); };
+      const done=()=>{ clearTimeout(t); v.removeEventListener('loadeddata',ok); v.removeEventListener('error',ko); };
+      v.addEventListener('loadeddata',ok); v.addEventListener('error',ko);
+    });
+  }
+  // Copie de l'image en cours d'une vidéo, aux proportions voulues (corrige un format renvoyé différent).
+  function frameOf(v,aspect,side){
+    const vw=v.videoWidth, vh=v.videoHeight; if(!vw || !vh) return null;
+    side=side||720; aspect=aspect||vw/vh;
+    const c=document.createElement('canvas');
+    if(aspect<1){ c.height=side; c.width=Math.round(side*aspect); } else { c.width=side; c.height=Math.round(side/aspect); }
+    c.getContext('2d').drawImage(v,0,0,vw,vh,0,0,c.width,c.height);
+    return c;
+  }
+  const fixFor = (v,aspect) => v.videoWidth && Math.abs(v.videoWidth/v.videoHeight-aspect)/aspect>0.04 ? aspect : null;
+  function jobWait(job,ms){ return new Promise(r=>{ const t=setTimeout(r,ms); job.wakers.push(()=>{ clearTimeout(t); r(); }); }); }
+  function jobWake(job){ const w=job.wakers; job.wakers=[]; w.forEach(f=>f()); }
+  // Enregistre une image redessinée (canvas) pendant secs secondes, ou jusqu'à endWhen().
+  function recordCanvas(inp,secs,onTick,cancelled,endWhen){
+    return new Promise((resolve,reject)=>{
+      const mime=recMime(); if(mime===null) return reject(new Error('enregistrement vidéo non pris en charge par ce navigateur'));
+      let mr;
+      try{ mr=new MediaRecorder(inp.stream, mime ? {mimeType:mime,videoBitsPerSecond:6000000} : {videoBitsPerSecond:6000000}); }catch(e){ return reject(e); }
+      const chunks=[], t0=performance.now(); let poster=null, aborted=false, iv=null;
+      mr.ondataavailable=e=>{ if(e.data && e.data.size) chunks.push(e.data); };
+      mr.onstop=()=>{
+        clearInterval(iv);
+        if(aborted || !chunks.length) return resolve(null);
+        const type=(mr.mimeType||mime||'video/webm').split(';')[0];
+        const dur=Math.round((performance.now()-t0)/100)/10;
+        resolve({blob:new Blob(chunks,{type}),mime:type,w:inp.w,h:inp.h,dur,posterCanvas:poster});
+      };
+      const stop=()=>{ clearInterval(iv); try{ if(mr.state!=='inactive') mr.stop(); }catch(e){} };
+      iv=setInterval(()=>{
+        const s=(performance.now()-t0)/1000;
+        if(!poster && s>=Math.min(1,secs/2)){ poster=document.createElement('canvas'); poster.width=inp.w; poster.height=inp.h; poster.getContext('2d').drawImage(inp.canvas,0,0); }
+        if(cancelled && cancelled()){ aborted=true; return stop(); }
+        if(onTick) onTick(s);
+        if(s>=secs || (endWhen && endWhen())) stop();
+      },100);
+      try{ mr.start(500); }catch(e){ clearInterval(iv); reject(e); }
+    });
+  }
+  async function saveClip(r){
+    let posterBlob=null;
+    if(r.posterCanvas){ const c=document.createElement('canvas'), k=Math.min(1,480/Math.max(r.w,r.h)); c.width=Math.round(r.w*k); c.height=Math.round(r.h*k); c.getContext('2d').drawImage(r.posterCanvas,0,0,c.width,c.height); posterBlob=await canvasBlob(c,0.85); }
+    const rec={id:newId('c'),blob:r.blob,mime:r.mime,w:r.w,h:r.h,dur:Math.max(1,Math.min(CLIP_MAX,r.dur)),time:Date.now(),poster:posterBlob};
+    const item=Object.assign({purl:posterBlob?URL.createObjectURL(posterBlob):null},rec);
+    state.clips.push(item); clip.sel=item.id;
+    await dbPutFresh('clips',rec,item); askPersist();
+    return item;
+  }
+  // Filmer 5 s depuis le miroir : retardateur avec bips, puis enregistrement de l'image telle qu'elle sera envoyée.
+  async function clipShoot(){
+    if(clip.job || clip.rec) return;
+    if(ai.on) aiStop('Direct IA arrêté');
+    $('clipSheet').hidden=true;
+    if(state.tab!=='miroir') setTab('miroir');
+    if(state.mode!=='live'){ await startCamera(); if(state.mode!=='live'){ openClipSheet(); return; } }
+    unlockAudio(); cancelCountdown();
+    const r=clip.rec={cancel:false};
+    let n=state.timer||3;
+    showCount(n); recChip('Clip dans '+n+' s');
+    const go=await new Promise(res=>{
+      r.cd=setInterval(()=>{
+        if(r.cancel){ clearInterval(r.cd); return res(false); }
+        n--;
+        if(n>0){ showCount(n); recChip('Clip dans '+n+' s'); return; }
+        clearInterval(r.cd); res(true);
+      },1000);
+    });
+    count.textContent=''; count.classList.remove('tick');
+    if(!go || state.mode!=='live'){ clip.rec=null; recChip(''); toast('Clip annulé'); return; }
+    const sw=stage.clientWidth||innerWidth, sh=stage.clientHeight||innerHeight, portrait=sh>=sw;
+    const inp=cropStream(video, portrait?720:1280, portrait?1280:720);
+    beep(1320,0.15); buzz(30);
+    let res=null;
+    try{ res=await recordCanvas(inp,CLIP_SECS,s=>recChip('● Clip '+Math.max(1,Math.ceil(CLIP_SECS-s))+' s'),()=>r.cancel || state.mode!=='live'); }
+    catch(e){ toast('Enregistrement impossible : '+errText(e)); }
+    finally{ inp.stop(); clip.rec=null; recChip(''); }
+    if(!res){ if(r.cancel) toast('Clip annulé'); return; }
+    beep(990,0.12); buzz(30);
+    await saveClip(res);
+    toast('Clip de '+Math.round(res.dur)+' s enregistré');
+    openClipSheet();
+  }
+  // Vidéo de la galerie : recadrée et réenregistrée au format envoyé à Decart (10 s au plus).
+  async function clipImport(f){
+    if(clip.job || clip.rec) return;
+    const src=mkVideo(), u=URL.createObjectURL(f); src.src=u;
+    const r=clip.rec={cancel:false};
+    clip.importing=true; renderClipSheet(); clipStatus('Préparation du clip…');
+    try{
+      await mediaReady(src);
+      const portrait=src.videoHeight>=src.videoWidth;
+      const total=isFinite(src.duration) && src.duration>0 ? src.duration : CLIP_MAX;
+      const secs=Math.min(CLIP_MAX,total);
+      const inp=cropStream(src, portrait?720:1280, portrait?1280:720, {timer:true});
+      let res=null;
+      try{
+        await src.play();
+        res=await recordCanvas(inp,secs,s=>clipStatus('Préparation du clip… '+Math.min(Math.round(s),Math.round(secs))+' / '+Math.round(secs)+' s'),()=>r.cancel,()=>src.ended);
+      }finally{ inp.stop(); src.pause(); }
+      if(res){ await saveClip(res); if(total>CLIP_MAX+0.3) toast('Clip limité aux '+CLIP_MAX+' premières secondes'); }
+    }catch(e){ toast('Vidéo illisible : '+errText(e)); }
+    finally{ URL.revokeObjectURL(u); src.removeAttribute('src'); src.remove(); clip.rec=null; clip.importing=false; clipStatus(''); renderClipSheet(); }
+  }
+  // Une vidéo habillée par tenue, rangée dans les Looks et sur les fiches.
+  function clipSaveLook(c,o,vid,poster,via,fixAspect,dur){
+    const pieces=outfitPieces(o).map(x=>({slot:x.slot,garmentId:x.g.id,garmentName:x.g.name,engine:'decart'}));
+    addLook({id:newId('l'),name:o.name,time:Date.now(),blob:poster,video:vid,mime:vid.type||'video/mp4',dur:Math.round(dur||c.dur),fixAspect:fixAspect||null,
+      outfitId:o.id&&o.id!=='_cabine'?o.id:null,baseBlob:null,baseId:null,pieces,kind:'video',via,clipId:c.id,fav:false,worn:[]});
+  }
+  async function blankPoster(w,h){ const c=document.createElement('canvas'); c.width=w>h?640:360; c.height=w>h?360:640; const g=c.getContext('2d'); g.fillStyle='#1a1b1e'; g.fillRect(0,0,c.width,c.height); return canvasBlob(c,0.8); }
+  // Rapide : le clip est rejoué vers le direct Decart, une passe par tenue, sur une seule connexion.
+  async function clipRunLive(c,outfits,job){
+    const sdk=await loadDecart(); if(job.stop) return;
+    const model=sdk.models.realtime(DECART_MODEL);
+    const tok=await aiToken(sdk,Math.min(600,Math.ceil(outfits.length*(c.dur+3)+30))); if(job.stop) return;
+    const client=sdk.createDecartClient({apiKey:tok.key,telemetry:false});
+    const src=mkVideo(), u=URL.createObjectURL(c.blob); src.src=u;
+    job.cleanup.push(()=>{ src.pause(); src.removeAttribute('src'); src.remove(); URL.revokeObjectURL(u); });
+    await mediaReady(src); if(job.stop) return;
+    // Entre deux passes, la première image du clip reste figée : Decart a le temps de prendre la tenue.
+    const inp=cropStream(src,c.w,c.h,{timer:true}); job.cleanup.push(()=>inp.stop());
+    const first=document.createElement('canvas'); first.width=c.w; first.height=c.h;
+    const k=Math.max(c.w/src.videoWidth,c.h/src.videoHeight), sw=c.w/k, sh=c.h/k;
+    first.getContext('2d').drawImage(src,(src.videoWidth-sw)/2,(src.videoHeight-sh)/2,sw,sh,0,0,c.w,c.h);
+    inp.hold=first;
+    clipStatus('Préparation de « '+outfits[0].name+' »…');
+    let g=await aiGarment(outfits[0]); if(job.stop) return;
+    clipStatus('Connexion à Decart…');
+    const view=$('clipVideo');
+    let remote=null, gotRemote=null; const remoteP=new Promise(r=>{ gotRemote=r; });
+    const rt=await client.realtime.connect(inp.stream,{
+      model, mirror:false,
+      initialState:{prompt:{text:g.prompt,enhance:false},image:g.image},
+      onRemoteStream:st=>{
+        if(job.stop) return;
+        remote=st; view.removeAttribute('src'); view.srcObject=st; view.loop=false; view.classList.add('on');
+        const p=view.play(); if(p && p.catch) p.catch(()=>{});
+        if(!job.start) job.start=Date.now();
+        gotRemote();
+      },
+      onQueuePosition:q=>{ if(!job.stop) clipStatus('File d\'attente Decart : '+q.position+(q.queueSize?' sur '+q.queueSize:'')+'…'); },
+      onCapacityWait:w=>{ if(!job.stop) clipStatus('Serveurs Decart pleins, nouvel essai dans '+Math.ceil(w.retryAfterMs/1000)+' s…'); }
+    });
+    job.rt=rt;
+    if(job.stop) return;
+    rt.on('generationTick',e=>{ if(e && typeof e.seconds==='number') job.secs=Math.max(job.secs,e.seconds); });
+    rt.on('sessionEnded',e=>{ job.ended=aiEndText(e && e.reason); job.stop=true; jobWake(job); });
+    await Promise.race([remoteP,jobWait(job,30000)]);
+    if(job.stop) return;
+    if(!remote) throw new Error('pas de réponse de Decart');
+    for(let i=0;i<outfits.length;i++){
+      const o=outfits[i];
+      if(i>0){
+        clipStatus('Préparation de « '+o.name+' »…');
+        g=await aiGarment(o); if(job.stop) return;
+        await rt.set({prompt:g.prompt,image:g.image,enhance:false});
+        src.src=u; await mediaReady(src);
+      }
+      clipStatus('« '+o.name+' » : Decart prend la tenue… ('+(i+1)+'/'+outfits.length+')');
+      await jobWait(job,CLIP_HOLD[i?1:0]); if(job.stop) return;
+      const rec=startClipRec(remote);
+      try{ src.currentTime=0; }catch(e){}
+      try{ await src.play(); }catch(e){ throw new Error('lecture du clip impossible'); }
+      clipStatus('« '+o.name+' » : en cours ('+(i+1)+'/'+outfits.length+')');
+      let poster=null;
+      const t0=Date.now();
+      await new Promise(res=>{
+        const iv=setInterval(()=>{
+          if(!poster && Date.now()-t0>=Math.min(1200,c.dur*400)) poster=frameOf(view,c.w/c.h);
+          if(job.stop || src.ended || src.currentTime>=c.dur-0.05 || Date.now()-t0>(c.dur+2)*1000){ clearInterval(iv); res(); }
+        },50);
+      });
+      if(job.stop){ rec.cancel(); return; }
+      await jobWait(job,400); // la fin de la vidéo habillée arrive un peu après celle du clip
+      src.pause();
+      const fix=fixFor(view,c.w/c.h);
+      const vid=await rec.stop();
+      if(!poster) poster=frameOf(view,c.w/c.h);
+      if(vid){
+        const pb=poster ? await canvasBlob(poster,0.85) : await blankPoster(c.w,c.h);
+        clipSaveLook(c,o,vid,pb,'clip',fix,c.dur); job.done++;
+      }
+    }
+  }
+  function startClipRec(stream){
+    const mime=recMime(); let mr=null; const chunks=[];
+    try{ mr=new MediaRecorder(stream, mime ? {mimeType:mime,videoBitsPerSecond:2500000} : {videoBitsPerSecond:2500000}); mr.ondataavailable=e=>{ if(e.data && e.data.size) chunks.push(e.data); }; mr.start(500); }catch(e){ mr=null; }
+    let dropped=false;
+    return {
+      cancel(){ dropped=true; try{ if(mr && mr.state!=='inactive') mr.stop(); }catch(e){} },
+      stop(){ return new Promise(res=>{
+        if(!mr) return res(null);
+        mr.onstop=()=>res(!dropped && chunks.length ? new Blob(chunks,{type:(mr.mimeType||mime||'video/webm').split(';')[0]}) : null);
+        try{ if(mr.state!=='inactive') mr.stop(); else mr.onstop(); }catch(e){ res(null); }
+      }); }
+    };
+  }
+  // Vignette et format d'une vidéo reçue (mode Qualité).
+  async function videoPoster(blob,aspect){
+    const v=mkVideo(), u=URL.createObjectURL(blob); v.src=u;
+    try{
+      await mediaReady(v,20000);
+      const d=isFinite(v.duration) ? v.duration : 0;
+      if(d>0.5){ await new Promise(r=>{ const t=setTimeout(r,1500); v.addEventListener('seeked',()=>{ clearTimeout(t); r(); },{once:true}); try{ v.currentTime=Math.min(1,d/2); }catch(e){ clearTimeout(t); r(); } }); }
+      const c=frameOf(v,aspect);
+      return {poster:c ? await canvasBlob(c,0.85) : null, fix:fixFor(v,aspect), dur:d};
+    }catch(e){ return {poster:null,fix:null,dur:0}; }
+    finally{ URL.revokeObjectURL(u); v.removeAttribute('src'); v.remove(); }
+  }
+  // Qualité : le clip est envoyé au mode vidéo de Decart, une demande par tenue.
+  async function clipRunVideo(c,outfits,job){
+    const sdk=await loadDecart(); if(job.stop) return;
+    const client=sdk.createDecartClient({apiKey:dcKey(),telemetry:false});
+    const model=sdk.models.video(DECART_MODEL);
+    const file=new File([c.blob],'clip.'+(/mp4/.test(c.mime)?'mp4':'webm'),{type:c.mime});
+    const view=$('clipVideo');
+    for(let i=0;i<outfits.length;i++){
+      if(job.stop) return;
+      const o=outfits[i], tag=' ('+(i+1)+'/'+outfits.length+')';
+      clipStatus('« '+o.name+' » : envoi à Decart…'+tag);
+      const g=await aiGarment(o); if(job.stop) return;
+      const ac=new AbortController(); job.abort=()=>ac.abort();
+      let r;
+      try{
+        r=await client.queue.submitAndPoll({model,prompt:g.prompt,reference_image:g.image,data:file,resolution:'720p',enhance_prompt:false,signal:ac.signal,
+          onStatusChange:st=>{ if(!job.stop) clipStatus('« '+o.name+' » : '+({pending:'en file d\'attente chez Decart',queued:'en file d\'attente chez Decart',processing:'en cours de rendu'}[st && st.status]||'en cours')+'…'+tag); }});
+      }catch(e){ if(job.stop) return; throw e; }
+      job.abort=null;
+      if(!r || r.status!=='completed' || !r.data){ job.failed++; toast('Decart n\'a pas pu traiter « '+o.name+' »'); continue; }
+      pref.set('decartUsedCr',dcUsedCr()+Math.round(c.dur*CREDITS_PER_S_VIDEO)); job.credits+=Math.round(c.dur*CREDITS_PER_S_VIDEO);
+      const vid=r.data.type ? r.data : new Blob([r.data],{type:'video/mp4'});
+      const pv=await videoPoster(vid,c.w/c.h);
+      clipSaveLook(c,o,vid,pv.poster||await blankPoster(c.w,c.h),'clipHQ',pv.fix,pv.dur||c.dur); job.done++;
+      // Aperçu du dernier rendu dans la fiche.
+      if(clip.url) URL.revokeObjectURL(clip.url);
+      clip.url=URL.createObjectURL(vid); view.srcObject=null; view.src=clip.url; view.dataset.id='result'; view.loop=true; const p=view.play(); if(p && p.catch) p.catch(()=>{});
+    }
+  }
+  async function clipGo(){
+    if(clip.job) return clipAbort('Clip IA arrêté');
+    const c=clipById(clip.sel); if(!c){ toast('Filme ou choisis d\'abord un clip'); return; }
+    const outs=clipChosen(); if(!outs.length){ toast('Choisis au moins une tenue'); return; }
+    if(!dcKey()){ openSettingsAt('dcKey'); toast('Colle d\'abord ta clé Decart dans les réglages'); return; }
+    if(ai.on) aiStop('Direct IA arrêté');
+    unlockAudio();
+    const job=clip.job={mode:clip.mode,stop:false,secs:0,start:0,done:0,failed:0,credits:0,cleanup:[],wakers:[],rt:null,abort:null,ended:'',n:outs.length};
+    renderClipSheet();
+    let err='';
+    try{ if(job.mode==='video') await clipRunVideo(c,outs,job); else await clipRunLive(c,outs,job); }
+    catch(e){ if(!job.stop) err=aiErrText(e); }
+    clipFinish(job,err);
+  }
+  function clipAbort(msg){
+    const job=clip.job; if(!job) return;
+    job.stop=true; job.abortMsg=msg||'Clip IA arrêté';
+    try{ if(job.abort) job.abort(); }catch(e){}
+    jobWake(job);
+    const rt=job.rt; job.rt=null; try{ if(rt) rt.disconnect(); }catch(e){}
+  }
+  function clipFinish(job,err){
+    if(clip.job!==job) return;
+    const rt=job.rt; job.rt=null; try{ if(rt) rt.disconnect(); }catch(e){}
+    job.cleanup.forEach(f=>{ try{ f(); }catch(e){} }); job.cleanup=[];
+    let credits=job.credits;
+    if(job.start){ const secs=Math.max(job.secs,(Date.now()-job.start)/1000); pref.set('decartUsedSec',dcUsedSec()+secs); credits+=Math.round(secs*CREDITS_PER_S); }
+    clip.job=null;
+    const v=$('clipVideo'); if(v.srcObject){ v.srcObject=null; v.classList.remove('on'); }
+    if(v.dataset.id!=='result') v.dataset.id='';
+    clipStatus(''); renderClipSheet();
+    if(!settings.hidden) renderSettings();
+    const head = err || job.ended || job.abortMsg || (job.done ? (job.done>1?job.done+' vidéos rangées':'Vidéo rangée')+' dans les Looks'+(job.failed?' ('+job.failed+' refusée'+(job.failed>1?'s':'')+' par Decart)':'') : job.failed ? 'Decart n\'a pas pu traiter le clip' : 'Aucune vidéo obtenue');
+    toast(head+(credits?' · '+credits+' crédits':''));
+    if(job.done && !err && !job.stop){ beep(1320,0.15); buzz(40); }
+  }
+  function openClipSheet(o){
+    o=o||{};
+    if(o.clipId) clip.sel=o.clipId;
+    if(!clipById(clip.sel)) clip.sel = state.clips.length ? state.clips[state.clips.length-1].id : null;
+    const ids=new Set(fxOutfits().map(x=>x.id));
+    clip.picks.forEach(id=>{ if(!ids.has(id)) clip.picks.delete(id); });
+    if(o.outfitId && ids.has(o.outfitId)) clip.picks=new Set([o.outfitId]);
+    else if(!clip.picks.size){ const cur=fxCurrent(); if(cur) clip.picks.add(cur.id); }
+    $('clipSheet').hidden=false; renderClipSheet(); $('clipClose').focus();
+  }
+  function renderClipSheet(){
+    if($('clipSheet').hidden) return;
+    const c=clipById(clip.sel), job=clip.job, busy=!!job || !!clip.importing;
+    const v=$('clipVideo');
+    if(!job && v.dataset.id!=='result'){
+      if(c && v.dataset.id!==c.id){
+        if(clip.url) URL.revokeObjectURL(clip.url);
+        clip.url=URL.createObjectURL(c.blob); v.srcObject=null; v.src=clip.url; v.dataset.id=c.id; v.loop=true;
+        const p=v.play(); if(p && p.catch) p.catch(()=>{});
+      }else if(!c){ v.removeAttribute('src'); v.dataset.id=''; }
+    }
+    $('clipView').style.aspectRatio = c ? c.w+'/'+c.h : '9/16';
+    $('clipEmpty').hidden=!!c;
+    const st=$('clipStrip'); st.textContent=''; st.hidden=!state.clips.length;
+    state.clips.slice().reverse().forEach(x=>{
+      const t=thumb(x.purl, fmtDur(x.dur)+' · '+fmtShort(x.time), x.id===clip.sel, ()=>{ if(clip.job || clip.importing) return; clip.sel=x.id; const vv=$('clipVideo'); if(vv.dataset.id==='result') vv.dataset.id=''; renderClipSheet(); });
+      t.disabled=busy; st.append(t);
+    });
+    const og=$('clipOutfits'); og.textContent='';
+    const outs=fxOutfits();
+    outs.forEach(o=>{
+      const b=document.createElement('button'); b.type='button'; b.setAttribute('aria-pressed',String(clip.picks.has(o.id))); b.setAttribute('aria-label',o.name);
+      const m=document.createElement('span'); m.className='fx-mini'; fillMini(m,o);
+      const n=document.createElement('small'); n.textContent=o.name;
+      b.append(m,n); b.disabled=busy;
+      b.addEventListener('click',()=>{ if(clip.picks.has(o.id)) clip.picks.delete(o.id); else clip.picks.add(o.id); renderClipSheet(); });
+      og.append(b);
+    });
+    $('clipNoOutfit').hidden=outs.length>0;
+    document.querySelectorAll('#clipMode button').forEach(b=>{ b.setAttribute('aria-checked',String(b.dataset.m===clip.mode)); b.disabled=busy; });
+    $('clipModeNote').textContent = clip.mode==='video'
+      ? 'Qualité : le clip est envoyé au mode vidéo de Decart, traité sans contrainte de temps réel. 0,04 $ par seconde de clip, résultat en quelques minutes. À comparer avec Rapide.'
+      : 'Rapide : le clip est rejoué vers le Direct IA, une passe par tenue. 0,02 $ par seconde, plus environ 1,5 s par tenue le temps que Decart prenne la tenue.';
+    const n=clipChosen().length, cost=c ? clipCost(n,c.dur,clip.mode) : 0, left=dcLeft();
+    const cc=$('clipCost');
+    cc.textContent = !c ? '' : !n ? 'Choisis au moins une tenue.' : '≈ '+cost+' crédits ('+euros(cost)+') pour '+n+(n>1?' tenues':' tenue')+' · il t\'en reste ≈ '+left;
+    cc.classList.toggle('warn',!!c && n>0 && cost>left);
+    const go=$('clipGo');
+    go.textContent = job ? 'Arrêter' : n>1 ? 'Lancer les '+n+' tenues' : 'Lancer';
+    go.classList.toggle('danger',!!job);
+    go.disabled = !job && (!c || !n || !!clip.importing);
+    $('clipShoot').disabled=$('clipPick').disabled=busy;
+    $('clipDel').hidden=!c; $('clipDel').disabled=busy;
+    $('clipProg').hidden=!busy;
+  }
+  function closeClipSheet(){
+    if(clip.job && clip.job.mode==='live') clipAbort('Clip IA arrêté (fiche fermée)');
+    else if(clip.job) toast('Clip IA continue : les vidéos arriveront dans les Looks');
+    if(clip.importing && clip.rec) clip.rec.cancel=true;
+    $('clipSheet').hidden=true;
+    const v=$('clipVideo'); if(!clip.job){ v.pause(); v.srcObject=null; v.removeAttribute('src'); v.dataset.id=''; if(clip.url){ URL.revokeObjectURL(clip.url); clip.url=null; } }
+  }
+  $('clipBtn').addEventListener('click',()=>{ if(clip.rec && !clip.importing){ clip.rec.cancel=true; return; } openClipSheet(); });
+  $('clipClose').addEventListener('click',closeClipSheet);
+  $('clipSheet').addEventListener('click',e=>{ if(e.target===$('clipSheet')) closeClipSheet(); });
+  $('clipShoot').addEventListener('click',clipShoot);
+  $('clipPick').addEventListener('click',()=>$('clipFile').click());
+  $('clipFile').addEventListener('change',()=>{ const f=$('clipFile').files && $('clipFile').files[0]; $('clipFile').value=''; if(f) clipImport(f); });
+  $('clipGo').addEventListener('click',clipGo);
+  document.querySelectorAll('#clipMode button').forEach(b=>b.addEventListener('click',()=>{ clip.mode=b.dataset.m; pref.set('clipMode',clip.mode); renderClipSheet(); }));
+  $('clipDel').addEventListener('click',()=>{
+    const c=clipById(clip.sel); if(!c || clip.job) return;
+    state.clips=state.clips.filter(x=>x!==c); clip.sel=null;
+    const v=$('clipVideo'); v.dataset.id='';
+    dbDelete('clips',c.id); renderClipSheet();
+    toast('Clip supprimé',{label:'Annuler',undo(){ state.clips.push(c); state.clips.sort((a,b)=>a.time-b.time); clip.sel=c.id;
+      dbPutFresh('clips',{id:c.id,blob:c.blob,mime:c.mime,w:c.w,h:c.h,dur:c.dur,time:c.time,poster:c.poster},c); renderClipSheet(); }});
+  });
 
   async function addPhoto(blob){
     const rec={id:newId('p'),blob,time:Date.now()};
@@ -3117,7 +3586,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     const pieces=outfitPieces(o).map(x=>x.g);
     renderHarmony(pieces,$('oHarmony'));
     videoStrip($('oVideoStrip'),$('oVideos'),videosOf(l=>l.outfitId===o.id || piecesKey(Object.fromEntries((l.pieces||[]).map(p=>[p.slot,p.garmentId])))===piecesKey(o.pieces)));
-    $('oLive').disabled=!pieces.length; $('oCabin').disabled=!pieces.length;
+    $('oLive').disabled=!pieces.length; $('oCabin').disabled=!pieces.length; $('oClip').disabled=!pieces.length;
     $('outfitTitle').textContent = outfitIsNew ? 'Nouvelle tenue' : 'Tenue';
   }
   $('oName').addEventListener('input',()=>{ const o=outfitById(editingOutfit); if(o) o.name=$('oName').value.trim()||o.name; });
@@ -3133,6 +3602,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   $('oLive').addEventListener('click',()=>{
     const o=outfitById(editingOutfit); if(!o) return;
     closeOutfit(); tryLive(o.id);
+  });
+  $('oClip').addEventListener('click',()=>{
+    const o=outfitById(editingOutfit); if(!o) return;
+    closeOutfit(); openClipSheet({outfitId:o.id});
   });
   $('oDelete').addEventListener('click',()=>{
     const o=outfitById(editingOutfit); if(!o) return;
@@ -4200,7 +4673,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   /* ================= LOOKS ================= */
   function lookRecord(l){
     return {id:l.id,name:l.name,time:l.time,blob:l.blob,baseBlob:l.baseBlob||null,baseId:l.baseId||null,pieces:l.pieces||[],kind:l.kind||'ia',fav:!!l.fav,worn:l.worn||[],
-      video:l.video||null,mime:l.mime||'',dur:l.dur||0,fixAspect:l.fixAspect||null,outfitId:l.outfitId||null};
+      video:l.video||null,mime:l.mime||'',dur:l.dur||0,fixAspect:l.fixAspect||null,outfitId:l.outfitId||null,via:l.via||null,clipId:l.clipId||null};
   }
   function saveLookRec(l){ return dbPutFresh('looks',lookRecord(l),l); }
   function addLook(rec){
@@ -4211,6 +4684,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   }
   const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['video','Vidéos'],['ia','IA'],['live','Direct IA'],['filtre','Filtre'],['flat','À plat']];
   const KIND_LABEL={ia:'IA',flat:'À plat',filtre:'Filtre',live:'Direct IA',video:'Vidéo'};
+  const VIA_LABEL={clip:'Clip IA',clipHQ:'Clip IA+'};
   const fmtDur = s => Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
   // Vidéos d'essai où figure une pièce (ou une tenue).
   const videosOf = test => state.looks.filter(l=>l.kind==='video' && l.video && test(l)).slice().reverse();
@@ -4253,7 +4727,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       if(l.kind==='video'){ const pl=document.createElement('span'); pl.className='play'; pl.textContent='▶'; pl.setAttribute('aria-hidden','true'); b.append(pl); }
       if(sel>=0){ const n=document.createElement('span'); n.className='pickno'; n.textContent=sel+1; b.append(n); }
       else if(!state.compareMode){
-        const k=document.createElement('span'); k.className='kind'; k.textContent=KIND_LABEL[l.kind||'ia']||'IA'; k.setAttribute('aria-hidden','true'); b.append(k);
+        const k=document.createElement('span'); k.className='kind'; k.textContent=VIA_LABEL[l.via]||KIND_LABEL[l.kind||'ia']||'IA'; k.setAttribute('aria-hidden','true'); b.append(k);
       }
       if(l.fav){ const f=document.createElement('span'); f.className='fav'; f.textContent='♥'; f.setAttribute('aria-hidden','true'); b.append(f); }
       b.addEventListener('click',()=>{
@@ -4519,6 +4993,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       await add('garments',state.garments,async g=>Object.assign(garmentRecord(g),{data:await toDataUrl(g.blob),origData:await opt64(g.origBlob),
         backData:await opt64(g.backBlob),backOrigData:await opt64(g.backOrig)}));
       await add('outfits',state.outfits,async o=>({id:o.id,name:o.name,pieces:o.pieces,created:o.created}));
+      await add('clips',state.clips,async c=>({id:c.id,time:c.time,mime:c.mime,w:c.w,h:c.h,dur:c.dur,data:await toDataUrl(c.blob),posterData:await opt64(c.poster)}));
       await add('looks',state.looks,async l=>{ const r=lookRecord(l); delete r.blob; delete r.baseBlob; delete r.video; r.data=await toDataUrl(l.blob); r.baseData=l.baseBlob?await toDataUrl(l.baseBlob):null; r.videoData=l.video?await toDataUrl(l.video):null; return r; });
       parts.push('}');
       downloadFile(new Blob(parts,{type:'application/json'}),'cabine-sauvegarde-'+stamp()+'.json');
@@ -4557,13 +5032,18 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         const rec={id:o.id,name:o.name||'Tenue',pieces:Object.assign({haut:null,bas:null,chaussures:null},o.pieces||{}),created:o.created||Date.now()};
         state.outfits.push(rec); await saveOutfit(rec); added++;
       }
+      for(const c of j.clips||[]){
+        if(!c.data || clipById(c.id)){ skipped++; continue; }
+        const rec={id:c.id,time:c.time||Date.now(),mime:c.mime||'video/mp4',w:c.w||720,h:c.h||1280,dur:c.dur||CLIP_SECS,blob:await blobOf(c.data),poster:await blobOf(c.posterData)};
+        const item=Object.assign({purl:rec.poster?URL.createObjectURL(rec.poster):null},rec); state.clips.push(item); await dbPutFresh('clips',rec,item); added++;
+      }
       for(const l of j.looks||[]){
         if(!l.data || state.looks.some(x=>x.id===l.id)){ skipped++; continue; }
         const rec=lookRecord(Object.assign({},l,{blob:await blobOf(l.data),baseBlob:await blobOf(l.baseData),video:await blobOf(l.videoData)}));
         const item=Object.assign({url:URL.createObjectURL(rec.blob)},rec); state.looks.push(item); await saveLookRec(item); added++;
       }
     }catch(e){ toast('Import interrompu : '+errText(e)); }
-    state.photos.sort((a,b)=>a.time-b.time); state.looks.sort((a,b)=>a.time-b.time); state.outfits.sort((a,b)=>a.created-b.created);
+    state.photos.sort((a,b)=>a.time-b.time); state.looks.sort((a,b)=>a.time-b.time); state.outfits.sort((a,b)=>a.created-b.created); state.clips.sort((a,b)=>a.time-b.time);
     askPersist(); renderPhotos(); renderDressing(); renderLooks(); renderSettings();
     toast(added+(added>1?' éléments importés':' élément importé')+(skipped?' ('+skipped+' déjà présents)':''));
   });
@@ -4576,6 +5056,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ['L\'effet filtre','Touche « Tenue en filtre » : les pièces de tes tenues se posent sur toi en direct, gratuitement, dans le téléphone. C\'est un effet de type filtre (pas de vrais plis ni d\'ombres) ; pour un rendu réaliste, prends la photo puis touche « Rendu IA ». Les pièces sont détourées automatiquement la première fois.'],
       ['Changer de tenue d\'un geste','Avec l\'effet filtre ou le Direct IA, lève une main à hauteur de poitrine (au-dessus du coude) et balaie franchement l\'air, sur au moins un tiers de l\'image : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Une grande flèche confirme le geste. Le retour de la main est ignoré : marque un temps d\'arrêt ou baisse la main avant le geste suivant. Les flèches en haut de l\'image marchent aussi, et en touchant la miniature de la tenue tu vois toutes tes tenues en vignettes pour choisir directement. Reste en entier dans l\'image pour que tes mains soient vues.'],
       ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. Rien n\'est facturé au démarrage : après l\'appui sur « Direct IA », l\'app attend de te voir en entier une seconde, lance ton retardateur avec les bips, et ne se connecte qu\'ensuite. Pour arrêter sans toucher le téléphone, lève les deux mains au-dessus de la tête une seconde (une seule main levée prend une photo). L\'app s\'arrête aussi seule au bout de la durée choisie (réglages), 3 s après ta sortie de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper : la tenue est envoyée une demi-seconde après le dernier geste. L\'image est envoyée à la verticale quand le téléphone est droit ; recule jusqu\'à être vu de la tête aux pieds. Chaque tenue essayée est enregistrée en vidéo (Looks → Vidéos, et sur la fiche du vêtement) : pas besoin de la refaire.'],
+      ['Clip IA : un clip, toutes tes tenues','« Clip IA » : filme-toi 5 s une fois (ou choisis une vidéo de ta galerie, 10 s au plus), coche les tenues, et Decart les essaie sur ce clip. Tu n\'as pas à te replacer devant le téléphone à chaque tenue, et tu peux réutiliser le clip plus tard. « Rapide » rejoue le clip vers le Direct IA : 2 crédits par seconde, environ 14 à 16 crédits par tenue pour un clip de 5 s. « Qualité » l\'envoie au mode vidéo de Decart : 4 crédits par seconde, 20 crédits pour 5 s, résultat en quelques minutes. Le coût estimé s\'affiche avant de lancer. Les vidéos arrivent dans Looks → Vidéos et sur les fiches. Pendant l\'enregistrement du clip, le déclencheur annule.'],
       ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
       ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
       ['Les écritures de mon t-shirt sont à l\'envers','C\'est l\'effet miroir. Désactive-le dans « Plus d\'options » : l\'écran et la photo seront à l\'endroit.'],
@@ -4712,7 +5193,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   $('flatShare').textContent = navigator.share ? 'Partager' : 'Télécharger';
   if(!pref.get('onboarded',false)) openOnboard();
 
-  Promise.all([dbAll('garments'),dbAll('photos'),dbAll('looks'),dbAll('tries'),dbAll('meta'),dbAll('outfits')]).then(async([gs,ps,ls,ts,meta,os])=>{
+  Promise.all([dbAll('garments'),dbAll('photos'),dbAll('looks'),dbAll('tries'),dbAll('meta'),dbAll('outfits'),dbAll('clips')]).then(async([gs,ps,ls,ts,meta,os,cs])=>{
+    cs.filter(c=>c && c.blob).sort((a,b)=>a.time-b.time).forEach(c=>{ const it=Object.assign({},c,{purl:c.poster?URL.createObjectURL(c.poster):null}); state.clips.push(it); homeRec('clips',c,it); });
     state.outfits=os.filter(o=>o && o.id).map(o=>({id:o.id,name:o.name||'Tenue',pieces:Object.assign({haut:null,bas:null,chaussures:null},o.pieces||{}),created:o.created||0})).sort((a,b)=>a.created-b.created);
     for(const g of gs.sort((a,b)=>(a.created||0)-(b.created||0))){
       if(!g.blob) continue;

@@ -1,6 +1,6 @@
 // Cabine Miroir : réseau d'abord pour l'app, copie locale si le téléphone est hors ligne.
 // Change le numéro de version après une mise à jour pour vider l'ancienne copie.
-const CACHE = 'cabine-v6-7';
+const CACHE = 'cabine-v6-8';
 // Bibliothèques et modèles en version figée (client Gradio, détection du corps) :
 // gardés dans un cache à part, qui survit aux mises à jour, pour ne pas les retélécharger.
 const CDN_CACHE = 'cabine-cdn-v1';
