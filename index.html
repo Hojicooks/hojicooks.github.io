@@ -224,7 +224,7 @@ a{color:var(--tape-text)}
 .slot .icon-btn[aria-pressed="true"]{color:var(--tape-ink);background:var(--tape);border-color:var(--tape)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
 .seg button{min-height:38px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-weight:600;cursor:pointer}
-.seg button[aria-checked="true"]{background:var(--text);color:var(--ink)}
+.seg button[aria-checked="true"],.seg button[aria-selected="true"]{background:var(--text);color:var(--ink)}
 .gen-row{display:grid;grid-template-columns:1fr auto;gap:8px}
 .status{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
 .status-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -419,13 +419,32 @@ button.stat{cursor:pointer}
 .ob-dots i.on{background:var(--tape);width:20px}
 .ob-actions{display:flex;justify-content:space-between;align-items:center;width:100%;gap:12px;margin-top:6px}
 .seg.three{grid-template-columns:repeat(3,1fr)}
+.pane{display:flex;flex-direction:column;gap:18px}
+.ocard .pic{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3%;padding:7% 10%}
+.ocard .pic img{width:100%;height:auto;min-height:0;flex:1 1 0;object-fit:contain}
+.ocard .pic img.s{flex:.5 1 0}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools .btn{flex:1 1 150px}
+/* Effet filtre */
+.stage .fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1);z-index:1}
+.stage.noflip .fx{transform:none}
+.fx-bar{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;max-width:calc(100% - 20px);padding:4px;border-radius:999px;background:var(--scrim);box-shadow:0 4px 18px var(--shade)}
+.fx-nav{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--raise);color:var(--text);font-size:24px;line-height:1;padding:0 0 3px;cursor:pointer}
+.fx-name{display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 6px;text-align:center}
+.fx-name b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+.fx-name small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+.fx-bar.swl{animation:swl .35s ease-out}
+.fx-bar.swr{animation:swr .35s ease-out}
+@keyframes swl{from{transform:translateX(calc(-50% + 40px));opacity:.4}to{transform:translateX(-50%);opacity:1}}
+@keyframes swr{from{transform:translateX(calc(-50% - 40px));opacity:.4}to{transform:translateX(-50%);opacity:1}}
+body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes tick{from{transform:scale(1.25);opacity:.2}to{transform:scale(1);opacity:1}}
 @keyframes flash{from{opacity:.85}to{opacity:0}}
 @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 @media (prefers-reduced-motion:reduce){
-  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i,.busy i{animation:none}
+  .chip[data-mode="live"] .dot,.count.tick,.flash.go,.bar i,.coach i,.busy i,.fx-bar.swl,.fx-bar.swr{animation:none}
   .shutter i,.switch,.switch::after,.ob-dots i{transition:none}
 }
 </style>
@@ -459,6 +478,7 @@ button.stat{cursor:pointer}
 
     <div class="stage" id="stage">
       <video id="video" playsinline muted autoplay hidden></video>
+      <canvas class="fx" id="fx" hidden aria-hidden="true"></canvas>
       <img class="still" id="still" alt="Dernière photo prise" hidden>
       <div class="grid3" id="grid3" hidden aria-hidden="true"></div>
       <div class="state" id="startState">
@@ -490,6 +510,11 @@ button.stat{cursor:pointer}
         </button>
       </div>
       <div class="coach" id="coach" role="status" aria-live="polite" hidden><i></i><span id="coachText"></span></div>
+      <div class="fx-bar" id="fxBar" hidden>
+        <button class="fx-nav" id="fxPrev" type="button" aria-label="Tenue précédente">‹</button>
+        <div class="fx-name" aria-live="polite"><b id="fxName"></b><small id="fxStatus"></small></div>
+        <button class="fx-nav" id="fxNext" type="button" aria-label="Tenue suivante">›</button>
+      </div>
       <div class="imm-bar" id="immBar" hidden>
         <button class="imm-btn" id="immTimer" type="button" aria-label="Changer le retardateur">5 s</button>
         <button class="shutter" id="immShutter" type="button" aria-label="Déclencher"><i></i></button>
@@ -505,6 +530,7 @@ button.stat{cursor:pointer}
         <button type="button" role="radio" data-s="10" aria-checked="false">10 s</button>
       </div>
       <div class="quick" id="quickRow" hidden>
+        <button class="toggle" type="button" id="fxBtn" aria-pressed="false">Tenue en filtre</button>
         <button class="toggle" type="button" data-opt="coach" aria-pressed="false">Coach</button>
         <button class="toggle" type="button" data-opt="hand" aria-pressed="false">Main levée</button>
         <button class="toggle" type="button" data-opt="ring" aria-pressed="false">Lumière</button>
@@ -538,6 +564,17 @@ button.stat{cursor:pointer}
         <button class="btn small" id="addGarment" type="button">+ Ajouter</button>
       </div>
     </div>
+    <div class="seg" id="dressSeg" role="tablist" aria-label="Affichage du dressing">
+      <button type="button" role="tab" data-pane="pieces" aria-selected="true">Pièces</button>
+      <button type="button" role="tab" data-pane="tenues" aria-selected="false">Tenues</button>
+    </div>
+    <div class="pane" id="paneTenues" hidden>
+      <div class="closet" id="outfitGrid"></div>
+      <p class="empty" id="outfitEmpty" hidden></p>
+      <button class="btn ghost small" id="outfitsFromLooks" type="button" hidden>Reprendre les tenues de mes looks</button>
+      <p class="note">Une tenue réunit un haut, un bas et des chaussures. « Essayer en direct » la pose sur toi dans le miroir ; balaie l'air de la main pour passer d'une tenue à l'autre.</p>
+    </div>
+    <div class="pane" id="panePieces">
     <div class="stats" id="closetStats" hidden></div>
     <div class="search">
       <label class="sr-only" for="q">Rechercher un vêtement</label>
@@ -572,6 +609,7 @@ button.stat{cursor:pointer}
     <div class="closet" id="closet"></div>
     <p class="empty" id="closetEmpty" hidden></p>
     <p class="note">Pour de bons essais : un vêtement par photo, posé à plat, de face, bien éclairé. La couleur est détectée toute seule ; touche un vêtement pour compléter sa fiche.</p>
+    </div>
     <input class="sr-only" type="file" id="closetInput" accept="image/*" multiple tabindex="-1" aria-hidden="true">
     <input class="sr-only" type="file" id="shopInput" accept="image/*" tabindex="-1" aria-hidden="true">
     <input class="sr-only" type="file" id="camInput" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
@@ -610,7 +648,10 @@ button.stat{cursor:pointer}
       <p class="idea" id="idea" role="status" hidden></p>
       <div class="slots" id="slots"></div>
       <div class="harmony" id="harmony" hidden></div>
-      <button class="btn ghost small" id="flatBtn" type="button" disabled>Aperçu à plat · instantané, sans quota</button>
+      <div class="tools">
+        <button class="btn ghost small" id="flatBtn" type="button" disabled>Aperçu à plat</button>
+        <button class="btn ghost small" id="saveOutfit" type="button" disabled>Enregistrer la tenue</button>
+      </div>
       <p class="note">Le cadenas garde une pièce : son rendu quand tu demandes une variante, et la pièce elle-même quand tu demandes une idée. Les pièces s'appliquent dans l'ordre bas, chaussures, puis haut : changer seulement le haut ne coûte qu'une génération.</p>
     </div>
 
@@ -839,6 +880,27 @@ button.stat{cursor:pointer}
   </div>
 </div>
 
+<!-- Tenue -->
+<div class="sheet-wrap" id="outfitSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="outfitTitle">
+    <div class="sheet-head">
+      <h2 id="outfitTitle">Tenue</h2>
+      <button class="toggle" id="outfitClose" type="button">Fermer</button>
+    </div>
+    <div class="field">
+      <label for="oName">Nom</label>
+      <input id="oName" type="text" maxlength="40" autocomplete="off" enterkeyhint="done">
+    </div>
+    <div class="slots" id="oSlots"></div>
+    <div class="harmony" id="oHarmony" hidden></div>
+    <div class="sheet-actions">
+      <button class="btn" id="oLive" type="button">Essayer en direct (filtre)</button>
+      <button class="btn ghost" id="oCabin" type="button">Mettre dans la cabine</button>
+      <button class="btn danger" id="oDelete" type="button">Supprimer cette tenue</button>
+    </div>
+  </div>
+</div>
+
 <!-- Choix d'un vêtement pour une case -->
 <div class="sheet-wrap" id="picker" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
@@ -989,7 +1051,7 @@ button.stat{cursor:pointer}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.1</p>
+      <p class="note">Cabine Miroir · version 6.2</p>
     </div>
   </div>
 </div>
@@ -1116,10 +1178,10 @@ button.stat{cursor:pointer}
   function openDb(){
     return new Promise((resolve,reject)=>{
       if(!('indexedDB' in window)) return reject(new Error('indexedDB indisponible'));
-      const r=indexedDB.open('cabine-miroir',3);
+      const r=indexedDB.open('cabine-miroir',4);
       r.onupgradeneeded=()=>{
         const d=r.result;
-        ['photos','garments','tries','looks','meta'].forEach(s=>{ if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'}); });
+        ['photos','garments','tries','looks','meta','outfits'].forEach(s=>{ if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'}); });
       };
       r.onsuccess=()=>resolve(r.result);
       r.onerror=()=>reject(r.error);
@@ -1415,7 +1477,7 @@ button.stat{cursor:pointer}
   const state={
     tab:'miroir', mode:'off', stream:null, timer:pref.get('timer',5), countdown:null,
     wake:null, pending:false,
-    photos:[], garments:[], looks:[],
+    photos:[], garments:[], looks:[], outfits:[], dressPane:'pieces',
     filter:{q:'',cat:'all',color:null,fav:false,season:null,style:null,brand:null,unworn:false},
     moreFilters:false,
     dress:{sort:pref.get('sort','recent'),cols:pref.get('cols',3)},
@@ -1462,7 +1524,7 @@ button.stat{cursor:pointer}
     const s=document.createElement('span'); s.textContent=msg; t.append(s);
     if(undo){
       pendingUndo=undo;
-      const b=document.createElement('button'); b.type='button'; b.className='toast-btn'; b.textContent='Annuler';
+      const b=document.createElement('button'); b.type='button'; b.className='toast-btn'; b.textContent=undo.label||'Annuler';
       b.addEventListener('click',()=>{ const u=pendingUndo; pendingUndo=null; clearTimeout(toastTimer); t.hidden=true; if(u && u.undo) u.undo(); });
       t.append(b);
     }
@@ -1501,6 +1563,7 @@ button.stat{cursor:pointer}
     photo:"Le déclencheur ouvre l'appareil photo selfie du téléphone. Son propre retardateur fonctionne aussi."
   };
   function liveHint(){
+    if(fx.on) return 'Effet filtre : balaie l\'air d\'une main, à hauteur de poitrine, vers la gauche ou la droite pour changer de tenue.'+(opt.hand?' Main levée pour la photo.':'');
     if(opt.hand) return 'Lève une main au-dessus de ta tête une seconde : le retardateur ('+(state.timer||3)+' s) démarre. Le déclencheur marche aussi.';
     return state.timer===0 ? "Photo immédiate. Appuie sur le déclencheur."
       : "Retardateur "+state.timer+" s : appuie, puis recule. Appuie à nouveau pour annuler.";
@@ -1515,6 +1578,10 @@ button.stat{cursor:pointer}
     $('quickRow').hidden=!isLive;
     document.querySelectorAll('#quickRow [data-opt]').forEach(b=>b.setAttribute('aria-pressed',String(!!opt[b.dataset.opt])));
     $('fullBtn').hidden=!isLive;
+    $('fxBtn').setAttribute('aria-pressed',String(fx.on));
+    fxCanvas.hidden=!(isLive && fx.on);
+    $('fxBar').hidden=!(isLive && fx.on);
+    if(isLive && fx.on) renderFxBar();
     $('immTimer').textContent = state.timer ? state.timer+' s' : 'Sans';
     if(isLive) hint.textContent=liveHint();
   }
@@ -1613,9 +1680,22 @@ button.stat{cursor:pointer}
     const g=c.getContext('2d');
     if(opt.mirror){ g.translate(c.width,0); g.scale(-1,1); }
     g.drawImage(video,sx,sy,sw,sh,0,0,c.width,c.height);
+    // Avec l'effet filtre : une seconde image où la tenue est posée sur la photo.
+    const outfit = fx.on && fx.drawn ? fxCurrent() : null;
+    let comp=null;
+    if(outfit){
+      comp=document.createElement('canvas'); comp.width=c.width; comp.height=c.height;
+      const g2=comp.getContext('2d'); g2.drawImage(c,0,0);
+      if(opt.mirror){ g2.translate(comp.width,0); g2.scale(-1,1); }
+      g2.drawImage(fxCanvas,0,0,comp.width,comp.height);
+    }
     flashEl.classList.remove('go'); void flashEl.offsetWidth; flashEl.classList.add('go');
     beep(1320,0.22); buzz(40);
-    c.toBlob(b=>{ if(b) addPhoto(b); },'image/jpeg',0.92);
+    c.toBlob(async b=>{
+      if(!b) return;
+      const pid=await addPhoto(b);
+      if(comp) comp.toBlob(cb=>{ if(cb) fxSaveLook(cb,b,pid,outfit); },'image/jpeg',0.92);
+    },'image/jpeg',0.92);
   }
   function capture(){
     live.cooldown=Date.now()+3500;
@@ -1697,39 +1777,51 @@ button.stat{cursor:pointer}
   // Geste « retour » en plein écran : on quitte aussi le mode immersif.
   document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement) exitImmersive(); });
 
-  /* ---------- Coach de cadrage et main levée (détection du corps en direct) ---------- */
-  const live={on:false,gen:0,timer:null,lm:null,raise:0,cooldown:0,cand:'',candN:0,shown:''};
-  function wantLive(){ return state.mode==='live' && state.tab==='miroir' && (opt.coach||opt.hand) && document.visibilityState!=='hidden'; }
+  /* ---------- Coach de cadrage, main levée et effet filtre (détection du corps en direct) ---------- */
+  const live={on:false,gen:0,timer:null,raf:0,lm:null,raise:0,cooldown:0,cand:'',candSince:0,shown:'',last:0,err:0};
+  function wantLive(){ return state.mode==='live' && state.tab==='miroir' && (opt.coach||opt.hand||fx.on) && document.visibilityState!=='hidden'; }
   function syncLive(){ if(wantLive()) startLive(); else stopLive(); }
   async function startLive(){
     if(live.on) return;
     live.on=true; const gen=++live.gen;
     if(!live.lm){
-      showCoach('Chargement du coach…','wait');
+      showCoach('Chargement de la détection du corps…','wait');
       try{ live.lm=await getPose('VIDEO'); }
-      catch(e){ if(gen===live.gen){ live.on=false; showCoach(''); toast('Le coach n\'a pas pu se charger : vérifie ta connexion.'); } return; }
+      catch(e){ if(gen===live.gen){ live.on=false; showCoach(''); toast('La détection du corps n\'a pas pu se charger : vérifie ta connexion.'); } return; }
     }
     if(!live.on || gen!==live.gen) return;
     showCoach(''); tickLive(gen);
   }
   function stopLive(){
-    live.on=false; live.gen++; clearTimeout(live.timer); live.timer=null;
-    live.raise=0; live.cand=''; live.candN=0; showCoach('');
+    live.on=false; live.gen++; clearTimeout(live.timer); cancelAnimationFrame(live.raf); live.timer=null;
+    live.raise=0; live.cand=''; showCoach(''); fxClear();
   }
+  // Avec l'effet filtre, la détection tourne à chaque image (jusqu'à ~30 par seconde) ; sinon 5 fois par seconde suffisent.
   function tickLive(gen){
     if(!live.on || gen!==live.gen) return;
-    if(video.readyState>=2 && video.videoWidth){
+    const now=performance.now();
+    if(video.readyState>=2 && video.videoWidth && now-live.last>=(fx.on?30:190)){
+      live.last=now;
       let p=null;
-      try{ const r=live.lm.detectForVideo(video,performance.now()); p=(r && r.landmarks && r.landmarks[0]) || null; }catch(e){}
-      readPose(p);
+      try{ const r=live.lm.detectForVideo(video,now); p=(r && r.landmarks && r.landmarks[0]) || null; live.err=0; }
+      catch(e){ if(++live.err>8){ poseFallback(); return; } }
+      readPose(p,now);
     }
-    live.timer=setTimeout(()=>tickLive(gen),200);
+    if(fx.on) live.raf=requestAnimationFrame(()=>tickLive(gen));
+    else live.timer=setTimeout(()=>tickLive(gen),200);
   }
-  function readPose(raw){
+  // Si la carte graphique du téléphone refuse la détection, on repasse sur le processeur.
+  function poseFallback(){ poseCPU=true; poseByMode.VIDEO=null; live.lm=null; live.on=false; live.gen++; live.err=0; syncLive(); }
+  function readPose(raw,now){
     // Coordonnées ramenées à la zone visible du miroir.
     const r=visibleRect();
     const p=raw ? raw.map(q=>({x:(q.x-r.x)/r.w,y:(q.y-r.y)/r.h,visibility:q.visibility})) : null;
     const vis=i=>!!(p && p[i] && (p[i].visibility==null || p[i].visibility>0.5) && p[i].x>=0 && p[i].x<=1 && p[i].y>=0 && p[i].y<=1);
+    if(fx.on){
+      fxDraw(p);
+      const dir=readSwipe(p,now);
+      if(dir) fxStep(dir,true);
+    }
     // Main levée : un poignet au-dessus du nez pendant 0,6 s.
     if(opt.hand && !state.countdown && Date.now()>live.cooldown){
       const up = vis(0) && [15,16].some(i=>vis(i) && p[i].y < p[0].y-0.04);
@@ -1741,9 +1833,10 @@ button.stat{cursor:pointer}
     if(live.raise){ showCoach('Main levée : garde-la une seconde…','wait'); live.cand=''; return; }
     if(!opt.coach){ showCoach(''); return; }
     const advice=coachAdvice(p,vis);
-    // Le conseil ne change qu'après deux lectures identiques, pour éviter le clignotement.
-    if(advice[0]===live.cand) live.candN++; else { live.cand=advice[0]; live.candN=1; }
-    if(live.candN>=2) showCoach(advice[0],advice[1]);
+    // Le conseil ne change qu'après 0,35 s de lecture identique, pour éviter le clignotement.
+    if(advice[0]!==live.cand){ live.cand=advice[0]; live.candSince=now; }
+    // Avec l'effet filtre, le conseil ne s'affiche que s'il y a quelque chose à corriger (il cacherait les chaussures).
+    if(now-live.candSince>=350){ if(fx.on && advice[1]==='ok') showCoach(''); else showCoach(advice[0],advice[1]); }
   }
   function coachAdvice(p,vis){
     if(!p || !vis(0)) return ['Place-toi face au téléphone, en entier dans l\'image','warn'];
@@ -1764,6 +1857,237 @@ button.stat{cursor:pointer}
     if(!msg){ el.hidden=true; live.shown=''; stage.classList.remove('coach-ok'); return; }
     if(live.shown!==msg){ $('coachText').textContent=msg; live.shown=msg; }
     el.dataset.level=level||''; el.hidden=false; stage.classList.toggle('coach-ok',level==='ok');
+  }
+
+  /* ---------- Effet filtre : les vêtements de la tenue suivent le corps ---------- */
+  // Version « autocollant » : chaque pièce détourée est posée et déformée selon les épaules, hanches et pieds.
+  // Gratuit et dans le téléphone ; le rendu réaliste reste celui de la cabine.
+  const fxCanvas=$('fx');
+  const fx={on:false,index:0,prep:new Map(),sm:null,miss:0,hist:{15:[],16:[]},lastSwipe:0,drawn:false};
+  function fxOutfits(){
+    const list=state.outfits.filter(o=>outfitPieces(o).length);
+    if(list.length) return list;
+    const tmp={id:'_cabine',name:'Tenue de la cabine',pieces:Object.assign({},state.cab.picks)};
+    return outfitPieces(tmp).length ? [tmp] : [];
+  }
+  function fxCurrent(){
+    const l=fxOutfits(); if(!l.length) return null;
+    fx.index=((fx.index%l.length)+l.length)%l.length;
+    return l[fx.index];
+  }
+  // Prépare une pièce : détourage (une fois, gardé dans la fiche) puis repérage de sa forme.
+  function fxPrep(g){
+    const e=fx.prep.get(g.id);
+    if(e && (e.loading || (e.src===g.cutBlob && (e.ready || e.failed)))) return e;
+    const entry={src:g.cutBlob,ready:false,loading:true,failed:false,img:null,kp:null};
+    fx.prep.set(g.id,entry);
+    (async()=>{
+      try{
+        if(!g.cutBlob){
+          fxStatus('Détourage de « '+g.name+' »…');
+          await new Promise((res,rej)=>{
+            bgChain=bgChain.then(async()=>{
+              rmbgStatus=t=>fxStatus(t);
+              try{ if(!g.cutBlob){ const r=await cutout(faceOrig(g,'front')); g.cutBlob=r.blob; saveGarment(g); } res(); }
+              catch(err){ rej(err); }
+              finally{ rmbgStatus=null; }
+            });
+          });
+          entry.src=g.cutBlob;
+        }
+        entry.img=await loadImage(g.cutBlob);
+        entry.kp=garmentShape(entry.img,g.category);
+        entry.ready=true;
+      }catch(err){ entry.failed=true; }
+      finally{ entry.loading=false; fxStatus(''); }
+    })();
+    return entry;
+  }
+  // Repères dans la photo détourée : haut et bas du vêtement, largeur du corps, proportions.
+  function garmentShape(img,category){
+    const iw=img.naturalWidth, ih=img.naturalHeight, s=120/Math.max(iw,ih);
+    const w=Math.max(8,Math.round(iw*s)), h=Math.max(8,Math.round(ih*s));
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const g=c.getContext('2d',{willReadFrequently:true}); g.drawImage(img,0,0,w,h);
+    const d=g.getImageData(0,0,w,h).data;
+    const span=y=>{ let a=-1,b=-1; for(let x=0;x<w;x++) if(d[(y*w+x)*4+3]>100){ if(a<0)a=x; b=x; } return a<0?null:[a,b+1]; };
+    let top=0; while(top<h-1 && !span(top)) top++;
+    let bot=h-1; while(bot>top && !span(bot)) bot--;
+    const H=bot+1-top, k=1/s;
+    let minX=w, maxX=0;
+    for(let y=top;y<=bot;y++){ const sp=span(y); if(sp){ if(sp[0]<minX) minX=sp[0]; if(sp[1]>maxX) maxX=sp[1]; } }
+    // Haut : largeur du corps mesurée vers l'ourlet (sous les manches). Bas : largeur à la taille.
+    const ref=span(top+Math.round(H*(category==='bas'?0.03:0.85))) || [minX,maxX];
+    return {top:top*k,bot:(bot+1)*k,left:ref[0]*k,right:ref[1]*k,minX:minX*k,maxX:maxX*k,ratio:H/Math.max(1,maxX-minX)};
+  }
+  const vAdd=(a,b)=>({x:a.x+b.x,y:a.y+b.y}), vSub=(a,b)=>({x:a.x-b.x,y:a.y-b.y}), vMul=(a,k)=>({x:a.x*k,y:a.y*k});
+  const vLen=a=>Math.hypot(a.x,a.y), vMid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  // Transformation qui envoie trois points de la photo du vêtement sur trois points du corps.
+  function affine(s0,s1,s2,d0,d1,d2){
+    const den=s0.x*(s1.y-s2.y)+s1.x*(s2.y-s0.y)+s2.x*(s0.y-s1.y);
+    if(Math.abs(den)<1e-6) return null;
+    return [
+      (d0.x*(s1.y-s2.y)+d1.x*(s2.y-s0.y)+d2.x*(s0.y-s1.y))/den,
+      (d0.y*(s1.y-s2.y)+d1.y*(s2.y-s0.y)+d2.y*(s0.y-s1.y))/den,
+      (d0.x*(s2.x-s1.x)+d1.x*(s0.x-s2.x)+d2.x*(s1.x-s0.x))/den,
+      (d0.y*(s2.x-s1.x)+d1.y*(s0.x-s2.x)+d2.y*(s1.x-s0.x))/den,
+      (d0.x*(s1.x*s2.y-s2.x*s1.y)+d1.x*(s2.x*s0.y-s0.x*s2.y)+d2.x*(s0.x*s1.y-s1.x*s0.y))/den,
+      (d0.y*(s1.x*s2.y-s2.x*s1.y)+d1.y*(s2.x*s0.y-s0.x*s2.y)+d2.y*(s0.x*s1.y-s1.x*s0.y))/den
+    ];
+  }
+  function fxClear(){
+    fx.drawn=false; fx.sm=null;
+    try{ const c=fxCanvas.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,fxCanvas.width,fxCanvas.height); }catch(e){}
+  }
+  function fxDraw(p){
+    const W=fxCanvas.clientWidth, H=fxCanvas.clientHeight; if(!W || !H) return;
+    const dpr=Math.min(2,window.devicePixelRatio||1), cw=Math.round(W*dpr), ch=Math.round(H*dpr);
+    if(fxCanvas.width!==cw || fxCanvas.height!==ch){ fxCanvas.width=cw; fxCanvas.height=ch; }
+    const ctx=fxCanvas.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cw,ch); fx.drawn=false;
+    if(!p){ if(++fx.miss>6) fx.sm=null; return; }
+    fx.miss=0;
+    // Lissage : les points suivent le corps sans trembler.
+    if(!fx.sm) fx.sm=p.map(q=>({x:q.x,y:q.y,v:q.visibility}));
+    else p.forEach((q,i)=>{ const m=fx.sm[i]; m.x+=(q.x-m.x)*0.6; m.y+=(q.y-m.y)*0.6; m.v=q.visibility; });
+    const sm=fx.sm;
+    const has=i=>!!(sm[i] && (sm[i].v==null || sm[i].v>0.5));
+    const P=i=>({x:sm[i].x*cw,y:sm[i].y*ch});
+    const o=fxCurrent(); if(!o) return;
+    for(const {slot,g} of outfitPieces(o)){
+      const e=fxPrep(g); if(!e.ready) continue;
+      try{
+        if(slot==='haut' || g.category==='robe') fxTop(ctx,e,P,has,g.category==='robe');
+        else if(slot==='bas') fxBottom(ctx,e,P,has);
+        else fxShoes(ctx,e,P,has);
+      }catch(err){}
+      ctx.setTransform(1,0,0,1,0,0);
+    }
+  }
+  function upFrom(u){ const L=vLen(u)||1; let n={x:u.y/L,y:-u.x/L}; if(n.y>0) n={x:-n.x,y:-n.y}; return n; }
+  function fxTop(ctx,e,P,has,dress){
+    if(!has(11) || !has(12)) return;
+    const Sr=P(12), Sl=P(11), u=vSub(Sl,Sr), L=vLen(u); if(L<6) return;
+    const n=upFrom(u), sMid=vMid(Sr,Sl);
+    const hMid = has(23)&&has(24) ? vMid(P(23),P(24)) : vAdd(sMid,vMul(n,-L*1.45));
+    let hem;
+    if(dress){
+      const knee = has(25)&&has(26) ? vMid(P(25),P(26)) : vAdd(hMid,vSub(hMid,sMid));
+      const ankle = has(27)&&has(28) ? vMid(P(27),P(28)) : vAdd(knee,vSub(knee,hMid));
+      hem=vAdd(sMid,vMul(vSub(ankle,sMid),Math.max(0.45,Math.min(1,e.kp.ratio/2.4))));
+    }else hem=vAdd(hMid,vMul(vSub(hMid,sMid),0.12));
+    const lift=vMul(n,L*0.07);
+    const T1=vAdd(vSub(Sr,vMul(u,0.2)),lift), T2=vAdd(vAdd(Sl,vMul(u,0.2)),lift);
+    const k=e.kp, sy=k.top+(k.bot-k.top)*0.1;
+    const m=affine({x:k.left,y:sy},{x:k.right,y:sy},{x:(k.left+k.right)/2,y:k.bot},T1,T2,hem);
+    if(!m) return;
+    ctx.setTransform(m[0],m[1],m[2],m[3],m[4],m[5]); ctx.drawImage(e.img,0,0); fx.drawn=true;
+  }
+  function fxBottom(ctx,e,P,has){
+    if(!has(23) || !has(24)) return;
+    const Hr=P(24), Hl=P(23), v=vSub(Hl,Hr), Lv=vLen(v); if(Lv<4) return;
+    const up=vMul(upFrom(v),Lv*0.35);
+    const foot=(hip,knee,ankle)=> has(ankle) ? P(ankle) : has(knee) ? vAdd(P(knee),vSub(P(knee),P(hip))) : null;
+    const Ar=foot(24,26,28), Al=foot(23,25,27); if(!Ar || !Al) return;
+    // Pantalon long jusqu'aux chevilles, short plus haut : la longueur suit les proportions du vêtement.
+    const f=Math.max(0.35,Math.min(1,e.kp.ratio/2))*1.04;
+    const k=e.kp, cx=(k.left+k.right)/2, ih=e.img.naturalHeight, iw=e.img.naturalWidth;
+    const C=vAdd(vMid(Hr,Hl),up);
+    const R0=vAdd(vSub(Hr,vMul(v,0.45)),up), Rend=vAdd(Hr,vMul(vSub(Ar,Hr),f));
+    const L1=vAdd(vAdd(Hl,vMul(v,0.45)),up), Lend=vAdd(Hl,vMul(vSub(Al,Hl),f));
+    // Jambe droite = moitié gauche de la photo (vue de face), jambe gauche = moitié droite.
+    let m=affine({x:k.left,y:k.top},{x:cx,y:k.top},{x:(k.left+cx)/2,y:k.bot},R0,C,Rend);
+    if(m){ ctx.setTransform(m[0],m[1],m[2],m[3],m[4],m[5]); ctx.drawImage(e.img,0,0,cx,ih,0,0,cx,ih); fx.drawn=true; }
+    m=affine({x:cx,y:k.top},{x:k.right,y:k.top},{x:(cx+k.right)/2,y:k.bot},C,L1,Lend);
+    if(m){ ctx.setTransform(m[0],m[1],m[2],m[3],m[4],m[5]); ctx.drawImage(e.img,cx,0,iw-cx,ih,cx,0,iw-cx,ih); fx.drawn=true; }
+  }
+  function fxShoes(ctx,e,P,has){
+    const k=e.kp, sw0=k.maxX-k.minX, sh=k.bot-k.top;
+    // Photo d'une paire côte à côte : une chaussure par pied ; sinon la même image pour les deux.
+    const pair=sw0/sh>1.25, mid=(k.minX+k.maxX)/2;
+    const halves=pair ? [[k.minX,mid],[mid,k.maxX]] : [[k.minX,k.maxX],[k.minX,k.maxX]];
+    const hipW = has(23)&&has(24) ? vLen(vSub(P(23),P(24))) : 0;
+    [[30,32,28,0],[29,31,27,1]].forEach(([heel,toe,ankle,hi])=>{
+      const pts=[heel,toe,ankle].filter(has).map(P); if(!pts.length) return;
+      const cx=pts.reduce((a,q)=>a+q.x,0)/pts.length, bottom=Math.max.apply(null,pts.map(q=>q.y));
+      const x0=halves[hi][0], x1=halves[hi][1], sw=x1-x0;
+      const footLen = has(heel)&&has(toe) ? vLen(vSub(P(heel),P(toe))) : 0;
+      const w=Math.max(footLen*1.3,hipW*0.45,24), h=w*sh/sw;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.drawImage(e.img,x0,k.top,sw,sh,cx-w/2,bottom-h*0.85,w,h); fx.drawn=true;
+    });
+  }
+  // Geste : un poignet qui balaie l'air à hauteur de poitrine (au moins un quart de l'image en moins d'une demi-seconde).
+  function readSwipe(p,now){
+    if(!p) return 0;
+    const has=i=>!!(p[i] && (p[i].visibility==null || p[i].visibility>0.5));
+    const hipY = has(23)&&has(24) ? (p[23].y+p[24].y)/2 : 0.65;
+    let dir=0;
+    for(const i of [15,16]){
+      const h=fx.hist[i];
+      if(has(i) && p[i].y<hipY && p[i].x>-0.1 && p[i].x<1.1) h.push({t:now,x:p[i].x,y:p[i].y}); else h.length=0;
+      while(h.length && now-h[0].t>450) h.shift();
+      if(!dir && h.length>=3 && now-fx.lastSwipe>900){
+        const a=h[0], b=h[h.length-1], dx=b.x-a.x, dy=b.y-a.y;
+        if(Math.abs(dx)>0.25 && Math.abs(dy)<0.6*Math.abs(dx)){
+          // Sens vu à l'écran : vers la gauche = tenue suivante, comme sur un téléphone.
+          const screenDx = opt.mirror ? -dx : dx;
+          dir = screenDx<0 ? 1 : -1;
+        }
+      }
+    }
+    if(dir){ fx.lastSwipe=now; fx.hist={15:[],16:[]}; }
+    return dir;
+  }
+  function fxStep(dir,gesture){
+    const l=fxOutfits();
+    if(l.length<2){ if(gesture) fxStatus('Une seule tenue : crée-en d\'autres dans Dressing → Tenues',2500); return; }
+    fx.index=(fx.index+dir+l.length)%l.length;
+    renderFxBar(dir);
+    // On prépare déjà la tenue suivante dans le même sens.
+    outfitPieces(l[(fx.index+dir+l.length)%l.length]).forEach(x=>fxPrep(x.g));
+    if(gesture) buzz(30);
+  }
+  let fxStatusTimer=null;
+  function fxStatus(t,ms){
+    $('fxStatus').textContent=t||'';
+    clearTimeout(fxStatusTimer); if(t && ms) fxStatusTimer=setTimeout(()=>{ $('fxStatus').textContent=''; },ms);
+  }
+  function renderFxBar(dir){
+    const bar=$('fxBar'), l=fxOutfits(), o=fxCurrent();
+    $('fxName').textContent = o ? (l.length>1?(fx.index+1)+'/'+l.length+' · ':'')+o.name : 'Aucune tenue';
+    $('fxPrev').disabled=$('fxNext').disabled=l.length<2;
+    if(dir){ bar.classList.remove('swl','swr'); void bar.offsetWidth; bar.classList.add(dir>0?'swl':'swr'); }
+    if(o) outfitPieces(o).forEach(x=>fxPrep(x.g));
+  }
+  function setFx(on){
+    if(on && !fxOutfits().length){
+      toast('Crée d\'abord une tenue : un haut, un bas, des chaussures',{label:'Créer',undo(){ setTab('dressing'); state.dressPane='tenues'; renderDressing(); const o=newOutfit({}); openOutfit(o.id,true); }});
+      on=false;
+    }
+    fx.on=on;
+    if(!on) fxClear();
+    renderStageOpts(); syncLive();
+  }
+  // Depuis une fiche tenue : ouvre le miroir avec l'effet filtre sur cette tenue.
+  function tryLive(outfitId){
+    const l=fxOutfits(), i=l.findIndex(o=>o.id===outfitId);
+    if(i>=0) fx.index=i;
+    setTab('miroir'); setFx(true);
+    if(state.mode!=='live') startCamera();
+  }
+  $('fxBtn').addEventListener('click',()=>{ unlockAudio(); setFx(!fx.on); });
+  $('fxPrev').addEventListener('click',()=>fxStep(-1,false));
+  $('fxNext').addEventListener('click',()=>fxStep(1,false));
+  // Photo avec l'effet filtre : la photo nette va dans « Tes photos », la version avec la tenue dans les Looks.
+  function fxSaveLook(blob,rawBlob,photoId,o){
+    const pieces=outfitPieces(o).map(x=>({slot:x.slot,garmentId:x.g.id,garmentName:x.g.name,engine:'filtre'}));
+    addLook({id:newId('l'),name:o.name,time:Date.now(),blob,baseBlob:rawBlob,baseId:photoId,pieces,kind:'filtre',fav:false,worn:[]});
+    toast('Photo avec « '+o.name+' » ajoutée aux Looks',{label:'Rendu IA',undo(){
+      state.cab.photoId=photoId;
+      SLOTS.forEach(s=>{ state.cab.picks[s.id]=garmentById(o.pieces[s.id])?o.pieces[s.id]:null; state.cab.locks[s.id]=false; });
+      setTab('cabine');
+    }});
   }
 
   async function addPhoto(blob){
@@ -1797,7 +2121,11 @@ button.stat{cursor:pointer}
   /* ================= DRESSING ================= */
   const closetInput=$('closetInput'), shopInput=$('shopInput');
   let afterAdd=null; // action après ajout (ex. remplir une case de la cabine)
-  $('addGarment').addEventListener('click',()=>{ afterAdd=null; openAddSheet(); });
+  $('addGarment').addEventListener('click',()=>{
+    if(state.dressPane==='tenues'){ const o=newOutfit({}); openOutfit(o.id,true); return; }
+    afterAdd=null; openAddSheet();
+  });
+  document.querySelectorAll('#dressSeg button').forEach(b=>b.addEventListener('click',()=>{ state.dressPane=b.dataset.pane; renderDressing(); }));
   const autoBgMode = () => pref.get('autoBg','orig');
   function renderAutoBg(){ document.querySelectorAll('#autoBgSeg button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.bg===autoBgMode()))); }
   function openAddSheet(){ renderAutoBg(); $('addSheet').hidden=false; $('addCam').focus(); }
@@ -2027,6 +2355,11 @@ button.stat{cursor:pointer}
   }
   function renderDressing(){
     const f=state.filter;
+    const tenues=state.dressPane==='tenues';
+    $('paneTenues').hidden=!tenues; $('panePieces').hidden=tenues;
+    document.querySelectorAll('#dressSeg button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.pane===state.dressPane)));
+    $('addGarment').textContent = tenues ? '+ Nouvelle tenue' : '+ Ajouter';
+    if(tenues) renderOutfits();
     curWear=null; renderStats();
     const catRow=$('catFilter'); catRow.textContent='';
     const base=state.garments.filter(g=>matches(g,'cat'));
@@ -2105,6 +2438,122 @@ button.stat{cursor:pointer}
     $('resetFilters').hidden=!filtered;
     $('closetCount').textContent = filtered ? list.length+' sur '+state.garments.length+' vêtements' : state.garments.length+(state.garments.length>1?' vêtements':' vêtement');
   }
+
+  /* ---------- Tenues : un haut, un bas, des chaussures ---------- */
+  const outfitById = id => state.outfits.find(o=>o.id===id)||null;
+  function outfitPieces(o){ return SLOTS.map(s=>({slot:s.id,g:garmentById(o && o.pieces && o.pieces[s.id])})).filter(x=>x.g); }
+  function saveOutfit(o){ return dbPut('outfits',{id:o.id,name:o.name,pieces:Object.assign({},o.pieces),created:o.created}); }
+  function newOutfit(pieces,name){
+    const o={id:newId('o'),name:name||('Tenue '+(state.outfits.length+1)),pieces:Object.assign({haut:null,bas:null,chaussures:null},pieces||{}),created:Date.now()};
+    state.outfits.push(o); saveOutfit(o); return o;
+  }
+  const piecesKey = pieces => SLOTS.map(s=>(pieces && pieces[s.id])||'-').join('|');
+  function outfitCard(o){
+    const b=document.createElement('button'); b.type='button'; b.className='gcard ocard';
+    const pic=document.createElement('span'); pic.className='pic';
+    DISPLAY_ORDER.forEach(id=>{
+      const g=garmentById(o.pieces[id]); if(!g) return;
+      const im=document.createElement('img'); im.src=g.url; im.alt=''; im.loading='lazy'; if(id==='chaussures') im.className='s'; pic.append(im);
+    });
+    if(!pic.children.length){ pic.textContent='+'; }
+    const n=document.createElement('span'); n.className='name'; n.textContent=o.name;
+    const m=document.createElement('span'); m.className='meta';
+    const t=document.createElement('span'); const k=outfitPieces(o).length; t.textContent=k+(k>1?' pièces':' pièce'); m.append(t);
+    b.append(pic,n,m); b.setAttribute('aria-label','Tenue '+o.name+', '+t.textContent);
+    b.addEventListener('click',()=>openOutfit(o.id));
+    return b;
+  }
+  // Ensembles de pièces des looks qui ne sont pas encore des tenues.
+  function looksOutfits(){
+    const have=new Set(state.outfits.map(o=>piecesKey(o.pieces))), seen=new Set(), out=[];
+    state.looks.forEach(l=>{
+      const pieces={}; (l.pieces||[]).forEach(p=>{ if(garmentById(p.garmentId)) pieces[p.slot]=p.garmentId; });
+      const k=piecesKey(pieces);
+      if(Object.keys(pieces).length && !have.has(k) && !seen.has(k)){ seen.add(k); out.push({pieces,name:l.name}); }
+    });
+    return out;
+  }
+  function renderOutfits(){
+    const grid=$('outfitGrid'); grid.textContent='';
+    grid.style.setProperty('--cols',state.dress.cols);
+    state.outfits.slice().reverse().forEach(o=>grid.append(outfitCard(o)));
+    const empty=$('outfitEmpty'); empty.hidden=state.outfits.length>0;
+    empty.textContent='Aucune tenue pour l\'instant. Touche « + Nouvelle tenue », ou « Enregistrer la tenue » dans la cabine.';
+    const fromLooks=looksOutfits();
+    $('outfitsFromLooks').hidden=!fromLooks.length;
+    $('outfitsFromLooks').textContent='Reprendre les tenues de mes looks ('+fromLooks.length+')';
+  }
+  $('outfitsFromLooks').addEventListener('click',()=>{
+    const l=looksOutfits(); l.forEach(x=>newOutfit(x.pieces,x.name));
+    renderDressing(); toast(l.length+(l.length>1?' tenues créées':' tenue créée')+' à partir de tes looks');
+  });
+  let editingOutfit=null, outfitIsNew=false;
+  function openOutfit(id,isNew){
+    editingOutfit=id; outfitIsNew=!!isNew;
+    $('outfitSheet').hidden=false; renderOutfitSheet(true); $('outfitClose').focus();
+  }
+  function closeOutfit(){
+    const o=outfitById(editingOutfit);
+    $('outfitSheet').hidden=true; editingOutfit=null;
+    if(o){
+      // Une tenue restée vide n'est pas gardée.
+      if(!outfitPieces(o).length){ state.outfits=state.outfits.filter(x=>x!==o); dbDelete('outfits',o.id); }
+      else saveOutfit(o);
+    }
+    renderDressing();
+  }
+  function renderOutfitSheet(fill){
+    const o=outfitById(editingOutfit); if(!o){ $('outfitSheet').hidden=true; return; }
+    if(fill || document.activeElement!==$('oName')) $('oName').value=o.name;
+    const box=$('oSlots'); box.textContent='';
+    DISPLAY_ORDER.forEach(id=>{
+      const s=slotDef(id), g=garmentById(o.pieces[id]);
+      const row=document.createElement('div'); row.className='slot';
+      const pick=document.createElement('button'); pick.type='button'; pick.className='slot-pick';
+      pick.setAttribute('aria-label','Choisir '+s.label.toLowerCase()+(g?', actuellement '+g.name:''));
+      const pic=document.createElement('span'); pic.className='slot-pic'+(g?' has':'')+(g && faceBg(g,'front')==='cut'?' cut':'');
+      if(g){ const im=document.createElement('img'); im.src=g.url; im.alt=''; pic.append(im); } else pic.textContent='+';
+      const tx=document.createElement('span'); tx.className='slot-txt';
+      const sm=document.createElement('small'); sm.textContent=s.label;
+      const b=document.createElement('b'); b.textContent=g?g.name:'Aucun';
+      const sp=document.createElement('span'); sp.textContent=g?[cat(g.category).label,g.brand].filter(Boolean).join(' · '):'Touche pour choisir';
+      tx.append(sm,b,sp); pick.append(pic,tx);
+      pick.addEventListener('click',()=>openPicker(id,{
+        get:()=>o.pieces[id], set:v=>{ o.pieces[id]=v||null; saveOutfit(o); }, done:()=>renderOutfitSheet(), empty:'Aucun '+s.label.toLowerCase()
+      }));
+      const clr=document.createElement('button'); clr.type='button'; clr.className='icon-btn'; clr.textContent='×';
+      clr.disabled=!g; clr.setAttribute('aria-label','Retirer '+s.label.toLowerCase());
+      clr.addEventListener('click',()=>{ o.pieces[id]=null; saveOutfit(o); renderOutfitSheet(); });
+      row.append(pick,clr); box.append(row);
+    });
+    const pieces=outfitPieces(o).map(x=>x.g);
+    renderHarmony(pieces,$('oHarmony'));
+    $('oLive').disabled=!pieces.length; $('oCabin').disabled=!pieces.length;
+    $('outfitTitle').textContent = outfitIsNew ? 'Nouvelle tenue' : 'Tenue';
+  }
+  $('oName').addEventListener('input',()=>{ const o=outfitById(editingOutfit); if(o) o.name=$('oName').value.trim()||o.name; });
+  $('oName').addEventListener('change',()=>{ const o=outfitById(editingOutfit); if(o){ o.name=$('oName').value.trim()||o.name; saveOutfit(o); } });
+  $('oName').addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
+  $('outfitClose').addEventListener('click',closeOutfit);
+  $('outfitSheet').addEventListener('click',e=>{ if(e.target===$('outfitSheet')) closeOutfit(); });
+  $('oCabin').addEventListener('click',()=>{
+    const o=outfitById(editingOutfit); if(!o) return;
+    SLOTS.forEach(s=>{ state.cab.picks[s.id]=o.pieces[s.id]&&garmentById(o.pieces[s.id])?o.pieces[s.id]:null; state.cab.locks[s.id]=false; });
+    closeOutfit(); setTab('cabine'); toast('« '+o.name+' » est dans la cabine');
+  });
+  $('oLive').addEventListener('click',()=>{
+    const o=outfitById(editingOutfit); if(!o) return;
+    closeOutfit(); tryLive(o.id);
+  });
+  $('oDelete').addEventListener('click',()=>{
+    const o=outfitById(editingOutfit); if(!o) return;
+    const pos=state.outfits.indexOf(o);
+    state.outfits.splice(pos,1); $('outfitSheet').hidden=true; editingOutfit=null; renderDressing();
+    toast('Tenue « '+o.name+' » supprimée',{
+      commit(){ dbDelete('outfits',o.id); },
+      undo(){ state.outfits.splice(Math.min(pos,state.outfits.length),0,o); renderDressing(); }
+    });
+  });
 
   /* ---------- Fiche vêtement ---------- */
   const sheet=$('sheet'), sName=$('sName'), sFav=$('sFav'), sDelete=$('sDelete');
@@ -2445,6 +2894,9 @@ button.stat{cursor:pointer}
     const pieces=DISPLAY_ORDER.map(id=>garmentById(cab.picks[id])).filter(Boolean);
     renderHarmony(pieces);
     $('flatBtn').disabled=!pieces.length;
+    const same=state.outfits.find(o=>piecesKey(o.pieces)===piecesKey(cab.picks));
+    $('saveOutfit').disabled=!pieces.length || !!same;
+    $('saveOutfit').textContent = same ? 'Tenue enregistrée ✓' : 'Enregistrer la tenue';
     const idea=$('idea'), showIdea=!!(cab.idea && cab.idea.key===picksKey());
     idea.hidden=!showIdea; if(showIdea) idea.textContent=cab.idea.text;
     $('inspire').disabled = inspiring || !state.garments.some(g=>SLOTS.some(s=>s.cats.includes(g.category)));
@@ -2570,8 +3022,8 @@ button.stat{cursor:pointer}
     }
     return {score:-1,level:'warn',label:'Chargé',text:vivid.length+' couleurs vives : remplace une pièce par un neutre (noir, blanc, beige, marine…).'};
   }
-  function renderHarmony(pieces){
-    const el=$('harmony'); el.textContent='';
+  function renderHarmony(pieces,el){
+    el=el||$('harmony'); el.textContent='';
     if(pieces.length<2){ el.hidden=true; return; }
     const h=harmony(pieces); el.hidden=false; el.dataset.level=h.level;
     const dots=document.createElement('span'); dots.className='dots'; dots.setAttribute('aria-hidden','true');
@@ -2704,6 +3156,13 @@ button.stat{cursor:pointer}
     finally{ btn.disabled=false; }
   });
   $('flatClose').addEventListener('click',()=>{ $('flatOverlay').hidden=true; });
+  $('saveOutfit').addEventListener('click',()=>{
+    const picks={}; SLOTS.forEach(s=>{ if(garmentById(state.cab.picks[s.id])) picks[s.id]=state.cab.picks[s.id]; });
+    if(!Object.keys(picks).length) return;
+    const o=newOutfit(picks);
+    renderCabine();
+    toast('« '+o.name+' » enregistrée dans Dressing → Tenues',{label:'Renommer',undo(){ setTab('dressing'); state.dressPane='tenues'; renderDressing(); openOutfit(o.id); }});
+  });
   $('flatShare').addEventListener('click',()=>{ if(flatCur) saveBlob(flatCur.blob,'a-plat',Date.now()); });
   $('flatSave').addEventListener('click',()=>{
     if(!flatCur) return;
@@ -2723,16 +3182,22 @@ button.stat{cursor:pointer}
 
   /* ---------- Choix d'une pièce ---------- */
   const picker=$('picker');
-  let pickerSlot=null, pickerCat='all';
-  function openPicker(slot){
-    pickerSlot=slot; pickerCat='all';
+  let pickerSlot=null, pickerCat='all', pickerTarget=null;
+  // Le choix d'une pièce sert à la cabine et aux fiches tenue : la « cible » dit où ranger la pièce choisie.
+  const cabTarget = slot => ({
+    get:()=>state.cab.picks[slot],
+    set:id=>{ state.cab.picks[slot]=id; if(!id) state.cab.locks[slot]=false; },
+    done:()=>renderCabine()
+  });
+  function openPicker(slot,target){
+    pickerSlot=slot; pickerCat='all'; pickerTarget=target||cabTarget(slot);
     picker.hidden=false; renderPicker(); $('pickerClose').focus();
   }
-  function closePicker(){ picker.hidden=true; pickerSlot=null; renderCabine(); }
+  function closePicker(){ picker.hidden=true; const t=pickerTarget; pickerSlot=null; pickerTarget=null; if(t) t.done(); }
   function renderPicker(){
     const s=slotDef(pickerSlot); if(!s) return;
     $('pickerTitle').textContent=s.label;
-    $('pickerNone').textContent=s.empty;
+    $('pickerNone').textContent=(pickerTarget && pickerTarget.empty)||s.empty;
     const cats=$('pickerCats'); cats.textContent='';
     const all=state.garments.filter(g=>s.cats.includes(g.category));
     cats.hidden = s.cats.length<2;
@@ -2743,23 +3208,24 @@ button.stat{cursor:pointer}
     if(pickerCat==='fav') list=list.filter(g=>g.fav); else if(pickerCat!=='all') list=list.filter(g=>g.category===pickerCat);
     list=list.slice().sort((a,b)=>(b.fav-a.fav)||(b.created-a.created));
     const grid=$('pickerGrid'); grid.textContent='';
-    list.forEach(g=>grid.append(garmentCard(g,()=>{ state.cab.picks[pickerSlot]=g.id; closePicker(); },state.cab.picks[pickerSlot]===g.id)));
+    list.forEach(g=>grid.append(garmentCard(g,()=>{ pickerTarget.set(g.id); closePicker(); },pickerTarget.get()===g.id)));
     $('pickerEmpty').hidden=list.length>0;
     $('pickerEmpty').textContent = all.length ? 'Aucun vêtement dans ce filtre.' : 'Aucun vêtement de type '+s.cats.map(c=>cat(c).label.toLowerCase()).join(' ou ')+' dans ton dressing. Ajoute-en un, puis règle sa catégorie.';
   }
   $('pickerClose').addEventListener('click',closePicker);
   picker.addEventListener('click',e=>{ if(e.target===picker) closePicker(); });
-  $('pickerNone').addEventListener('click',()=>{ state.cab.picks[pickerSlot]=null; state.cab.locks[pickerSlot]=false; closePicker(); });
+  $('pickerNone').addEventListener('click',()=>{ pickerTarget.set(null); closePicker(); });
   $('pickerAdd').addEventListener('click',()=>{
-    const slot=pickerSlot;
+    const slot=pickerSlot, target=pickerTarget;
     afterAdd=g=>{
       if(!slotDef(slot).cats.includes(g.category)){
         g.category=slotDef(slot).cats[0];
         g.name=cat(g.category).label+' '+state.garments.filter(x=>x.category===g.category).length;
       }
-      saveGarment(g); state.cab.picks[slot]=g.id;
+      g._catTouched=true;
+      saveGarment(g); target.set(g.id); target.done();
     };
-    picker.hidden=true; closetInput.click();
+    picker.hidden=true; pickerSlot=null; pickerTarget=null; closetInput.click();
   });
 
   /* ---------- Moteurs (démos Hugging Face) ---------- */
@@ -2938,7 +3404,7 @@ button.stat{cursor:pointer}
   const MP='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34';
   const POSE_MODEL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
   // Un détecteur pour les photos (IMAGE) et un pour le direct (VIDEO), qui partagent le même chargement.
-  let mpBase=null; const poseByMode={};
+  let mpBase=null, poseCPU=false; const poseByMode={};
   function mpLoad(){
     if(!mpBase){
       mpBase=(async()=>{
@@ -2953,7 +3419,12 @@ button.stat{cursor:pointer}
   function getPose(mode){
     mode=mode||'IMAGE';
     if(!poseByMode[mode]){
-      poseByMode[mode]=mpLoad().then(({m,files})=>m.PoseLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:POSE_MODEL,delegate:'CPU'},runningMode:mode,numPoses:1}));
+      poseByMode[mode]=mpLoad().then(async({m,files})=>{
+        const make=delegate=>m.PoseLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:POSE_MODEL,delegate},runningMode:mode,numPoses:1});
+        // En direct, la carte graphique du téléphone va plus vite ; le processeur reste le secours.
+        if(mode==='VIDEO' && !poseCPU){ try{ return await make('GPU'); }catch(e){ poseCPU=true; } }
+        return make('CPU');
+      });
       poseByMode[mode].catch(()=>{ poseByMode[mode]=null; });
     }
     return poseByMode[mode];
@@ -3121,9 +3592,10 @@ button.stat{cursor:pointer}
     saveLookRec(rec); askPersist();
     if(state.tab==='looks') renderLooks();
   }
-  const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['ia','IA'],['flat','À plat']];
+  const LOOK_FILTERS=[['all','Tous'],['fav','♥ Favoris'],['worn','Portés'],['ia','IA'],['filtre','Filtre'],['flat','À plat']];
+  const KIND_LABEL={ia:'IA',flat:'À plat',filtre:'Filtre'};
   function lookMatches(l,f){
-    return f==='all' || (f==='fav' && l.fav) || (f==='worn' && (l.worn||[]).length>0) || (f==='ia' && (l.kind||'ia')==='ia') || (f==='flat' && l.kind==='flat');
+    return f==='all' || (f==='fav' && l.fav) || (f==='worn' && (l.worn||[]).length>0) || (f==='ia' && (l.kind||'ia')==='ia') || (f==='flat' && l.kind==='flat') || (f==='filtre' && l.kind==='filtre');
   }
   $('compareMode').addEventListener('click',()=>{
     state.compareMode=!state.compareMode; state.compareSel=[]; renderLooks();
@@ -3152,7 +3624,7 @@ button.stat{cursor:pointer}
       b.append(img,lb);
       if(sel>=0){ const n=document.createElement('span'); n.className='pickno'; n.textContent=sel+1; b.append(n); }
       else if(!state.compareMode){
-        const k=document.createElement('span'); k.className='kind'; k.textContent=l.kind==='flat'?'À plat':'IA'; k.setAttribute('aria-hidden','true'); b.append(k);
+        const k=document.createElement('span'); k.className='kind'; k.textContent=KIND_LABEL[l.kind||'ia']||'IA'; k.setAttribute('aria-hidden','true'); b.append(k);
       }
       if(l.fav){ const f=document.createElement('span'); f.className='fav'; f.textContent='♥'; f.setAttribute('aria-hidden','true'); b.append(f); }
       b.addEventListener('click',()=>{
@@ -3216,7 +3688,7 @@ button.stat{cursor:pointer}
       $('viewerFav').textContent = it.fav ? '♥' : '♡';
       $('viewerFav').setAttribute('aria-label',it.fav?'Retirer des favoris':'Ajouter aux favoris');
     }
-    viewerAction.textContent = isLook ? (it.kind==='flat' ? 'Mettre dans la cabine' : 'Ouvrir dans la cabine') : 'Habiller';
+    viewerAction.textContent = isLook ? (it.kind==='flat' ? 'Mettre dans la cabine' : it.kind==='filtre' ? 'Rendu IA dans la cabine' : 'Ouvrir dans la cabine') : 'Habiller';
     viewerPrev.disabled=state.viewer.index<=0;
     viewerNext.disabled=state.viewer.index>=items.length-1;
   }
@@ -3316,7 +3788,7 @@ button.stat{cursor:pointer}
     });
     if(document.activeElement!==$('hfToken')) $('hfToken').value=state.token||'';
     const info=$('storageInfo');
-    info.textContent=state.photos.length+' photos, '+state.garments.length+' vêtements, '+state.looks.length+' looks.';
+    info.textContent=state.photos.length+' photos, '+state.garments.length+' vêtements, '+state.outfits.length+' tenues, '+state.looks.length+' looks.';
     try{
       if(navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e=>{
         if(e && e.usage!=null) info.textContent+=' Espace utilisé : '+(e.usage/1048576).toFixed(1)+' Mo.';
@@ -3377,6 +3849,7 @@ button.stat{cursor:pointer}
       await add('photos',state.photos,async p=>({id:p.id,time:p.time,back:!!p.back,data:await toDataUrl(p.blob)}));
       await add('garments',state.garments,async g=>Object.assign(garmentRecord(g),{data:await toDataUrl(g.blob),origData:await opt64(g.origBlob),
         backData:await opt64(g.backBlob),backOrigData:await opt64(g.backOrig)}));
+      await add('outfits',state.outfits,async o=>({id:o.id,name:o.name,pieces:o.pieces,created:o.created}));
       await add('looks',state.looks,async l=>{ const r=lookRecord(l); delete r.blob; delete r.baseBlob; r.data=await toDataUrl(l.blob); r.baseData=l.baseBlob?await toDataUrl(l.baseBlob):null; return r; });
       parts.push('}');
       downloadFile(new Blob(parts,{type:'application/json'}),'cabine-sauvegarde-'+stamp()+'.json');
@@ -3410,13 +3883,18 @@ button.stat{cursor:pointer}
         if(item.backBg==='cut' && !item.backCut) item.backCut=item.backBlob;
         state.garments.push(item); saveGarment(item); added++;
       }
+      for(const o of j.outfits||[]){
+        if(!o.id || outfitById(o.id)){ skipped++; continue; }
+        const rec={id:o.id,name:o.name||'Tenue',pieces:Object.assign({haut:null,bas:null,chaussures:null},o.pieces||{}),created:o.created||Date.now()};
+        state.outfits.push(rec); await saveOutfit(rec); added++;
+      }
       for(const l of j.looks||[]){
         if(!l.data || state.looks.some(x=>x.id===l.id)){ skipped++; continue; }
         const rec=lookRecord(Object.assign({},l,{blob:await blobOf(l.data),baseBlob:await blobOf(l.baseData)}));
         state.looks.push(Object.assign({url:URL.createObjectURL(rec.blob)},rec)); await saveLookRec(rec); added++;
       }
     }catch(e){ toast('Import interrompu : '+errText(e)); }
-    state.photos.sort((a,b)=>a.time-b.time); state.looks.sort((a,b)=>a.time-b.time);
+    state.photos.sort((a,b)=>a.time-b.time); state.looks.sort((a,b)=>a.time-b.time); state.outfits.sort((a,b)=>a.created-b.created);
     askPersist(); renderPhotos(); renderDressing(); renderLooks(); renderSettings();
     toast(added+(added>1?' éléments importés':' élément importé')+(skipped?' ('+skipped+' déjà présents)':''));
   });
@@ -3426,6 +3904,8 @@ button.stat{cursor:pointer}
     miroir:{title:'Le miroir',items:[
       ['Comment bien cadrer ?','Pose le téléphone debout, à hauteur de hanche, contre un meuble, et recule de 2 à 3 m. Le coach de cadrage te dit d\'avancer, de reculer ou de te décaler ; quand il affiche « Cadrage parfait », tu es en entier.'],
       ['Prendre une photo sans toucher le téléphone','Active « Main levée » sous le retardateur, puis lève une main au-dessus de ta tête pendant une seconde : le compte à rebours démarre (3 s si le retardateur est sur « Sans »).'],
+      ['L\'effet filtre','Touche « Tenue en filtre » : les pièces de tes tenues se posent sur toi en direct, gratuitement, dans le téléphone. C\'est un effet de type filtre (pas de vrais plis ni d\'ombres) ; pour un rendu réaliste, prends la photo puis touche « Rendu IA ». Les pièces sont détourées automatiquement la première fois.'],
+      ['Changer de tenue d\'un geste','Avec l\'effet filtre, balaie l\'air d\'une main à hauteur de poitrine : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Les flèches en haut de l\'image marchent aussi. Reste en entier dans l\'image pour que tes mains soient vues.'],
       ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
       ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
       ['Les écritures de mon t-shirt sont à l\'envers','C\'est l\'effet miroir. Désactive-le dans « Plus d\'options » : l\'écran et la photo seront à l\'endroit.'],
@@ -3434,6 +3914,7 @@ button.stat{cursor:pointer}
     ]},
     dressing:{title:'Le dressing',items:[
       ['Bien photographier un vêtement','« + Ajouter », puis « Prendre en photo » : un vêtement par photo, à plat sur un fond uni, de face, sans pli, à la lumière du jour. La catégorie et la couleur sont devinées : corrige-les dans la fiche si besoin.'],
+      ['Créer des tenues','Onglet « Tenues » du dressing : « + Nouvelle tenue », puis choisis un haut, un bas et des chaussures. Dans la cabine, « Enregistrer la tenue » garde la tenue en cours. Tes tenues défilent ensuite dans l\'effet filtre du miroir.'],
       ['Le dos d\'un vêtement','Après la photo du devant, retourne le vêtement et touche « Photographier ». Plus tard, ouvre sa fiche et touche « Dos ». La cabine l\'utilise quand tu es de dos sur ta photo.'],
       ['Retirer le fond','Dans la fiche, choisis « Sans fond » ou « Fond blanc » sous la photo. Une IA détoure le vêtement dans le téléphone, sans quota ni envoi. La première fois, elle se télécharge (environ 45 Mo). Pour que ce soit automatique, règle « Fond des nouvelles photos » quand tu ajoutes un vêtement.'],
       ['Recadrer un vêtement','Dans la fiche, touche « Recadrer » et dessine un cadre autour du vêtement. Les essais sont bien meilleurs.'],
@@ -3484,7 +3965,7 @@ button.stat{cursor:pointer}
   const ICON=d=>'<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';
   const OB=[
     {art:ICON('<rect x="6" y="2.5" width="12" height="19" rx="6"/><circle cx="12" cy="9" r="1.8"/><path d="M12 11.5v4.5M9.5 13.2 12 12l2.5 1.2"/>'),title:'Ton miroir',
-      text:'Pose le téléphone contre un meuble et recule : le coach te dit quand tu es en entier. Lève la main pour déclencher sans le toucher, ou passe en plein écran.'},
+      text:'Pose le téléphone contre un meuble et recule : le coach te dit quand tu es en entier. « Tenue en filtre » pose tes tenues sur toi en direct ; balaie l\'air de la main pour en changer.'},
     {art:ICON('<path d="M10 6.5a2 2 0 1 1 2.6 1.9c-.4.1-.6.5-.6.9V11"/><path d="M12 11 3.6 17.2a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8z"/>'),title:'Ton dressing',
       text:'Photographie tes vêtements, devant et dos. Le fond peut être retiré automatiquement ; catégorie et couleur sont devinées. Ajoute prix et saisons pour les stats.'},
     {art:ICON('<path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>'),title:'La cabine',
@@ -3561,7 +4042,8 @@ button.stat{cursor:pointer}
   $('flatShare').textContent = navigator.share ? 'Partager' : 'Télécharger';
   if(!pref.get('onboarded',false)) openOnboard();
 
-  Promise.all([dbAll('garments'),dbAll('photos'),dbAll('looks'),dbAll('tries'),dbAll('meta')]).then(async([gs,ps,ls,ts,meta])=>{
+  Promise.all([dbAll('garments'),dbAll('photos'),dbAll('looks'),dbAll('tries'),dbAll('meta'),dbAll('outfits')]).then(async([gs,ps,ls,ts,meta,os])=>{
+    state.outfits=os.filter(o=>o && o.id).map(o=>({id:o.id,name:o.name||'Tenue',pieces:Object.assign({haut:null,bas:null,chaussures:null},o.pieces||{}),created:o.created||0})).sort((a,b)=>a.created-b.created);
     for(const g of gs.sort((a,b)=>(a.created||0)-(b.created||0))){
       if(!g.blob) continue;
       // Fiches des versions précédentes : champs manquants complétés.
