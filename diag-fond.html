@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnostic fond</title>
+<style>
+body{font:14px system-ui;margin:10px;background:#fff;color:#111}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.row img{width:100%;height:220px;object-fit:contain;border:1px solid #ccc}
+.chk{background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/16px 16px}
+#log{white-space:pre-wrap;font:12px monospace;background:#f4f4f4;padding:6px}
+</style></head><body>
+<h1>Diagnostic détourage</h1>
+<div id="log">démarrage…</div>
+<div id="out"></div>
+<script type="module">
+const log=t=>{ document.getElementById('log').textContent+='\n'+t; };
+const T0=performance.now(); const el=()=>((performance.now()-T0)/1000).toFixed(1)+' s';
+const IMGS=[
+ 'https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?w=900&q=80',
+ 'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=900&q=80',
+ 'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?w=900&q=80'
+];
+function maskCanvas(data,w,h,ch){
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d'); const id=g.createImageData(w,h);
+  for(let i=0,j=0;i<w*h;i++,j+=ch) id.data[i*4+3]=data[j];
+  g.putImageData(id,0,0); return c;
+}
+try{
+  const T=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1');
+  log('module chargé '+el()+' · version '+(T.env&&T.env.version));
+  T.env.allowLocalModels=false;
+  let last=0;
+  const progress_callback=p=>{ if(p.status==='progress' && p.total>2e6 && performance.now()-last>1500){ last=performance.now(); log('  '+p.file+' '+Math.round(p.progress||0)+' % '+el()); } };
+  const model=await T.AutoModel.from_pretrained('briaai/RMBG-1.4',{config:{model_type:'custom'},progress_callback});
+  log('modèle chargé '+el());
+  const processor=await T.AutoProcessor.from_pretrained('briaai/RMBG-1.4',{config:{do_normalize:true,do_pad:false,do_rescale:true,do_resize:true,image_mean:[0.5,0.5,0.5],feature_extractor_type:'ImageFeatureExtractor',image_std:[1,1,1],resample:2,rescale_factor:0.00392156862745098,size:{width:1024,height:1024}}});
+  log('processeur chargé '+el());
+  for(const url of IMGS){
+    try{
+      const blob=await (await fetch(url)).blob();
+      const t1=performance.now();
+      const image=await T.RawImage.fromBlob(blob);
+      const {pixel_values}=await processor(image);
+      const {output}=await model({input:pixel_values});
+      const m=await T.RawImage.fromTensor(output[0].mul(255).to('uint8'));
+      log('image '+image.width+'×'+image.height+' → masque '+m.width+'×'+m.height+'×'+m.channels+' en '+((performance.now()-t1)/1000).toFixed(1)+' s');
+      const mc=maskCanvas(m.data,m.width,m.height,m.channels||1);
+      const bm=await createImageBitmap(blob);
+      const c=document.createElement('canvas'); c.width=bm.width; c.height=bm.height;
+      const g=c.getContext('2d'); g.drawImage(bm,0,0); g.globalCompositeOperation='destination-in'; g.drawImage(mc,0,0,bm.width,bm.height);
+      const w=document.createElement('canvas'); w.width=bm.width; w.height=bm.height;
+      const wg=w.getContext('2d'); wg.fillStyle='#fff'; wg.fillRect(0,0,w.width,w.height); wg.drawImage(c,0,0);
+      let fg=0; for(let i=0;i<m.data.length;i+=(m.channels||1)) if(m.data[i]>128) fg++;
+      log('  part du vêtement : '+Math.round(100*fg/(m.width*m.height))+' %');
+      const row=document.createElement('div'); row.className='row';
+      const a=new Image(); a.src=URL.createObjectURL(blob);
+      const b=new Image(); b.className='chk'; b.src=c.toDataURL('image/png');
+      const d=new Image(); d.src=w.toDataURL('image/jpeg',0.9);
+      row.append(a,b,d); document.getElementById('out').append(row);
+    }catch(e){ log('ERREUR image : '+(e&&e.message||e)); }
+  }
+  log('TERMINÉ '+el());
+}catch(e){ log('ERREUR : '+(e&&e.stack||e)); }
+</script>
+</body></html>
