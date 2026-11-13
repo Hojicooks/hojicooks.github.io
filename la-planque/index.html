@@ -10,14 +10,54 @@
 <title>La Planque · Guide GTA VI en français</title>
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-/* Version publique : les fiches viennent de data.json, en lecture seule. */
-window.PLANQUE_STATIC=true;
+/* Version hébergée : fiches, votes, commentaires et comptes dans Supabase. */
 (function(){
-  var D=fetch("data.json?v="+Math.floor(Date.now()/3e5)).then(function(r){if(!r.ok)throw new Error("data");return r.json()});
-  function nodoc(){return {onSnapshot:function(cb){setTimeout(function(){cb({exists:false,data:function(){return null},metadata:{fromCache:false}})},0);return function(){}},get:function(){return Promise.resolve({exists:false})},set:function(){return Promise.reject({code:"static"})},delete:function(){return Promise.reject({code:"static"})}}}
-  var db={collection:function(c){return {onSnapshot:function(cb,err){D.then(function(all){cb({docs:(all[c]||[]).map(function(x){return {id:x.id,data:function(){return x.data}}}),metadata:{fromCache:false}})}).catch(function(e){if(err)err(e)});return function(){}},doc:nodoc,add:function(){return Promise.reject({code:"static"})}}},doc:nodoc};
-  window.claude={use:function(n){return Promise.resolve(n==="db"?db:null)}};
+  var sb=supabase.createClient("https://sonpigelysgbfvbeotgj.supabase.co","sb_publishable_yzD2ln5tGuEZZyYttiFCWA__bK-4psf");
+  var CONTENT=["tips","money","vehicles","codes","wildlife","places"],ROWS={community:1,suggestions:1};
+  var sess=sb.auth.getSession().then(function(r){return r.data.session}).catch(function(){return null});
+  function me(){return sess.then(function(s){return s?s.user.id:null})}
+  var subs={};function reg(k,f){(subs[k]=subs[k]||[]).push(f);f()}
+  function emit(k){(subs[k]||[]).forEach(function(f){f()})}
+  function fail(e){throw {code:e&&(e.code==="42501"||e.code==="PGRST301")?"invalid_argument":"error",message:e&&e.message}}
+  function ok(k){return function(r){if(r.error)fail(r.error);if(k)emit(k);return r}}
+  function now(){return new Date().toISOString()}
+  function slug(d){var t=String(d.name||d.title||"fiche").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)||"fiche";return t+"-"+Math.random().toString(36).slice(2,6)}
+  function nodoc(){return {onSnapshot:function(cb){setTimeout(function(){cb({exists:false,data:function(){return null},metadata:{fromCache:false}})},0);return function(){}},set:function(){return Promise.reject({code:"error"})},delete:function(){return Promise.reject({code:"error"})}}}
+  function rowDoc(table,id){return {
+    onSnapshot:function(cb,err){reg(table,function(){sb.from(table).select("data").eq("user_id",id).maybeSingle().then(function(r){if(r.error){if(err)err(r.error);return}cb({exists:!!r.data,data:function(){return r.data?r.data.data:null},metadata:{fromCache:false}})})});return function(){}},
+    set:function(d){return me().then(function(u){return u===id?sb.from(table).upsert({user_id:id,data:d,updated_at:now()}):sb.from(table).update({data:d,updated_at:now()}).eq("user_id",id)}).then(ok(table))},
+    delete:function(){return Promise.reject({code:"error"})}}}
+  function ficheDoc(col,id){return {
+    onSnapshot:nodoc().onSnapshot,
+    set:function(d){return sb.from("fiches").upsert({col:col,id:id,data:d,updated_at:now()}).then(ok("fiches:"+col))},
+    delete:function(){return sb.from("fiches").delete().eq("col",col).eq("id",id).then(ok("fiches:"+col))}}}
+  var db={
+    collection:function(c){
+      if(CONTENT.indexOf(c)>-1)return {
+        onSnapshot:function(cb,err){reg("fiches:"+c,function(){sb.from("fiches").select("id,data").eq("col",c).then(function(r){if(r.error){if(err)err(r.error);return}cb({docs:r.data.map(function(x){return {id:x.id,data:function(){return x.data}}}),metadata:{fromCache:false}})})});return function(){}},
+        add:function(d){var id=slug(d);return sb.from("fiches").insert({col:c,id:id,data:d}).then(ok("fiches:"+c)).then(function(){return {id:id}})},
+        doc:function(id){return ficheDoc(c,id)}};
+      if(ROWS[c])return {
+        onSnapshot:function(cb,err){reg(c,function(){sb.from(c).select("user_id,data").then(function(r){if(r.error){if(err)err(r.error);return}cb({docs:r.data.map(function(x){return {id:x.user_id,data:function(){return x.data}}}),metadata:{fromCache:false}})})});return function(){}},
+        doc:function(id){return rowDoc(c,id)}};
+      var m=/^data\/users\/([0-9a-f-]{36})$/.exec(c);
+      if(m)return {doc:function(){return rowDoc("user_state",m[1])},onSnapshot:function(){return function(){}}};
+      return {onSnapshot:function(cb){cb({docs:[],metadata:{fromCache:false}});return function(){}},doc:nodoc,add:function(){return Promise.reject({code:"error"})}}},
+    doc:function(path){var p=path.split("/");if(p.length===2&&CONTENT.indexOf(p[0])>-1)return ficheDoc(p[0],p[1]);if(p.length===2&&ROWS[p[0]])return rowDoc(p[0],p[1]);return nodoc()}};
+  var user={
+    id:me,
+    canEdit:function(){return sess.then(function(s){return s?sb.rpc("is_admin").then(function(r){return !!r.data}):false})},
+    profiles:function(ids){var o={};ids.forEach(function(i){o[i]={id:i,name:""}});return sb.from("profiles").select("user_id,name").in("user_id",ids).then(function(r){(r.data||[]).forEach(function(x){if(o[x.user_id])o[x.user_id].name=x.name});return o})}};
+  window.claude={use:function(n){return Promise.resolve(n==="db"?db:n==="user"?user:null)}};
+  window.PLANQUE_AUTH={
+    signIn:function(email){return sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:location.origin+location.pathname}}).then(function(r){if(r.error)throw r.error})},
+    signOut:function(){return sb.auth.signOut()},
+    setName:function(n){return me().then(function(u){return sb.from("profiles").upsert({user_id:u,name:n,updated_at:now()})}).then(function(r){if(r.error)throw r.error})}};
+  /* rafraîchir ce que font les autres joueurs */
+  setInterval(function(){if(!document.hidden)emit("community")},60000);
+  document.addEventListener("visibilitychange",function(){if(!document.hidden){emit("community");CONTENT.forEach(function(c){emit("fiches:"+c)})}});
 })();
 </script>
 
@@ -457,7 +497,7 @@ form.edit label.inline input{width:22px;height:22px}
 <script>
 (function(){
 "use strict";
-var STATIC=!!window.PLANQUE_STATIC; /* version publique en lecture seule : pas de votes ni de commentaires */
+var STATIC=!!window.PLANQUE_STATIC,AUTH=window.PLANQUE_AUTH||null; /* AUTH : connexion propre au site hébergé */ /* version publique en lecture seule : pas de votes ni de commentaires */
 /* ================= utilitaires ================= */
 function h(tag,attrs){var e=document.createElement(tag);attrs=attrs||{};
   for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;
@@ -644,7 +684,7 @@ function writeMine(path,store,mut){
   var p=wq.then(function(){var had=uid in store,cur=store[uid]||{};var next=JSON.parse(JSON.stringify(cur));mut(next);next.updatedAt=Date.now();store[uid]=next;if(store===comm)recompute();
     return db.doc(path+"/"+uid).set(next).catch(function(e){if(had)store[uid]=cur;else delete store[uid];if(store===comm)recompute();throw e})});
   wq=p.catch(function(){});return p}
-function participationError(e){toast(e&&e.code==="noid"?"Connecte-toi à claude.ai pour participer.":e&&e.code==="invalid_argument"?"La participation n'est pas ouverte sur ce lien.":"Ça n'a pas marché, réessaie.")}
+function participationError(e){toast(e&&e.code==="noid"?(AUTH?"Connecte-toi pour participer : onglet Plus, puis Mon profil.":"Connecte-toi à claude.ai pour participer."):e&&e.code==="invalid_argument"?"La participation n'est pas ouverte sur ce lien.":"Ça n'a pas marché, réessaie.")}
 function vote(m,id,v){var k=KEY(m,id),cur=myVotes[k]||0,nv=cur===v?0:v;
   return writeMine("community",comm,function(d){d.votes=d.votes||{};if(nv)d.votes[k]=nv;else delete d.votes[k];d.comments=d.comments||[]}).catch(function(e){participationError(e)})}
 function addComment(m,id,text){return writeMine("community",comm,function(d){d.votes=d.votes||{};d.comments=d.comments||[];d.comments.push({id:uid8(),target:KEY(m,id),text:text.slice(0,600),at:Date.now()})})}
@@ -762,11 +802,25 @@ function startProfileSync(){if(!db||!uid)return;
     else if(!s.metadata.fromCache){if(!s.exists||(s.data().at||0)<profAt)pushProfile();else profState="ok"}
   },function(){profState="err"})}
 function drawAvatar(el){el.innerHTML="";if(me.avatarUrl)el.append(h("img",{alt:"",src:me.avatarUrl}));else if(me.name)el.textContent=me.name.trim().charAt(0).toUpperCase();else el.append(ic("user"))}
+function authBlock(){
+  var box=h("section",{class:"sec"}),msg=h("div",{class:"notice",hidden:true});
+  if(!uid){var em=h("input",{id:"au-mail",type:"email",placeholder:"ton@email.fr",autocomplete:"email",required:true}),go=h("button",{class:"btn",type:"submit",text:"Recevoir mon lien de connexion"});
+    var f=h("form",{class:"edit"},h("label",{for:"au-mail"},"Ton e-mail",em),go,msg);
+    f.addEventListener("submit",function(e){e.preventDefault();var v=em.value.trim();if(!/^\S+@\S+\.\S+$/.test(v)){msg.hidden=false;msg.textContent="Vérifie ton adresse e-mail.";return}
+      go.disabled=true;go.textContent="Envoi…";AUTH.signIn(v).then(function(){msg.hidden=false;msg.textContent="C'est envoyé. Ouvre l'e-mail sur cet appareil et touche le lien pour te connecter.";go.textContent="Lien envoyé"}).catch(function(err){go.disabled=false;go.textContent="Recevoir mon lien de connexion";msg.hidden=false;msg.textContent=err&&/rate|limit/i.test(err.message||"")?"Trop de demandes pour le moment. Réessaie dans quelques minutes.":"L'envoi a échoué. Réessaie dans un instant."})});
+    box.append(h("div",{class:"sech"},h("h2",{text:"Connexion"})),h("p",{class:"muted",style:"margin:0;font-size:13.5px",text:"Pas de mot de passe : tu reçois un lien par e-mail."}),f)}
+  else{var nm=h("input",{id:"au-name",type:"text",maxlength:"24",minlength:"2",value:me.name||"",placeholder:"Ton pseudo"}),sv=h("button",{class:"btn sec",type:"submit",text:"Enregistrer"});
+    var f2=h("form",{class:"edit"},h("label",{for:"au-name"},"Ton pseudo, affiché sur tes commentaires",nm),h("div",{class:"row-actions"},sv,h("button",{class:"btn danger",type:"button",text:"Se déconnecter",onclick:function(){AUTH.signOut().then(function(){location.reload()})}})),msg);
+    f2.addEventListener("submit",function(e){e.preventDefault();var v=nm.value.trim();if(v.length<2){msg.hidden=false;msg.textContent="Ton pseudo doit faire au moins 2 caractères.";return}
+      sv.disabled=true;AUTH.setName(v).then(function(){me.name=v;drawAvatar(document.getElementById("profBtn"));toast("Pseudo enregistré");render()}).catch(function(){sv.disabled=false;msg.hidden=false;msg.textContent="L'enregistrement a échoué. Réessaie."})});
+    box.append(h("div",{class:"sech"},h("h2",{text:"Mon compte"})),f2)}
+  return box}
 function renderProfile(v){
   v.append(h("div",{class:"pagehead"},h("h1",{text:"Mon profil"})));
   var av=h("span",{class:"avatar"});drawAvatar(av);
   v.append(h("div",{class:"who"},av,h("div",null,h("b",{text:uid?(me.name||"Joueur"):"Invité"}),
-    h("small",{text:uid?(profState==="err"?"Sauvegarde en attente : tes infos restent sur cet appareil.":"Tes infos sont enregistrées sur ton compte et te suivent sur tous tes appareils."):(STATIC?"Tes infos sont enregistrées sur cet appareil.":"Tes infos sont enregistrées sur cet appareil. Connecte-toi à claude.ai pour les retrouver partout.")}))));
+    h("small",{text:uid?(profState==="err"?"Sauvegarde en attente : tes infos restent sur cet appareil.":"Tes infos sont enregistrées sur ton compte et te suivent sur tous tes appareils."):(STATIC?"Tes infos sont enregistrées sur cet appareil.":AUTH?"Connecte-toi pour voter, commenter et retrouver tes infos sur tous tes appareils.":"Tes infos sont enregistrées sur cet appareil. Connecte-toi à claude.ai pour les retrouver partout.")}))));
+  if(AUTH)v.append(authBlock());
   var nv=Object.keys(myVotes).length,ncm=uid&&comm[uid]&&comm[uid].comments?comm[uid].comments.length:0;
   v.append(h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:"Mon activité"})),h("div",{class:"pstats"},
     h("a",{class:"pstat",href:"#liste"},h("b",{text:String(Object.keys(favs()).length)}),h("small",{text:"fiches épinglées"})),
@@ -1025,7 +1079,7 @@ function openDetail(m,id){
   if(canParticipate()){var ta=h("textarea",{id:"cm-text",placeholder:"Ajouter un commentaire…",maxlength:"600",rows:"1","aria-label":"Commentaire"});
     var sendB=h("button",{type:"button","aria-label":"Publier",onclick:function(){var t=ta.value.trim();if(!t)return;sendB.disabled=true;addComment(m,id,t).then(function(){openDetail(m,id)}).catch(function(e){sendB.disabled=false;participationError(e)})}},ic("send"));
     cbox.append(h("div",{class:"composer"},ta,sendB))}
-  else cbox.append(h("p",{class:"muted",style:"margin:0;font-size:13px",text:"Connecte-toi à claude.ai pour "+(M.vote?"voter et ":"")+"commenter."}));
+  else cbox.append(AUTH?h("button",{type:"button",class:"linkbtn",style:"justify-self:start",text:"Connecte-toi pour "+(M.vote?"voter et ":"")+"commenter",onclick:function(){closeModal();location.hash="#profil"}}):h("p",{class:"muted",style:"margin:0;font-size:13px",text:"Connecte-toi à claude.ai pour "+(M.vote?"voter et ":"")+"commenter."}));
   if(!STATIC)body.push(blk("Commentaires"+(cms.length?" · "+cms.length:""),cbox));
   // admin
   if(isAdmin){var del=h("button",{class:"btn danger",type:"button",text:"Supprimer"});
