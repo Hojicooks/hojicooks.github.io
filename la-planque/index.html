@@ -70,8 +70,18 @@
   var bip=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();bip=e});
   window.PLANQUE_INSTALL={can:function(){return !!bip},prompt:function(){if(!bip)return Promise.resolve(false);var e=bip;bip=null;e.prompt();return e.userChoice.then(function(c){return c&&c.outcome==="accepted"},function(){return false})}};
   if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js",{scope:"./"}).catch(function(){})});
+  /* lien « mot de passe oublié » : on ouvre Mon profil pour choisir le nouveau mot de passe */
+  sb.auth.onAuthStateChange(function(ev){if(ev==="PASSWORD_RECOVERY"){window.PLANQUE_RECOVERY=true;location.hash="#profil"}});
+  if(/type=recovery/.test(location.hash))window.PLANQUE_RECOVERY=true;
+  function aerr(r){if(r.error)throw r.error;return r}
   window.PLANQUE_AUTH={
-    signIn:function(email){return sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:location.origin+location.pathname}}).then(function(r){if(r.error)throw r.error})},
+    signUp:function(email,pw){return sb.auth.signUp({email:email,password:pw,options:{emailRedirectTo:location.origin+location.pathname}}).then(aerr).then(function(r){
+      /* compte déjà existant : Supabase renvoie un utilisateur sans identité */
+      if(r.data.user&&r.data.user.identities&&r.data.user.identities.length===0)throw {code:"user_already_exists"};
+      return {session:!!r.data.session}})},
+    signInPw:function(email,pw){return sb.auth.signInWithPassword({email:email,password:pw}).then(aerr)},
+    resetPw:function(email){return sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname}).then(aerr)},
+    setPw:function(pw){return sb.auth.updateUser({password:pw}).then(aerr)},
     signOut:function(){return sb.auth.signOut()},
     setName:function(n){return me().then(function(u){return sb.from("profiles").upsert({user_id:u,name:n,updated_at:now()})}).then(function(r){if(r.error)throw r.error})},
     deleteAccount:function(){return sb.rpc("delete_my_account").then(function(r){if(r.error)throw r.error;return sb.auth.signOut({scope:"local"})})}};
@@ -850,24 +860,63 @@ function renderPrivacy(v){
     "Hébergement des pages : GitHub Pages (GitHub Inc., San Francisco, États-Unis). Base de données et connexion : Supabase, serveurs situés à Paris.",
     h("p",{class:"muted",style:"margin:0;font-size:14px"},"Contact : ",h("a",{href:"https://github.com/Hojicooks/hojicooks.github.io/issues",target:"_blank",rel:"noopener",style:"color:var(--teal)",text:"page du projet sur GitHub"}),".")]);
   sec("Sans compte",["Tu peux tout consulter sans te connecter. Tes fiches épinglées, ta progression et ta console restent alors uniquement dans ton navigateur, sur ton appareil.","Le site n'utilise ni publicité, ni traceur, ni cookie publicitaire. Les polices d'écriture sont chargées depuis Google Fonts, qui reçoit ton adresse IP comme tout site que tu visites."]);
-  sec("Avec un compte",["Ton adresse e-mail : elle sert uniquement à t'envoyer le lien de connexion. Elle n'est jamais affichée ni partagée.","Ton pseudo, tes votes et tes commentaires : ils sont publics, c'est le principe du site.","Tes propositions d'infos et de corrections : visibles par toi et par l'administrateur du site.","Tes fiches épinglées et ta progression : visibles par toi seul, pour les retrouver sur tous tes appareils."]);
+  sec("Avec un compte",["Ton adresse e-mail : elle sert uniquement à te connecter et, si tu le demandes, à t'envoyer un lien pour changer ton mot de passe. Ton mot de passe est chiffré : personne, pas même l'administrateur, ne peut le lire. Elle n'est jamais affichée ni partagée.","Ton pseudo, tes votes et tes commentaires : ils sont publics, c'est le principe du site.","Tes propositions d'infos et de corrections : visibles par toi et par l'administrateur du site.","Tes fiches épinglées et ta progression : visibles par toi seul, pour les retrouver sur tous tes appareils."]);
   sec("Durée et suppression",["Tes données sont conservées tant que ton compte existe. Le bouton « Supprimer mon compte », dans Mon profil, efface immédiatement et définitivement ton e-mail, ton pseudo, tes votes, tes commentaires, tes propositions et ta progression."]);
   sec("Tes droits",["Conformément au RGPD, tu peux accéder à tes données, les corriger ou les faire effacer. Écris-nous via la page de contact ci-dessus. Tu peux aussi adresser une réclamation à la CNIL (cnil.fr)."]);
   sec("Contenus",["Les textes sont rédigés par l'équipe du site à partir de sources citées sur chaque fiche. Les commentaires engagent leurs auteurs. Tout contenu insultant, illégal ou hors sujet peut être supprimé."]);
 }
+function authErr(e){var c=(e&&(e.code||""))+" "+(e&&e.message||"");
+  if(/invalid_credentials|Invalid login/i.test(c))return "E-mail ou mot de passe incorrect.";
+  if(/email_not_confirmed|not confirmed/i.test(c))return "Ton compte n'est pas encore activé. Ouvre l'e-mail de confirmation, ou réessaie dans quelques minutes.";
+  if(/user_already_exists|already registered/i.test(c))return "Un compte existe déjà avec cet e-mail. Connecte-toi, ou utilise « Mot de passe oublié ».";
+  if(/weak_password|at least/i.test(c))return "Mot de passe trop faible : 8 caractères minimum.";
+  if(/rate|limit|429/i.test(c))return "Trop de demandes pour le moment. Réessaie dans quelques minutes.";
+  return "Ça n'a pas marché. Réessaie dans un instant."}
+var authMode="login";
 function authBlock(){
   var box=h("section",{class:"sec"}),msg=h("div",{class:"notice",hidden:true});
-  if(!uid){var em=h("input",{id:"au-mail",type:"email",placeholder:"ton@email.fr",autocomplete:"email",required:true}),go=h("button",{class:"btn",type:"submit",text:"Recevoir mon lien de connexion"});
-    var f=h("form",{class:"edit"},h("label",{for:"au-mail"},"Ton e-mail",em),go,msg);
-    f.addEventListener("submit",function(e){e.preventDefault();var v=em.value.trim();if(!/^\S+@\S+\.\S+$/.test(v)){msg.hidden=false;msg.textContent="Vérifie ton adresse e-mail.";return}
-      go.disabled=true;go.textContent="Envoi…";AUTH.signIn(v).then(function(){msg.hidden=false;msg.textContent="C'est envoyé. Ouvre l'e-mail sur cet appareil et touche le lien pour te connecter.";go.textContent="Lien envoyé"}).catch(function(err){go.disabled=false;go.textContent="Recevoir mon lien de connexion";msg.hidden=false;msg.textContent=err&&/rate|limit/i.test(err.message||"")?"Trop de demandes pour le moment. Réessaie dans quelques minutes.":"L'envoi a échoué. Réessaie dans un instant."})});
-    box.append(h("div",{class:"sech"},h("h2",{text:"Connexion"})),h("p",{class:"muted",style:"margin:0;font-size:13.5px",text:"Pas de mot de passe : tu reçois un lien par e-mail."}),f,
-      h("p",{class:"muted",style:"margin:0;font-size:12.5px"},"Ton e-mail sert uniquement à te connecter. ",h("a",{href:"#confidentialite",style:"color:var(--teal)",text:"En savoir plus"})))}
+  function say(t){msg.hidden=false;msg.textContent=t}
+  if(!uid){var signup=authMode==="signup";
+    var seg=h("div",{class:"seg",role:"group","aria-label":"Compte"});
+    [["login","Se connecter"],["signup","Créer un compte"]].forEach(function(o){seg.append(h("button",{type:"button","aria-pressed":String(authMode===o[0]),text:o[1],onclick:function(){if(authMode!==o[0]){authMode=o[0];rerender()}}}))});
+    var em=h("input",{id:"au-mail",type:"email",placeholder:"ton@email.fr",autocomplete:"email",required:true}),
+      pw=h("input",{id:"au-pw",type:"password",placeholder:signup?"8 caractères minimum":"Ton mot de passe",autocomplete:signup?"new-password":"current-password",minlength:"8",required:true}),
+      nm=signup?h("input",{id:"au-nick",type:"text",maxlength:"24",minlength:"2",placeholder:"Ton pseudo (facultatif)",autocomplete:"nickname"}):null,
+      show=h("button",{type:"button",class:"linkbtn",style:"justify-self:start",text:"Afficher le mot de passe",onclick:function(){var t=pw.type==="password";pw.type=t?"text":"password";show.textContent=t?"Masquer le mot de passe":"Afficher le mot de passe"}}),
+      go=h("button",{class:"btn",type:"submit",text:signup?"Créer mon compte":"Me connecter"});
+    var f=h("form",{class:"edit"},h("label",{for:"au-mail"},"Ton e-mail",em),h("label",{for:"au-pw"},"Mot de passe",pw),show);
+    if(nm)f.append(h("label",{for:"au-nick"},"Ton pseudo, affiché sur tes commentaires",nm));
+    f.append(go,msg);
+    f.addEventListener("submit",function(e){e.preventDefault();var v=em.value.trim(),p=pw.value,n=nm?nm.value.trim():"";
+      if(!/^\S+@\S+\.\S+$/.test(v))return say("Vérifie ton adresse e-mail.");
+      if(p.length<8)return say("Ton mot de passe doit faire au moins 8 caractères.");
+      if(n&&n.length<2)return say("Ton pseudo doit faire au moins 2 caractères.");
+      go.disabled=true;go.textContent=signup?"Création…":"Connexion…";
+      var run=signup?AUTH.signUp(v,p).then(function(r){
+          if(!r.session){go.textContent="Compte créé";say("Compte créé. Ouvre l'e-mail de confirmation pour l'activer, puis reviens te connecter ici.");return false}
+          return n?AUTH.setName(n).catch(function(){}).then(function(){return true}):true})
+        :AUTH.signInPw(v,p).then(function(){return true});
+      run.then(function(done){if(done)location.reload()}).catch(function(err){go.disabled=false;go.textContent=signup?"Créer mon compte":"Me connecter";say(authErr(err))})});
+    box.append(h("div",{class:"sech"},h("h2",{text:signup?"Créer un compte":"Connexion"})),seg,
+      h("p",{class:"muted",style:"margin:0;font-size:13.5px",text:signup?"Un e-mail et un mot de passe, c'est tout. Ton compte garde tes votes, tes fiches épinglées et ta progression sur tous tes appareils.":"Connecte-toi avec ton e-mail et ton mot de passe."}),f);
+    if(!signup){var fg=h("button",{type:"button",class:"linkbtn",style:"justify-self:start",text:"Mot de passe oublié ?"});
+      fg.addEventListener("click",function(){var v=em.value.trim();if(!/^\S+@\S+\.\S+$/.test(v)){say("Écris d'abord ton e-mail ci-dessus, puis touche « Mot de passe oublié ».");em.focus();return}
+        fg.disabled=true;AUTH.resetPw(v).then(function(){say("Si un compte existe avec cet e-mail, tu vas recevoir un lien pour choisir un nouveau mot de passe.")}).catch(function(err){fg.disabled=false;say(authErr(err))})});
+      box.append(fg)}
+    box.append(h("p",{class:"muted",style:"margin:0;font-size:12.5px"},"Ton e-mail sert uniquement à te connecter. ",h("a",{href:"#confidentialite",style:"color:var(--teal)",text:"En savoir plus"})));
+    return box}
   else{var nm=h("input",{id:"au-name",type:"text",maxlength:"24",minlength:"2",value:me.name||"",placeholder:"Ton pseudo"}),sv=h("button",{class:"btn sec",type:"submit",text:"Enregistrer"});
     var f2=h("form",{class:"edit"},h("label",{for:"au-name"},"Ton pseudo, affiché sur tes commentaires",nm),h("div",{class:"row-actions"},sv,h("button",{class:"btn danger",type:"button",text:"Se déconnecter",onclick:function(){AUTH.signOut().then(function(){location.reload()})}})),msg);
     f2.addEventListener("submit",function(e){e.preventDefault();var v=nm.value.trim();if(v.length<2){msg.hidden=false;msg.textContent="Ton pseudo doit faire au moins 2 caractères.";return}
       sv.disabled=true;AUTH.setName(v).then(function(){me.name=v;drawAvatar(document.getElementById("profBtn"));toast("Pseudo enregistré");render()}).catch(function(){sv.disabled=false;msg.hidden=false;msg.textContent="L'enregistrement a échoué. Réessaie."})});
     box.append(h("div",{class:"sech"},h("h2",{text:"Mon compte"})),f2);
+    var rec=!!window.PLANQUE_RECOVERY,np=h("input",{id:"au-newpw",type:"password",minlength:"8",autocomplete:"new-password",placeholder:"8 caractères minimum"}),
+      ps=h("button",{class:"btn sec",type:"submit",text:rec?"Enregistrer mon nouveau mot de passe":"Changer mon mot de passe"}),pmsg=h("div",{class:"notice",hidden:!rec,text:rec?"Choisis ton nouveau mot de passe.":""});
+    var f3=h("form",{class:"edit"},h("label",{for:"au-newpw"},rec?"Nouveau mot de passe":"Mot de passe",np),ps,pmsg);
+    f3.addEventListener("submit",function(e){e.preventDefault();if(np.value.length<8){pmsg.hidden=false;pmsg.textContent="Ton mot de passe doit faire au moins 8 caractères.";return}
+      ps.disabled=true;AUTH.setPw(np.value).then(function(){window.PLANQUE_RECOVERY=false;np.value="";ps.disabled=false;ps.textContent="Changer mon mot de passe";pmsg.hidden=false;pmsg.textContent="Mot de passe enregistré.";toast("Mot de passe enregistré")})
+        .catch(function(err){ps.disabled=false;pmsg.hidden=false;pmsg.textContent=/same|different/i.test(err&&err.message||"")?"C'est déjà ton mot de passe actuel.":authErr(err)})});
+    box.append(f3);if(rec)setTimeout(function(){np.focus()},50);
     if(AUTH.deleteAccount){var del=h("button",{type:"button",class:"linkbtn",style:"color:var(--bad);justify-self:start",text:"Supprimer mon compte"});
       del.addEventListener("click",function(){if(del.dataset.a!=="1"){del.dataset.a="1";del.textContent="Confirmer : mon compte, mes votes et mes commentaires seront effacés";return}
         del.disabled=true;del.textContent="Suppression…";AUTH.deleteAccount().then(function(){try{Object.keys(localStorage).filter(function(k){return k.indexOf("pl_")===0}).forEach(function(k){localStorage.removeItem(k)})}catch(e){}location.hash="#accueil";location.reload()})
