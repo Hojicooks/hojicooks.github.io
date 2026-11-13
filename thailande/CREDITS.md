@@ -1,0 +1,71 @@
+# Crédits photos
+
+Photos de Wikimedia Commons, sous licences libres. Carnet personnel, non commercial.
+
+- **Ao Nang Beach** : kallerna, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Ao_Nang_beach_panorama_3.jpg
+- **Aurasol Wellness Spa & Massage** : Tara Angkor Hotel, CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Classical_Thai_Massage_at_Tara_Angkor_Hotel_(5918685202).jpg
+- **Baan ThaTien** : Trip.with.taste, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Wat_Arun_on_the_sunset.jpg
+- **Bamboo Island (Ko Mai Phai)** : Christophe95, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Ko_Mai_Phai_(Bamboo_Island).jpg
+- **Banana Beach – Koh Hey (Coral Island)** : Endrjuch, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Koh_hae,_Thailand.jpg
+- **Bang Niang Beach** : Bjoertvedt, CC BY 3.0 — https://commons.wikimedia.org/wiki/File:KhaoLak05.jpg
+- **Bateau sur la Chao Phraya** : Christophe95, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Tha_Tien_Pier.jpg
+- **Beautrium Siam Square** : Paolobon140, CC0 — https://commons.wikimedia.org/wiki/File:Bangkok_Siam_square_at_night.jpg
+- **Big Buddha** : Subhrajyoti07, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:The_Big_Buddha,_Phuket.jpg
+- **Blue Temple – Wat Rong Suea Ten (Chiang Rai)** : Chainwit., CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Wat_Rong_Suea_Ten_(Blue_Temple,_Chiang_Rai)_%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%A3%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B9%80%E0%B8%95%E0%B9%89%E0%B8%99_(October_2021)_-_img_01.jpg
+- **Cascade Bang Hua Rat** : Christophe95, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:River_in_Khao_Sok_National_Park.jpg
+- **Chatuchak Weekend Market** : Christophe95, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Chatuchak_Weekend_Market_2.jpg
+- **Chinatown (Yaowarat)** : Marcin Konsek, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:2016_Bangkok,_Dystrykt_Samphanthawong,_Ulica_Yaowarat_(05).jpg
+- **Coconut Beach** : Eddie Blatt, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Pakarang_Beach_shore.jpg
+- **Cours de cuisine – Silom Thai Cooking School** : Elmschrat, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Pad_Thai_in_Thai_Cooking_School_in_Sukhothai.jpg
+- **Cours de cuisine – Sompong Thai Cooking School** : Thai Secret Cooking School, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Thai-Cooking-Class-Chiang-Mai-Thailand.jpg
+- **Crystal Temple – Wat Tha Sung** : Meneerke bloem, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Wat_Tha_Sung.JPG
+- **Dragon Crest (rando lever de soleil)** : Doreme21150, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Khao_Ngon_Nak_National_Park.jpg
+- **EVEANDBOY Siam Square** : Paolobon140, CC0 — https://commons.wikimedia.org/wiki/File:Bangkok_Siam_square_at_night.jpg
+- **Emerald Pool** : Karelj, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Emerald_pool_park,_Krabi_province,_Thailand_2018_6.jpg
+- **Erawan Museum** : Mike Behnken, CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Erawan_Museum_-_Samut_Prakan,_Thailand_(4995210401).jpg
+- **Freedom Beach** : Joachim Lutz, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:20221108_Freedom_Beach_auf_Phuket_(3).jpg
+- **Grand Palace** : Basile Morin, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%A8%E0%B8%A3%E0%B8%B5%E0%B8%A3%E0%B8%B1%E0%B8%95%E0%B8%99%E0%B8%A8%E0%B8%B2%E0%B8%AA%E0%B8%94%E0%B8%B2%E0%B8%A3%E0%B8%B2%E0%B8%A1_%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7_%E0%B8%81%E0%B8%A3%E0%B8%B8%E0%B8%87%E0%B9%80%E0%B8%97%E0%B8%9E%E0%B8%A1%E0%B8%AB%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A3_-_Wat_Phra_Kaew,_Temple_of_Emerald_Buddha,_Bangkok,_Thailand.jpg
+- **Hong Island – lagon** : Wolfgang Holzem, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:16.Ko_Hong_Island_-_Andaman_Sea_-_Krabi_Province,_Thailand.jpg
+- **Hot Spring Waterfall** : Crystal Tepjinda, CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Hot_Spring_Waterfall_(121207107).jpeg
+- **ICONSIAM** : Slyronit, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Approaching_Iconsiam_from_Chao_Phraya_River,_Bangkok.jpg
+- **James Bond Island (Khao Phing Kan)** : Kemal Kaya (maxmajestic) - http://yoldaolmak.com/iletisim, CC BY-SA 2.5 — https://commons.wikimedia.org/wiki/File:Khao_Phing_Kan_and_Koh_Tapu_(James_Bond_Island).jpg
+- **Kanchanaburi – Cascades d’Erawan** : FearOfMusic, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Erawan_Falls_4.JPG
+- **Kanchanaburi – Pont de la rivière Kwaï** : Krzysztof Golik, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:River_Kwai_bridge_(20).jpg
+- **Kanchanaburi – Tham Krasae (voie ferrée de la mort)** : PA, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Wang_Pho_-_Mae_Klong.jpg
+- **Khao San Road** : Random username 083794703875938, CC0 — https://commons.wikimedia.org/wiki/File:%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%AA%E0%B8%B2%E0%B8%A3%E0%B9%83%E0%B8%99%E0%B9%80%E0%B8%A7%E0%B8%A5%E0%B8%B2%E0%B8%81%E0%B8%A5%E0%B8%B2%E0%B8%87%E0%B8%84%E0%B8%B7%E0%B8%99_%E0%B9%91_-_Khaosan_Road_at_night_1.jpg
+- **Klong Muang Beach** : Stefan Fussan, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Klong_Muang_Beach_SF0002.jpg
+- **Klong Root (kayak)** : Stefan Fussan, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Klong_Root,_Krabi,_Thailand_SF0003.jpg
+- **Ko Lao Lading** : Maksym Kozlenko, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:2016-04-12_Ko_Lao_Lading_01.jpg
+- **Krabi Town Night Market** : Christophe95, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Krabi_Walking_Street.jpg
+- **Lac Cheow Lan – embarcadère (barrage Ratchaprapha)** : Original: Vyacheslav Argenberg Derivative work: The Cosmonaut, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Trees_rising_out_of_Cheow_Lan_Lake,_blue_sky,_eternal_summer_in_Surat_Thani_edited.jpg
+- **Lido Connect – sculpture photobooth** : Paolobon140, CC0 — https://commons.wikimedia.org/wiki/File:Bangkok_Siam_square_at_night.jpg
+- **Marché flottant de Damnoen Saduak** : No(0)GoodNamesLeft, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:(02g)_Damnoen_Saduak_Floating_Market_(NgnL)-07558.jpg
+- **Nang Thong Beach** : Vyacheslav Argenberg, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Khao_Lak_Beach,_Thailand.jpg
+- **Nobu Bangkok (rooftop)** : Slyronit, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Bangkok_Skyline_from_Movenpick_Hotel,_Asok,_Bangkok_at_night.jpg
+- **Parc national de Khao Sok (entrée)** : Velatrix, CC0 — https://commons.wikimedia.org/wiki/File:Khao_Sok_National_Park_View.JPG
+- **Phi Phi Don – Tonsai Village** : Fabio Achilli from Milano, Italy, CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Phi_Phi_Island,_Tonsai_Pier_(6222524019).jpg
+- **Phi Phi – Maya Bay** : Diego Delso, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Playa_Maya,_Ko_Phi_Phi,_Tailandia,_2013-08-19,_DD_13.JPG
+- **Phi Phi – Monkey Beach** : Alexey Komarov, CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Monkey_Beach_at_Phi_Phi_Don_Island_-_panoramio_(1).jpg
+- **Phi Phi – Nui Bay** : Markrosenrosen, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Karst_limestone_in_Nui_Bay,_Ko_Phi_Phi_Don.jpg
+- **Phi Phi – Pileh Lagoon** : Christophe95, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Pileh_Lagoon.jpg
+- **Phuket Old Town (Thalang Road)** : Christophe95, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Thalang_Road,_Old_Phuket_Town.jpg
+- **Platinum Fashion Mall** : jetalone, CC BY 2.0 — https://upload.wikimedia.org/wikipedia/commons/1/1d/Platinum_Fashion_Mall.jpg
+- **Princess Cave – Phra Nang Cave Beach** : Maksym Kozlenko, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Phra_Nang_Cave_Beach.jpg
+- **Railay Beach** : kallerna, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Railay_Beach_5.jpg
+- **Samet Nangshe – Beyond Skywalk Nangshi** : TomMumuPangPangEmma, CC0 — https://commons.wikimedia.org/wiki/File:Samet_Nangshe_Viewpoint.jpg
+- **Shell Temple (option proche) – Wat Chedi Hoi** : กสิณธร ราชโอรส, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%88%E0%B8%94%E0%B8%B5%E0%B8%A2%E0%B9%8C%E0%B8%AB%E0%B8%AD%E0%B8%A2_%E0%B8%AD.%E0%B8%A5%E0%B8%B2%E0%B8%94%E0%B8%AB%E0%B8%A5%E0%B8%B8%E0%B8%A1%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7_%E0%B8%88.%E0%B8%9B%E0%B8%97%E0%B8%B8%E0%B8%A1%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5_(5).jpg
+- **Sky Bar (Lebua)** : Alter, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Bangkok_at_Night.jpg
+- **Song Wat Road** : Thomas Woodtli from Zürich, Switzerland, CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Riverside_housing_at_Song_Wat_Road_in_Bangkok,_Thailand_(28102251760).jpg
+- **The Grotto** : Fabio Achilli from Milano, Italy, CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Krabi,_Railay_West_Beach_(6218177231).jpg
+- **Tiger Cave Temple** : Stefan Fussan, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Wat_Tham_Suea_SF0001.jpg
+- **Tonsai Beach** : kallerna, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Ton_Sai_beach.jpg
+- **Tour des 4 îles – Chicken Island (Ko Kai)** : Marcin Konsek, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:2016_Prowincja_Krabi,_Ko_Po_Da_Nok_(01).jpg
+- **Tour des 4 îles – Ko Poda** : kallerna, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Poda_Island_panorama.jpg
+- **Tour des 4 îles – Ko Tup (Talay Waek)** : Maksym Kozlenko, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:2016-04-14_Tup_Island,_Krabi_Province_3.jpg
+- **Wat Bang Thong** : PEAK99, CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Wat_Maha_That_Wachiramongkol_(6).jpg
+- **Wat Chalong** : Edwin Lee derivative work: MrPanyGoff, CC BY 2.0 — https://commons.wikimedia.org/wiki/File:Grand_Pagoda_-_Wat_Chalong.jpg
+- **Wat Kaew Korawaram** : Maksym Kozlenko, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:2016-04-09_Wat_Kaew_Korawaram_temple_3.jpg
+- **Wat Maneewong** : Chainwit., CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Nakhon_Nayok_-_Wat_Maniwong_Temple_%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%A1%E0%B8%93%E0%B8%B5%E0%B8%A7%E0%B8%87%E0%B8%A8%E0%B9%8C_%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B8%99%E0%B8%B2%E0%B8%A2%E0%B8%81_%E0%B8%A0%E0%B8%B2%E0%B8%9E_06.jpg
+- **Wat Paknam Phasi Charoen** : Pablotorrado, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:La_nueva_estupa_de_Wat_Paknam_Bhasicharoen.jpg
+- **Wat Ratchabophit** : Kriengsak Jirasirirojanakorn, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Wat_Ratchabophit_(2).jpg
+- **Îles Similan – île n°8, Donald Duck Bay** : Lakshmi Sawitri, CC BY 2.0 — https://commons.wikimedia.org/wiki/File:View_from_Sail_Rock_S_(15862531450).jpg
