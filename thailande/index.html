@@ -704,6 +704,45 @@ textarea.copy { width: 100%; min-height: 200px; border-radius: 12px; border: 1px
   .basebar .txt small { display: none; }
 }
 
+/* ---------- excursions ---------- */
+.exsec { margin-bottom: 22px; }
+.exsec .group-h { display: flex; align-items: center; gap: 8px; }
+.exsec .group-h svg { width: 18px; height: 18px; fill: #1A73E8; }
+.exsec .group-h .mini-btn { margin-left: auto; letter-spacing: 0; text-transform: none; font-family: var(--font-body); }
+.excard { border-color: #B9D3F5; background: #F5F9FF; }
+.excard.is-go { background: #EEF8F2; } .excard.is-maybe { background: var(--maybe-soft); }
+.ex-ph { position: relative; overflow: hidden; border-radius: 12px; min-height: 160px; }
+.ex-ph img, .ex-ph .fb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ex-ph .fb { display: grid; place-items: center; } .ex-ph .fb svg { width: 34px; height: 34px; fill: #fff; }
+.ex-badge { position: absolute; left: 8px; top: 8px; display: inline-flex; align-items: center; gap: 5px; background: #1A73E8; color: #fff; border-radius: 999px; padding: 3px 10px 3px 7px; font-size: .78rem; font-weight: 700; }
+.ex-badge svg { width: 15px; height: 15px; fill: #fff; }
+.ex-k { font-family: var(--font-display); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: #1A73E8; }
+.ex-pl { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #C9D9EE; background: #fff; border-radius: 999px; padding: 3px 10px 3px 4px; font-size: .85rem; color: var(--ink); cursor: pointer; }
+.chip b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #1A73E8; color: #fff; font-size: .72rem; }
+.chip:hover { border-color: #1A73E8; }
+.bchip { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 9px 2px 6px; font-size: .78rem; font-weight: 700; font-family: var(--font-body); vertical-align: 2px; }
+.bchip svg { width: 14px; height: 14px; fill: currentColor; }
+.bchip.ok { background: #D7F0E2; color: #1E6B43; } .bchip.todo { background: #FFE7C2; color: #7A4B00; }
+.ex-fields { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 4px; }
+.ex-fields label { display: grid; gap: 3px; font-size: .78rem; font-weight: 600; color: var(--muted); flex: 0 1 150px; }
+.ex-fields label.grow { flex: 1 1 200px; } .ex-fields label.full { flex: 1 1 100%; }
+.ex-fields input, .ex-fields select { font: inherit; font-size: .92rem; font-weight: 400; color: var(--ink); border: 1.5px solid var(--line); border-radius: 10px; padding: 6px 9px; background: #fff; width: 100%; }
+.ex-fields input:focus, .ex-fields select:focus { outline: none; border-color: #1A73E8; }
+.ex-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; max-height: 260px; overflow-y: auto; padding: 4px; border: 1px solid var(--line); border-radius: 10px; }
+.ex-pick label { display: flex !important; align-items: center; gap: 8px; font-weight: 400 !important; color: var(--ink) !important; font-size: .9rem !important; }
+.tag.exc { background: #E3EEFD; color: #1554A8; border: 0; cursor: pointer; font-family: var(--font-body); }
+.linkish { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: left; }
+.ev-ic.ex { background: #E3EEFD; } .ev-ic.ex svg { fill: #1A73E8; }
+.day-card.exday { border-color: #9FC2F2; box-shadow: inset 4px 0 0 #1A73E8; }
+.exsum h3 svg { width: 22px; height: 22px; fill: #1A73E8; }
+.cal .exmark svg { width: 14px; height: 14px; fill: #1A73E8; display: block; }
+@media (max-width: 900px) {
+  .exsec .group-h { flex-wrap: wrap; }
+  .ex-ph { min-height: 150px; border-radius: 0; }
+  .ex-fields label { flex: 1 1 45%; }
+}
+
 </style>
 </head>
 <body>
@@ -785,6 +824,14 @@ function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; 
 const BASEPLACES = DATA.places.filter(p => p.f !== 'logement');
 const ORIG = Object.fromEntries(BASEPLACES.map(p => [p.id, p]));
 const FAMICON = {}; for (const p of BASEPLACES) if (!FAMICON[p.f]) FAMICON[p.f] = p.i;
+// Excursions : une journée qui regroupe plusieurs lieux, réservée ou non
+const DEF_EXC = [
+  { id: 'ex-4iles', s: 2, n: 'Tour des 4 îles', pl: ['tour-des-4-iles-ko-poda', 'tour-des-4-iles-chicken-island-ko-kai', 'tour-des-4-iles-ko-tup-talay-waek', 'princess-cave-phra-nang-cave-beach'], note: 'Option repérée : « Early Bird Koh Hong & 4 Islands » (GetYourGuide), départ vers 6 h 40, îles Hong en plus. Prévoir la taxe du parc national.' },
+  { id: 'ex-cheowlan', s: 4, n: 'Lac Cheow Lan et jungle', pl: ['lac-cheow-lan-embarcadere-barrage-ratchaprapha', 'krai-sorn-viewpoint-rando', 'nam-ta-lu-cave'] },
+  { id: 'ex-similan', s: 5, n: 'Îles Similan', pl: ['iles-similan-ile-n8-donald-duck-bay', 'thap-lamu-pier'], note: 'Via GetYourGuide ou un guide local. Départ du port de Thap Lamu.' },
+  { id: 'ex-phiphi', s: 6, n: 'Îles Phi Phi', pl: ['phi-phi-maya-bay', 'phi-phi-pileh-lagoon', 'phi-phi-monkey-beach', 'phi-phi-nui-bay', 'bamboo-island-ko-mai-phai'] }
+];
+let exs = [];      // excursions : { id, s, n, pl, st, d, b ('todo'|'done'), p (prise en charge), r (retour), pr (prix), o (prestataire / contact), l (lien), note }
 let extras = [];   // lieux ajoutés : { id, s, n, d, f, la, lo }
 let edits = {};    // id -> { n, d } : textes modifiés
 let PLACES = [], byId = {};
@@ -820,6 +867,17 @@ const noteOf = (id) => choices.get(id)?.note || '';
 const dateOf = (id) => choices.get(id)?.d || '';
 const timesOf = (id) => [choices.get(id)?.t1 || '', choices.get(id)?.t2 || ''];
 const kept = (p) => status(p.id) === 'go' || status(p.id) === 'maybe';
+const keptEx = (e) => e.st === 'go' || e.st === 'maybe';
+const exsOf = (i) => exs.filter(e => e.s === canon(i));
+const exOfPlace = (id) => exs.filter(e => e.pl.includes(id) && e.st !== 'no');
+function setExc(id, patch) {
+  const i = exs.findIndex(e => e.id === id); if (i < 0) return;
+  const next = { ...exs[i], ...patch };
+  for (const k of Object.keys(patch)) if (patch[k] == null || patch[k] === '') delete next[k];
+  if (!next.st || next.st === 'no') delete next.d;
+  const o = cleanExc(next); if (!o) return;
+  exs[i] = o; touch('ex:' + id); saveLocal(); render();
+}
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 const isTime = (v) => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 const str = (v, n) => typeof v === 'string' ? v.trim().slice(0, n) : '';
@@ -873,6 +931,18 @@ function cleanExtra(v) {
   if (!isFinite(la) || !isFinite(lo) || !STAGES[st] || STAGES[st].alias != null || !DATA.fam[v.f] || v.f === 'logement') return null;
   return { id: str(v.id, 40) || newId('u'), s: st, n: str(v.n, 90) || 'Nouveau lieu', d: str(v.d, 900), f: v.f, la: +la.toFixed(6), lo: +lo.toFixed(6) };
 }
+function cleanExc(v) {
+  if (!v || typeof v !== 'object') return null;
+  const st = +v.s; if (!STAGES[st] || STAGES[st].alias != null) return null;
+  const o = { id: str(v.id, 40) || newId('ex'), s: st, n: str(v.n, 90) || 'Excursion', pl: Array.isArray(v.pl) ? [...new Set(v.pl.filter(x => typeof x === 'string').map(x => x.slice(0, 60)))].slice(0, 30) : [] };
+  if (STS.includes(v.st)) o.st = v.st;
+  if (o.st && o.st !== 'no' && DAYS.includes(v.d)) o.d = v.d;
+  if (v.b === 'done' || v.b === 'todo') o.b = v.b;
+  for (const k of ['p', 'r']) if (isTime(v[k])) o[k] = v[k];
+  for (const [k, n] of [['pr', 60], ['o', 120], ['note', 600]]) { const t = str(v[k], n); if (t) o[k] = t; }
+  const l = str(v.l, 400); if (/^https?:\/\/\S+$/i.test(l)) o.l = l;
+  return o;
+}
 function cleanEdit(id, v) {
   if (!ORIG[id] || !v || typeof v !== 'object') return null;
   const o = {}; const n = str(v.n, 90), d = typeof v.d === 'string' ? v.d.trim().slice(0, 900) : null;
@@ -881,9 +951,9 @@ function cleanEdit(id, v) {
   return (o.n || o.d != null) ? o : null;
 }
 // document complet (stockage local, synchro, fichier de sauvegarde)
-function docOf() { return { v: 4, c: Object.fromEntries(choices), s: stays, t: trips, x: extras, e: edits, m: mt, g: gone }; }
+function docOf() { return { v: 4, c: Object.fromEntries(choices), s: stays, t: trips, x: extras, e: edits, ex: exs, m: mt, g: gone }; }
 function applyDoc(raw) {
-  choices = new Map(); stays = []; trips = []; extras = []; edits = {}; mt = {}; gone = {};
+  choices = new Map(); stays = []; trips = []; extras = []; edits = {}; exs = []; mt = {}; gone = {};
   if (raw && typeof raw === 'object') {
     for (const v of Array.isArray(raw.x) ? raw.x : []) { const o = cleanExtra(v); if (o && !extras.some(y => y.id === o.id)) extras.push(o); }
     for (const [id, v] of Object.entries(raw.e || {})) { const o = cleanEdit(id, v); if (o) edits[id] = o; }
@@ -893,13 +963,16 @@ function applyDoc(raw) {
     for (const v of Array.isArray(raw.t) ? raw.t : []) { const o = cleanTrip(v); if (o && !trips.some(y => y.id === o.id)) trips.push(o); }
     basesToStays(raw.b, stays);
     for (const [k, t] of Object.entries(raw.m || {})) if (isFinite(t)) mt[k] = +t;
+    for (const v of Array.isArray(raw.ex) ? raw.ex : []) { const o = cleanExc(v); if (o && !exs.some(y => y.id === o.id)) exs.push(o); }
     for (const [k, t] of Object.entries(raw.g || {})) if (isFinite(t)) gone[k] = +t;
   } else rebuildPlaces();
+  // excursions proposées par défaut, sauf si elles ont été supprimées
+  for (const d of DEF_EXC) if (!exs.some(y => y.id === d.id) && !gone['ex:' + d.id]) exs.push(cleanExc(d));
   // anciennes données sans date de modification : comptent comme « très anciennes »
   for (const k of liveKeys()) if (!mt[k]) mt[k] = 1;
 }
 function liveKeys() {
-  return [...[...choices.keys()].map(id => 'c:' + id), ...stays.map(x => 's:' + x.id), ...trips.map(x => 't:' + x.id), ...extras.map(x => 'x:' + x.id), ...Object.keys(edits).map(id => 'e:' + id)];
+  return [...[...choices.keys()].map(id => 'c:' + id), ...stays.map(x => 's:' + x.id), ...trips.map(x => 't:' + x.id), ...extras.map(x => 'x:' + x.id), ...Object.keys(edits).map(id => 'e:' + id), ...exs.map(x => 'ex:' + x.id)];
 }
 function loadLocal() {
   let raw = null;
@@ -928,6 +1001,7 @@ function indexDoc(d) {
   for (const v of d.s || []) if (v && v.id) rec['s:' + v.id] = v;
   for (const v of d.t || []) if (v && v.id) rec['t:' + v.id] = v;
   for (const v of d.x || []) if (v && v.id) rec['x:' + v.id] = v;
+  for (const v of d.ex || []) if (v && v.id) rec['ex:' + v.id] = v;
   for (const [id, v] of Object.entries(d.e || {})) rec['e:' + id] = v;
   for (const k of Object.keys(rec)) ts[k] = +(d.m || {})[k] || 1;
   for (const [k, t] of Object.entries(d.g || {})) if (!(k in rec) || +t >= ts[k]) { ts[k] = +t; dead[k] = true; delete rec[k]; }
@@ -935,14 +1009,14 @@ function indexDoc(d) {
 }
 function mergeDocs(local, remote) {
   const A = indexDoc(local), B = indexDoc(remote);
-  const out = { v: 4, c: {}, s: [], t: [], x: [], e: {}, m: {}, g: {} };
+  const out = { v: 4, c: {}, s: [], t: [], x: [], e: {}, ex: [], m: {}, g: {} };
   for (const k of new Set([...Object.keys(A.ts), ...Object.keys(B.ts)])) {
     const W = (A.ts[k] || 0) > (B.ts[k] || 0) ? A : B;
     if (W.dead[k]) { out.g[k] = W.ts[k]; continue; }
     const r = W.rec[k]; if (r === undefined) continue;
     out.m[k] = W.ts[k];
     const [p, ...rest] = k.split(':'); const id = rest.join(':');
-    if (p === 'c') out.c[id] = r; else if (p === 'e') out.e[id] = r; else if (p === 's') out.s.push(r); else if (p === 't') out.t.push(r); else if (p === 'x') out.x.push(r);
+    if (p === 'c') out.c[id] = r; else if (p === 'e') out.e[id] = r; else if (p === 's') out.s.push(r); else if (p === 't') out.t.push(r); else if (p === 'x') out.x.push(r); else if (p === 'ex') out.ex.push(r);
   }
   return out;
 }
@@ -951,7 +1025,7 @@ function canonDoc(d) {
   const sortObj = (o) => Object.keys(o || {}).sort().map(k => [k, o[k]]);
   const byIdSort = (xs) => [...(xs || [])].sort((a, b) => String(a.id).localeCompare(String(b.id)));
   const deep = (v) => Array.isArray(v) ? v.map(deep) : v && typeof v === 'object' ? Object.keys(v).sort().reduce((o, k) => (o[k] = deep(v[k]), o), {}) : v;
-  return JSON.stringify(deep({ c: sortObj(d.c), s: byIdSort(d.s), t: byIdSort(d.t), x: byIdSort(d.x), e: sortObj(d.e), m: sortObj(d.m), g: sortObj(d.g) }));
+  return JSON.stringify(deep({ c: sortObj(d.c), s: byIdSort(d.s), t: byIdSort(d.t), x: byIdSort(d.x), ex: byIdSort(d.ex), e: sortObj(d.e), m: sortObj(d.m), g: sortObj(d.g) }));
 }
 
 /* ---------- synchro en ligne (Supabase) : un carnet partagé, protégé par un code secret ---------- */
@@ -1241,7 +1315,7 @@ function route() {
   const prev = view;
   view = /^etape-[0-8]$/.test(h) || ['programme', 'voyage', 'sauvegarde'].includes(h) ? h : 'vue';
   ui.seg = 'all'; ui.q = ''; ui.qRaw = ''; ui.editing = null; ui.placing = false; ui.search = false;
-  document.body.classList.remove('menu-open'); ui.editPlace = null;
+  document.body.classList.remove('menu-open'); ui.editPlace = null; ui.editExc = null;
   if (prev !== view) ui.mview = 'list';
   if (ui.placingNext) { ui.placing = true; ui.placingNext = false; if (matchMedia('(max-width: 900px)').matches) ui.mview = 'map'; }
   if (view !== prev) ui.limit = '';
@@ -1605,6 +1679,7 @@ function dateSelect(p) {
     const xs = per[d] || []; let t = dayShort(d);
     const w = whereOn(d); if (w) t += ' · ' + w;
     if (xs.length && d !== cur) t += ' (' + xs.length + ' prévu' + (xs.length > 1 ? 's' : '') + ')';
+    const ex = exs.find(e => e.d === d && keptEx(e)); if (ex) t += ' ⛵ ' + ex.n;
     sel.append(el('option', { value: d, text: t, selected: d === cur || null }));
   }
   const box = el('span', { class: 'whenbox' }, el('label', { class: 'when' + (cur ? ' has-date' : ''), title: 'Quel jour ? Chaque jour indique où vous êtes.' }, icon('calendar-month-outline'), sel));
@@ -1639,6 +1714,67 @@ function placeEditor(p) {
     p.user ? el('button', { class: 'btn btn-light danger', type: 'button', 'data-act': 'place-del', 'data-id': p.id }, icon('delete-outline'), 'Supprimer ce lieu') : null));
   return box;
 }
+/* ---------- excursions ---------- */
+function exDateSelect(e) {
+  const sel = el('select', { 'data-ex-f': 'd', 'data-id': e.id, 'aria-label': 'Date de ' + e.n });
+  sel.append(el('option', { value: '', text: 'Date libre', selected: !e.d || null }));
+  for (const d of DAYS) {
+    let t = dayShort(d); const w = whereOn(d); if (w) t += ' · ' + w;
+    const other = exs.find(x => x.id !== e.id && x.d === d && keptEx(x)); if (other) t += ' ⛵ ' + other.n;
+    const n = Object.values(plannedByDay(null)[d] || []).length; if (n && !other) t += ' (' + n + ' prévu' + (n > 1 ? 's' : '') + ')';
+    sel.append(el('option', { value: d, text: t, selected: d === e.d || null }));
+  }
+  return el('label', { class: 'when' + (e.d ? ' has-date' : '') }, icon('calendar-month-outline'), sel);
+}
+function exField(e, f, label, type, extra = {}) {
+  let x;
+  if (type === 'select') { x = el('select', { 'data-ex-f': f, 'data-id': e.id, 'aria-label': label }); for (const [v, t] of extra.options) x.append(el('option', { value: v, text: t, selected: (e[f] || '') === v || null })); }
+  else { x = el('input', { type, 'data-ex-f': f, 'data-id': e.id, 'aria-label': label, placeholder: extra.ph || '', maxlength: extra.max || null, step: type === 'time' ? '300' : null }); x.value = e[f] || ''; }
+  return el('label', { class: extra.cls || null }, label, x);
+}
+const bookChip = (e) => keptEx(e) ? el('span', { class: 'bchip ' + (e.b === 'done' ? 'ok' : 'todo') }, icon(e.b === 'done' ? 'check-circle' : 'clock-outline'), e.b === 'done' ? 'Réservée' : 'À réserver') : null;
+function excCard(e, i) {
+  const ps = e.pl.map(id => byId[id]).filter(Boolean);
+  const cover = ps.find(p => photoUrl(p.id)) || ps[0];
+  const b = (act, ic, label, pressed) => el('button', { class: 'act ' + act, type: 'button', 'aria-pressed': pressed == null ? null : String(pressed), 'data-act': 'ex-' + act, 'data-id': e.id }, icon(ic), label);
+  const acts = e.st === 'no'
+    ? el('div', { class: 'r-acts' }, b('go', 'check', 'On y va', false), b('maybe', 'help-circle-outline', 'Peut-être', false), b('undo', 'restore', 'Remettre à décider', null))
+    : el('div', { class: 'r-acts' }, b('go', 'check', 'On y va', e.st === 'go'), b('maybe', 'help-circle-outline', 'Peut-être', e.st === 'maybe'), b('no', 'close', 'Pas pour nous', null));
+  const ph = el('div', { class: 'ex-ph', style: 'background:' + (cover ? famColor(cover.f) : '#1A73E8') }, cover ? photoBox(cover) : null, el('span', { class: 'ex-badge' }, icon('ferry'), 'Excursion'));
+  const main = el('div', { class: 'r-main' });
+  if (ui.editExc === e.id) {
+    const n = el('input', { type: 'text', id: 'ex-n', maxlength: '90', 'aria-label': 'Nom de l’excursion' }); n.value = e.n;
+    const list = el('div', { class: 'ex-pick' }, placesOf(i).map(p => el('label', {}, el('input', { type: 'checkbox', class: 'ex-pl', value: p.id, checked: e.pl.includes(p.id) || null }), `${p.num}. ${p.n}`)));
+    main.append(el('div', { class: 'place-edit' }, el('label', {}, 'Nom de l’excursion', n), el('div', { class: 'sub-h', text: 'Lieux visités pendant l’excursion' }), list,
+      el('div', { class: 'btns' }, el('button', { class: 'btn btn-dark', type: 'button', 'data-act': 'ex-save', 'data-id': e.id }, 'Enregistrer'), el('button', { class: 'btn btn-light', type: 'button', 'data-act': 'ex-cancel', 'data-id': e.id }, 'Annuler'),
+        el('button', { class: 'btn btn-light danger', type: 'button', 'data-act': 'ex-del', 'data-id': e.id }, icon('delete-outline'), 'Supprimer l’excursion'))));
+  } else {
+    main.append(el('div', { class: 'ex-k', text: 'Excursion · journée complète' }), el('h3', {}, el('span', { text: e.n }), bookChip(e)),
+      ps.length ? el('div', { class: 'ex-pl' }, ps.map(p => el('button', { class: 'chip', type: 'button', 'data-act': 'ex-place', 'data-id': p.id, title: 'Voir ce lieu' }, el('b', { text: String(p.num) }), p.n))) : el('p', { class: 'r-desc', text: 'Aucun lieu rattaché : clique sur « Modifier » pour en choisir.' }),
+      e.note && !keptEx(e) ? el('div', { class: 'mynote', text: e.note }) : null,
+      el('div', { class: 'r-foot' }, acts, keptEx(e) ? el('span', { class: 'whenbox' }, exDateSelect(e), el('label', { class: 'when tm' + (e.p ? ' has-date' : ''), title: 'Prise en charge → retour' }, icon('clock-outline'),
+        (() => { const x = el('input', { type: 'time', step: '300', 'data-ex-f': 'p', 'data-id': e.id, 'aria-label': 'Heure de prise en charge' }); x.value = e.p || ''; return x; })(), el('span', { text: '→' }),
+        (() => { const x = el('input', { type: 'time', step: '300', 'data-ex-f': 'r', 'data-id': e.id, 'aria-label': 'Heure de retour' }); x.value = e.r || ''; return x; })())) : null));
+    if (keptEx(e)) main.append(el('div', { class: 'ex-fields' },
+      exField(e, 'b', 'Réservation', 'select', { options: [['todo', 'À réserver'], ['done', 'Réservée']] }),
+      exField(e, 'pr', 'Prix', 'text', { ph: 'ex. 2 400 THB à deux', max: '60' }),
+      exField(e, 'o', 'Prestataire / contact', 'text', { ph: 'GetYourGuide, guide local, n° WhatsApp…', max: '120', cls: 'grow' }),
+      exField(e, 'l', 'Lien', 'url', { ph: 'https://…', max: '400', cls: 'grow' }),
+      exField(e, 'note', 'Note', 'text', { ph: 'Ce qui est inclus, quoi emporter…', max: '600', cls: 'full' })));
+    main.append(el('div', { class: 'r-links' },
+      e.l ? el('a', { class: 'linkbtn', href: e.l, target: '_blank', rel: 'noopener' }, icon('open-in-new'), 'Ouvrir la réservation') : null,
+      el('button', { class: 'linkbtn', type: 'button', 'data-act': 'ex-edit', 'data-id': e.id }, icon('pencil'), 'Modifier le nom et les lieux')));
+  }
+  return el('article', { class: 'row excard' + (e.st === 'go' ? ' is-go' : e.st === 'maybe' ? ' is-maybe' : e.st === 'no' ? ' is-no' : ''), id: 'ex-' + e.id }, ph, main);
+}
+function excSection(i) {
+  if (i === 7) return null;
+  const list = exsOf(i).filter(e => (ui.seg === 'no' ? e.st === 'no' : e.st !== 'no') && (ui.seg !== 'todo' || !e.st) && (!['go', 'maybe'].includes(ui.seg) || e.st === ui.seg) && (!ui.q || norm(e.n).includes(ui.q)));
+  if (!list.length && ui.seg !== 'all') return null;
+  return el('section', { class: 'exsec' },
+    el('div', { class: 'group-h' }, icon('ferry'), 'Excursions · ' + list.length, el('button', { class: 'mini-btn', type: 'button', 'data-act': 'ex-add' }, icon('plus'), 'Ajouter une excursion')),
+    list.length ? el('div', { class: 'rows' }, list.map(e => excCard(e, i))) : el('p', { class: 'removed-note', text: 'Pas d’excursion pour cette étape. Une excursion regroupe les lieux d’une même journée (bateau, guide…).' }));
+}
 function rowFor(p, org, i) {
   const st = status(p.id), col = famColor(p.f);
   const b = (act, ic, label, pressed) => el('button', { class: 'act ' + act, type: 'button', 'aria-pressed': pressed == null ? null : String(pressed), 'data-act': act, 'data-id': p.id }, icon(ic), label);
@@ -1662,7 +1798,7 @@ function rowFor(p, org, i) {
     photoBox(p), el('span', { class: 'badge', text: String(p.num) }), el('span', { class: 'cat', style: 'background:' + col }, icon(p.i)));
   const editing = ui.editPlace === p.id;
   const main = el('div', { class: 'r-main' },
-    editing ? null : el('h3', {}, el('span', { text: p.n }), p.user ? el('span', { class: 'tag user', text: 'ajouté par nous' }) : null, visitTag(p, i)),
+    editing ? null : el('h3', {}, el('span', { text: p.n }), p.user ? el('span', { class: 'tag user', text: 'ajouté par nous' }) : null, visitTag(p, i), ...exOfPlace(p.id).map(e => el('button', { class: 'tag exc', type: 'button', 'data-act': 'to-ex', 'data-id': e.id, title: 'Voir l’excursion' }, '⛵ ' + e.n))),
     meta.childNodes.length ? meta : null,
     editing ? placeEditor(p) : el('p', { class: 'r-desc', text: p.d || (p.user ? 'Pas encore de description.' : '') }),
     note && ui.editing !== p.id ? el('div', { class: 'mynote', text: note }) : null,
@@ -1827,6 +1963,7 @@ function renderStageBody() {
   const shown = basic.filter(p => inRadius(p, org));
   const far = basic.length - shown.length;
   listCol.replaceChildren();
+  const xsec = excSection(i); if (xsec) listCol.append(xsec);
   if (ui.seg === 'no' && shown.length) listCol.append(el('p', { class: 'removed-note' }, icon('eye-outline'), 'Les lieux retirés, avec leurs photos et leur place sur la carte (en gris). Un clic sur « On y va », « Peut-être » ou « Remettre à décider » les fait revenir.'));
   if (!shown.length) listCol.append(el('div', { class: 'empty', text: far ? 'Aucun lieu dans ce rayon.' : ui.seg === 'go' ? 'Rien de choisi ici pour l’instant. Cliquez « On y va » sur les lieux qui vous tentent.' : ui.seg === 'maybe' ? 'Aucun « peut-être » ici.' : ui.seg === 'todo' ? 'Tout est décidé pour cette étape.' : ui.seg === 'no' ? 'Aucun lieu retiré ici.' : 'Aucun lieu ne correspond.' }));
   if (ui.sort === 'dist' && org && shown.length) {
@@ -1881,6 +2018,30 @@ function focusRow(id) {
   r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash');
 }
 
+function exAction(act, id, i) {
+  const e = exs.find(x => x.id === id);
+  if (act === 'ex-go' || act === 'ex-maybe') { const st = act.slice(3); setExc(id, { st: e.st === st ? null : st, b: e.b || 'todo' }); }
+  else if (act === 'ex-no') { setExc(id, { st: 'no' }); toast('Excursion « ' + e.n + ' » retirée. Elle reste dans l’onglet « Retirés ».'); }
+  else if (act === 'ex-undo') setExc(id, { st: null });
+  else if (act === 'ex-edit') { ui.editExc = id; render(); $('#ex-n')?.focus(); }
+  else if (act === 'ex-cancel') { ui.editExc = null; render(); }
+  else if (act === 'ex-save') {
+    const n = ($('#ex-n')?.value || '').trim() || e.n;
+    const pl = [...document.querySelectorAll('#ex-' + CSS.escape(id) + ' .ex-pl:checked')].map(x => x.value);
+    ui.editExc = null; setExc(id, { n, pl }); toast('Excursion enregistrée.');
+  }
+  else if (act === 'ex-del') { exs = exs.filter(x => x.id !== id); kill('ex:' + id); ui.editExc = null; saveLocal(); render(); toast('Excursion supprimée.'); }
+  else if (act === 'ex-add' && i != null) {
+    const x = cleanExc({ id: newId('ex'), s: canon(i), n: 'Nouvelle excursion', pl: [], st: 'maybe', b: 'todo' });
+    exs.push(x); touch('ex:' + x.id); ui.editExc = x.id; ui.seg = 'all'; saveLocal(); render();
+    setTimeout(() => { document.getElementById('ex-' + x.id)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); $('#ex-n')?.select(); }, 60);
+  }
+  else if (act === 'ex-place') focusRow(id);
+  else if (act === 'to-ex') {
+    if (view.startsWith('etape-')) { if (ui.seg !== 'all') { ui.seg = 'all'; render(); } const c = document.getElementById('ex-' + id); if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); } }
+    else if (e) location.hash = 'etape-' + e.s;
+  }
+}
 /* ---------- actions ---------- */
 document.addEventListener('click', (e) => {
   const mvb = e.target.closest('[data-mview]');
@@ -1888,6 +2049,7 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = b.dataset.id, act = b.dataset.act, i = view.startsWith('etape-') ? +view.split('-')[1] : null;
   const card = $('#pinCard'); const fromCard = card && !card.hidden && card.contains(b);
+  if (act.startsWith('ex-') || act === 'to-ex') { exAction(act, id, i); return; }
   if (act === 'go' || act === 'maybe') setChoice(id, { s: status(id) === act ? null : act });
   else if (act === 'no') { setChoice(id, { s: 'no' }); toast('« ' + byId[id].n + ' » retiré. Tu le retrouves dans l’onglet « Retirés ».'); }
   else if (act === 'undo') setChoice(id, { s: null });
@@ -1930,6 +2092,14 @@ document.addEventListener('click', (e) => {
   if (fromCard && byId[id] && ['go', 'maybe', 'no', 'undo'].includes(act)) setTimeout(() => showPinCard(id), 30);
 });
 document.addEventListener('change', (e) => {
+  const xf = e.target.closest && e.target.closest('[data-ex-f]');
+  if (xf) {
+    const f = xf.dataset.exF, v = xf.value || null, ex = exs.find(x => x.id === xf.dataset.id);
+    if (f === 'l' && v && !/^https?:\/\//i.test(v)) { toast('Le lien doit commencer par https://'); return; }
+    setExc(xf.dataset.id, { [f]: v });
+    if (f === 'd' && ex) toast(v ? '« ' + ex.n + ' » prévue le ' + dayLong(v).toLowerCase() + '.' : '« ' + ex.n + ' » : date libre.');
+    return;
+  }
   const tm = e.target.closest && e.target.closest('input[data-time]');
   if (tm) { setChoice(tm.dataset.id, { [tm.dataset.time]: tm.value || null }); return; }
   if (e.target.closest && e.target.closest('[data-stay-f], [data-trip-f]')) { voyageChange(e.target); return; }
@@ -1961,6 +2131,7 @@ function dayEvents(d) {
 function dayItems(d, ks) {
   const items = dayEvents(d).map(x => ({ ...x, kind: 'ev' }));
   for (const p of ks.filter(p => dateOf(p.id) === d)) { const [t1, t2] = timesOf(p.id); items.push({ kind: 'place', p, t: t1, end: t2, o: 1 }); }
+  for (const e of exs.filter(e => e.d === d && keptEx(e))) items.push({ kind: 'exc', e, t: e.p || '', end: e.r || '', o: 1 });
   return items.sort((a, b) => (a.t || '99').localeCompare(b.t || '99') || a.o - b.o || (a.p && b.p ? a.p.s - b.p.s || a.p.num - b.p.num : 0));
 }
 function dayWarnings(d, items) {
@@ -1969,6 +2140,15 @@ function dayWarnings(d, items) {
     if (it.kind !== 'place') continue; const p = it.p; const k = BASEKEY[p.s];
     if (here.size && k != null && p.s !== 3 && p.s !== 7 && !here.has(k)) out.push(`« ${p.n} » est à ${BASENAME[k]}, mais ce jour-là vous êtes à ${[...here].map(c => BASENAME[c]).join(' / ')}.`);
     if (it.t) for (const tr of trips) if (tr.dd === d && tr.dt && it.t >= tr.dt && (!tr.at || tr.ad !== d || it.t < tr.at)) out.push(`« ${p.n} » à ${it.t} tombe pendant le trajet ${tr.f || ''} → ${tr.t || ''}.`);
+  }
+  // journée d'excursion : le reste de la journée est pris
+  const ex = items.filter(it => it.kind === 'exc');
+  if (ex.length > 1) out.push('Deux excursions le même jour : ' + ex.map(it => it.e.n).join(' et ') + '.');
+  if (ex.length) {
+    const inEx = new Set(ex.flatMap(it => it.e.pl));
+    const others = items.filter(it => it.kind === 'place' && !inEx.has(it.p.id));
+    if (others.length) out.push(`Journée d’excursion (${ex[0].e.n}) : ${others.map(it => '« ' + it.p.n + ' »').join(', ')} en plus, à caser le soir ou un autre jour.`);
+    for (const it of ex) { const k = BASEKEY[it.e.s]; if (here.size && k != null && it.e.s !== 3 && !here.has(k)) out.push(`L’excursion « ${it.e.n} » part de ${BASENAME[k]}, mais ce jour-là vous êtes à ${[...here].map(c => BASENAME[c]).join(' / ')}.`); }
   }
   return out;
 }
@@ -1979,9 +2159,11 @@ function programmeText() {
   for (const d of DAYS) {
     const items = dayItems(d, ks); if (!items.length) continue;
     const w = whereOn(d);
-    out += `\n${dayLong(d)}${w ? ' – ' + w : ''}\n` + items.map(it => '- ' + (it.t ? it.t + (it.end ? '–' + it.end : '') + ' ' : '') + (it.kind === 'place' ? pl(it.p, true) : it.txt + (it.sub ? ' (' + it.sub + ')' : ''))).join('\n') + '\n';
+    out += `\n${dayLong(d)}${w ? ' – ' + w : ''}\n` + items.map(it => '- ' + (it.t ? it.t + (it.end ? '–' + it.end : '') + ' ' : '') + (it.kind === 'place' ? pl(it.p, true) : it.kind === 'exc' ? 'Excursion : ' + it.e.n + (it.e.st === 'maybe' ? ' [peut-être]' : '') + (it.e.b === 'done' ? ' (réservée)' : ' (à réserver)') + (it.e.pr ? ', ' + it.e.pr : '') : it.txt + (it.sub ? ' (' + it.sub + ')' : ''))).join('\n') + '\n';
   }
   const block = (title, xs) => { if (!xs.length) return; out += `\n${title}\n`; STAGES.forEach((s, i) => { const ys = xs.filter(p => p.s === i); if (ys.length) out += s.title + '\n' + ys.map(p => '- ' + pl(p)).join('\n') + '\n'; }); };
+  const exFree = exs.filter(e => keptEx(e) && !e.d);
+  if (exFree.length) out += '\nExcursions sans date\n' + exFree.map(e => '- ' + e.n + ' (' + SHORT[e.s] + ')' + (e.st === 'maybe' ? ' [peut-être]' : '') + (e.b === 'done' ? ' (réservée)' : ' (à réserver)')).join('\n') + '\n';
   block('Date libre', ks.filter(p => !dateOf(p.id) && status(p.id) === 'go'));
   block('Peut-être, sans date', ks.filter(p => !dateOf(p.id) && status(p.id) === 'maybe'));
   return out;
@@ -2013,13 +2195,23 @@ function renderProgramme(c) {
     el('div', { class: 'prog-head' }, el('div', { class: 'seg', role: 'group', 'aria-label': 'Présentation' }, mb('jour', 'Jour par jour'), mb('etape', 'Par étape')),
       el('div', { class: 'prog-actions' }, copyBtn, el('a', { class: 'btn btn-light', href: '#vue' }, icon('view-dashboard-outline'), 'Vue d’ensemble'))), ta);
   if (!ks.length && !stays.length && !trips.length) { wrap.append(el('div', { class: 'empty', text: 'Rien de gardé pour l’instant. Ouvrez une étape et cliquez « On y va » ou « Peut-être » sur les lieux qui vous tentent.' })); c.append(wrap); return; }
+  const kex = exs.filter(keptEx).sort((a, b) => (a.d || '9').localeCompare(b.d || '9') || ORDER.indexOf(a.s) - ORDER.indexOf(b.s));
+  if (kex.length) {
+    const done = kex.filter(e => e.b === 'done').length;
+    wrap.append(el('section', { class: 'day-card exsum' }, el('h3', {}, icon('ferry'), 'Nos excursions', el('small', { text: `${done} réservée${done > 1 ? 's' : ''} sur ${kex.length}` })),
+      el('ul', { class: 'plist' }, kex.map(e => el('li', { class: 'ev' },
+        el('span', { class: 'thumb ev-ic ex' }, icon('ferry')),
+        el('div', { class: 'pt' }, el('button', { class: 'linkish', type: 'button', 'data-act': 'to-ex', 'data-id': e.id, text: e.n }), el('span', { class: 'tag stage', text: SHORT[e.s] }), e.st === 'maybe' ? el('span', { class: 'tag maybe', text: 'peut-être' }) : null, bookChip(e),
+          el('small', { text: [e.p ? 'prise en charge ' + e.p + (e.r ? ', retour ' + e.r : '') : '', e.pr, e.o].filter(Boolean).join(' · ') || 'Horaires, prix et prestataire à compléter dans l’étape.' })),
+        el('div', { class: 'side-acts' }, e.l ? el('a', { class: 'mini-btn', href: e.l, target: '_blank', rel: 'noopener' }, icon('open-in-new'), 'Réservation') : null, el('span', { class: 'whenbox' }, exDateSelect(e))))))));
+  }
   if (ui.prog === 'jour') {
     const cal = el('div', { class: 'cal', role: 'list', 'aria-label': 'Les 19 jours du voyage' });
     DAYS.forEach((d, k) => {
-      const xs = ks.filter(p => dateOf(p.id) === d); const dt = asDate(d); const ns = nightStay(d);
+      const xs = ks.filter(p => dateOf(p.id) === d); const dt = asDate(d); const ns = nightStay(d); const dex = exs.find(e => e.d === d && keptEx(e));
       const dots = el('span', { class: 'dots' }, xs.map(p => el('i', { class: status(p.id) === 'maybe' ? 'm' : null })));
       cal.append(el('button', { type: 'button', role: 'listitem', class: (xs.length ? 'has' : '') + (ns ? ' c' + ns.c : ''), 'data-act': 'cal', 'data-day': d, title: dayLong(d) + (whereOn(d) ? ' · ' + whereOn(d) : '') + (xs.length ? ' : ' + xs.map(p => p.n).join(', ') : '') },
-        fmtWd.format(dt), el('b', { text: String(dt.getUTCDate()) }), (k === 0 || dt.getUTCDate() === 1) ? fmtMon.format(dt) : '', el('span', { class: 'city', text: ns ? SHORT[ns.c] : '' }), dots));
+        fmtWd.format(dt), el('b', { text: String(dt.getUTCDate()) }), (k === 0 || dt.getUTCDate() === 1) ? fmtMon.format(dt) : '', el('span', { class: 'city', text: ns ? SHORT[ns.c] : '' }), dex ? el('span', { class: 'exmark', title: 'Excursion : ' + dex.n }, icon('ferry')) : null, dots));
     });
     wrap.append(cal);
     if (!stays.length && !trips.length) wrap.append(el('div', { class: 'import' }, el('div', {}, el('b', { text: 'Ajoutez vos logements et vos vols' }), ' pour voir chaque journée avec ses horaires.'), el('a', { class: 'btn btn-dark', href: '#voyage' }, icon('airplane'), 'Logements & trajets')));
@@ -2027,11 +2219,17 @@ function renderProgramme(c) {
       const items = dayItems(d, ks); const w = whereOn(d); const ns = nightStay(d);
       const head = el('h3', {}, dayLong(d), el('small', { text: [w, ns ? 'nuit : ' + stayLabel(ns) : ''].filter(Boolean).join(' · ') }));
       if (!items.length) { wrap.append(el('section', { class: 'day-card empty-day', id: 'day-' + d }, head, el('p', { class: 'nothing', text: 'Rien de prévu pour l’instant.' }))); continue; }
-      const card = el('section', { class: 'day-card', id: 'day-' + d }, head);
+      const card = el('section', { class: 'day-card' + (items.some(it => it.kind === 'exc') ? ' exday' : ''), id: 'day-' + d }, head);
       for (const msg of dayWarnings(d, items)) card.append(el('p', { class: 'warn', text: msg }));
       card.append(el('ul', { class: 'plist tl' }, items.map(it => {
         const time = el('span', { class: 'tl-t' }, it.t ? it.t : '—', it.end ? el('small', { text: '→ ' + it.end }) : null);
         if (it.kind === 'place') { const li = progItem(it.p, true); li.prepend(time); return li; }
+        if (it.kind === 'exc') {
+          const e = it.e; const names = e.pl.map(id => byId[id]?.n.replace(e.n + ' – ', '')).filter(Boolean);
+          return el('li', { class: 'ev exc' }, time, el('span', { class: 'thumb ev-ic ex' }, icon('ferry')),
+            el('div', { class: 'pt' }, el('b', {}, 'Excursion : ', el('button', { class: 'linkish', type: 'button', 'data-act': 'to-ex', 'data-id': e.id, text: e.n })), e.st === 'maybe' ? el('span', { class: 'tag maybe', text: 'peut-être' }) : null, bookChip(e),
+              el('small', { text: [it.t ? 'prise en charge ' + it.t : 'heure de prise en charge à préciser', e.pr, e.o, names.length ? names.join(', ') : ''].filter(Boolean).join(' · ') })), el('span'));
+        }
         return el('li', { class: 'ev' }, time, el('span', { class: 'thumb ev-ic' }, icon(it.ic)), el('div', { class: 'pt' }, el('b', { text: it.txt }), it.sub ? el('small', { text: it.sub }) : null), el('span'));
       })));
       wrap.append(card);
