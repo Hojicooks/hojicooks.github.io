@@ -819,14 +819,16 @@ function mapLegend(fams) {
 /* ---------- vraie carte (Leaflet) : plan OpenStreetMap/CARTO ou satellite Esri ---------- */
 const hasL = () => typeof window.L !== 'undefined';
 function tileLayers() {
-  const plan = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 20,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>' });
+  // Fonds sans clé : CARTO exige désormais une clé, donc plan Esri (noms en alphabet latin) + OpenStreetMap détaillé
+  const plan = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    maxNativeZoom: 18, maxZoom: 20, attribution: 'Plan © Esri, HERE, Garmin, contributeurs OpenStreetMap' });
+  const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxNativeZoom: 19, maxZoom: 20, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>' });
   const sat = L.layerGroup([
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 18, maxZoom: 20, attribution: 'Imagerie © Esri, Maxar, Earthstar Geographics' }),
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 18, maxZoom: 20 })
   ]);
-  return { plan, sat };
+  return { plan, sat, osm };
 }
 function pinIcon(p, cls) {
   return L.divIcon({ className: 'pinwrap', html: `<div class="pin ${cls}" style="--c:${famColor(p.f)}">${p.num}</div>`, iconSize: [30, 30], iconAnchor: [15, 15], tooltipAnchor: [0, -16] });
@@ -853,7 +855,7 @@ function createStageMap(i, div) {
   syncMarkers(); fitStage();
 }
 function setLayer(name) {
-  ui.layer = name === 'sat' ? 'sat' : 'plan';
+  ui.layer = name === 'sat' || name === 'osm' ? name : 'plan';
   document.querySelectorAll('[data-layer]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layer === ui.layer)));
   if (!LM) return;
   if (LM.cur) LM.map.removeLayer(LM.cur);
@@ -971,7 +973,7 @@ function renderOverview(c) {
   drawScene(bg, 'hero', 6);
   frame.append(overviewMap(frame));
   cards.querySelectorAll('canvas').forEach(cv => drawScene(cv, cv.dataset.scene, 3));
-  if (Object.keys(PHOTOS).length) c.append(el('p', { class: 'credits-note', text: 'Photos : Wikimedia Commons, sous licences libres (auteur indiqué en agrandissant chaque photo). Cartes : OpenStreetMap, CARTO et Esri.' }));
+  if (Object.keys(PHOTOS).length) c.append(el('p', { class: 'credits-note', text: 'Photos : Wikimedia Commons, sous licences libres (auteur indiqué en agrandissant chaque photo). Cartes : Esri et OpenStreetMap.' }));
 }
 
 /* ---------- étape ---------- */
@@ -1052,9 +1054,9 @@ function renderStage(c, i) {
     segBtn('all', 'Tous', cc.total - cc.no), segBtn('todo', 'À décider', cc.todo), segBtn('maybe', 'Peut-être', cc.maybe, 'maybe-k'), segBtn('go', 'On y va', cc.go, 'go-k')), search);
   const listCol = el('div', { id: 'listCol' });
   // carte : fond plan ou satellite, logement, recentrage
-  const lay = (key, label, ic) => el('button', { type: 'button', 'data-layer': key, 'aria-pressed': String(ui.layer === key), onclick: () => setLayer(key) }, label);
+  const lay = (key, label, tip) => el('button', { type: 'button', title: tip || null, 'data-layer': key, 'aria-pressed': String(ui.layer === key), onclick: () => setLayer(key) }, label);
   const maptools = el('div', { class: 'maptools' },
-    el('div', { class: 'seg', role: 'group', 'aria-label': 'Fond de carte' }, lay('plan', 'Plan'), lay('sat', 'Satellite')),
+    el('div', { class: 'seg', role: 'group', 'aria-label': 'Fond de carte' }, lay('plan', 'Plan'), lay('sat', 'Satellite'), lay('osm', 'Détaillé', 'OpenStreetMap : plus de petites rues et de commerces, mais beaucoup de noms en thaï')),
     el('button', { class: 'mini-btn', type: 'button', onclick: fitStage }, icon('fit-to-screen-outline'), 'Recentrer'));
   const sForm = el('form', {}, el('input', { id: 'baseQ', type: 'search', autocomplete: 'off', placeholder: 'Nom de l’hôtel, adresse ou coordonnées (13.7405, 100.5549)', 'aria-label': 'Chercher le logement' }), el('button', { class: 'mini-btn dark', type: 'submit' }, icon('magnify'), 'Chercher'));
   const sList = el('ul', { id: 'baseResults' });
