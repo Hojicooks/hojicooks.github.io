@@ -1,0 +1,24 @@
+{
+  "name": "La Planque · Guide GTA VI",
+  "short_name": "La Planque",
+  "description": "Le guide GTA VI en français : astuces, argent, codes, véhicules, faune et lieux.",
+  "lang": "fr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c121c",
+  "theme_color": "#0c121c",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Astuces", "url": "./#astuces"},
+    {"name": "Argent", "url": "./#argent"},
+    {"name": "Codes", "url": "./#codes"}
+  ]
+}

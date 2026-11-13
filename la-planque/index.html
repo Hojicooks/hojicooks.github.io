@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="La Planque : le guide GTA VI en français. Astuces vérifiées, argent, codes, véhicules, faune et lieux, à portée de main.">
 <meta name="theme-color" content="#0c121c">
+<link rel="canonical" href="https://hojicooks.github.io/la-planque/">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="La Planque">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:type" content="website"><meta property="og:site_name" content="La Planque"><meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="La Planque · Guide GTA VI en français">
+<meta property="og:description" content="Astuces vérifiées, argent, codes de triche, véhicules, faune et lieux de GTA VI. Trouve l'info en une minute.">
+<meta property="og:url" content="https://hojicooks.github.io/la-planque/"><meta property="og:image" content="https://hojicooks.github.io/la-planque/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sonpigelysgbfvbeotgj.supabase.co; img-src 'self' data: blob: https://sonpigelysgbfvbeotgj.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230c121c'/%3E%3Crect x='10' y='10' width='12' height='12' rx='2.5' fill='%23ff5d4f' transform='rotate(45 16 16)'/%3E%3C/svg%3E">
@@ -53,6 +65,11 @@
     canEdit:function(){return sess.then(function(s){return s?sb.rpc("is_admin").then(function(r){return !!r.data}):false})},
     profiles:function(ids){var o={};ids.forEach(function(i){o[i]={id:i,name:""}});return sb.from("profiles").select("user_id,name").in("user_id",ids).then(function(r){(r.data||[]).forEach(function(x){if(o[x.user_id])o[x.user_id].name=x.name});return o})}};
   window.claude={use:function(n){return Promise.resolve(n==="db"?db:n==="user"?user:null)}};
+  /* adresse publique du site (liens de partage) + installation sur l'écran d'accueil */
+  window.PLANQUE_SITE=location.origin+location.pathname.replace(/[^\/]*$/,"");
+  var bip=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();bip=e});
+  window.PLANQUE_INSTALL={can:function(){return !!bip},prompt:function(){if(!bip)return Promise.resolve(false);var e=bip;bip=null;e.prompt();return e.userChoice.then(function(c){return c&&c.outcome==="accepted"},function(){return false})}};
+  if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js",{scope:"./"}).catch(function(){})});
   window.PLANQUE_AUTH={
     signIn:function(email){return sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:location.origin+location.pathname}}).then(function(r){if(r.error)throw r.error})},
     signOut:function(){return sb.auth.signOut()},
@@ -87,6 +104,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0;padding:0}
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.isteps{margin:0 0 18px;padding:0;list-style:none;display:grid;gap:10px}.isteps li{background:var(--card2);border-radius:12px;padding:11px 13px;line-height:1.45}
 svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .app{max-width:760px;margin:0 auto;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 90px)}
 
@@ -460,6 +478,8 @@ form.edit label.inline input{width:22px;height:22px}
   <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></symbol>
   <symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
   <symbol id="ic-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol>
+  <symbol id="ic-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 12v8h14v-8"/></symbol>
+  <symbol id="ic-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
   <symbol id="ic-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5H5V6h5"/></symbol>
   <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
   <symbol id="ic-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></symbol>
@@ -701,7 +721,25 @@ function setSuggState(it,state){var d=sugg[it.uid];if(!d)return Promise.reject({
 
 /* ================= navigation ================= */
 var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","liste","propositions","profil","confidentialite"];
-function route(){var r=(location.hash||"").slice(1);return ROUTES.indexOf(r)>-1?r:"accueil"}
+var DEEP=/^#?voir-([a-z]+)-([A-Za-z0-9_-]{1,80})$/;
+function route(){var r=(location.hash||"").slice(1),dm=DEEP.exec(r);if(dm&&ORDER.indexOf(dm[1])>-1)return dm[1];return ROUTES.indexOf(r)>-1?r:"accueil"}
+/* lien direct vers une fiche (partage, pages Google) : ouvre la fiche puis remet l'adresse du module */
+function takeDeep(){var dm=DEEP.exec(location.hash||"");if(!dm||ORDER.indexOf(dm[1])<0)return false;try{history.replaceState(null,"","#"+dm[1])}catch(_){}
+  var col=MODS[dm[1]].col;if(data[col]&&data[col].some(function(x){return x.id===dm[2]}))openDetail(dm[1],dm[2]);else pendingOpen={m:dm[1],id:dm[2]};return true}
+var SITE=window.PLANQUE_SITE||null,SEG={astuces:"astuces",argent:"argent",voitures:"vehicules",codes:"codes",faune:"faune",lieux:"lieux"};
+function shareFiche(m,d){var url=SITE+SEG[m]+"/"+encodeURIComponent(d.id)+"/",t=(d[MODS[m].title]||"Fiche GTA VI")+" · La Planque";
+  if(navigator.share){navigator.share({title:t,url:url}).catch(function(){});return}
+  var fb=function(){toast("Ton lien : "+url)};
+  try{navigator.clipboard.writeText(url).then(function(){toast("Lien copié, colle-le où tu veux")},fb)}catch(_){fb()}}
+function standalone(){try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(_){return false}}
+function openInstall(){var I=window.PLANQUE_INSTALL;
+  if(I&&I.can()){I.prompt().then(function(ok){if(ok)toast("La Planque est installée")});return}
+  var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1),and=/Android/.test(ua);
+  function st(n,t){return h("li",null,h("b",{text:n+". "}),t)}
+  var steps=ios?[st(1,"Ouvre cette page dans Safari."),st(2,"Touche le bouton Partager, le carré avec une flèche."),st(3,"Choisis « Sur l'écran d'accueil », puis « Ajouter ».")]
+    :and?[st(1,"Ouvre cette page dans Chrome."),st(2,"Touche le menu ⋮ en haut à droite."),st(3,"Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil ».")]
+    :[st(1,"Ouvre cette page dans Chrome ou Edge."),st(2,"Clique sur l'icône d'installation à droite de la barre d'adresse."),st(3,"Confirme avec « Installer ».")];
+  sheet({kicker:"Installer",title:"La Planque sur ton écran d'accueil",body:[h("p",{class:"muted",style:"margin:0 0 12px",text:"Elle s'ouvre comme une vraie appli, en plein écran, en un geste."}),h("ol",{class:"isteps"},steps),h("button",{type:"button",class:"btn",text:"Compris",onclick:closeModal})]})}
 function renderNav(){var n=document.getElementById("nav");n.innerHTML="";var cur=route();if(PLUSROUTES.indexOf(cur)>-1)cur="plus";
   [["accueil","Accueil","home"],["astuces","Astuces","tip"],["argent","Argent","cash"],["codes","Codes","pad"],["plus","Plus","more"]].forEach(function(x){
     n.append(h("a",{href:"#"+x[0],"aria-current":cur===x[0]&&!query?"page":null},ic(x[2]),x[1]))});
@@ -713,7 +751,7 @@ function render(){
   if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
 }
 var rq=null;function rerender(){if(rq)return;rq=setTimeout(function(){rq=null;var y=window.scrollY;render();window.scrollTo(0,y)},30)}
-window.addEventListener("hashchange",function(){if(query){query="";qi.value="";qx.hidden=true}render();window.scrollTo(0,0);var v=document.getElementById("view");v.classList.remove("enter");void v.offsetWidth;v.classList.add("enter")});
+window.addEventListener("hashchange",function(){if(query){query="";qi.value="";qx.hidden=true}render();window.scrollTo(0,0);var v=document.getElementById("view");v.classList.remove("enter");void v.offsetWidth;v.classList.add("enter");takeDeep()});
 var qi=document.getElementById("q"),qx=document.getElementById("qx");
 qi.addEventListener("input",function(){query=qi.value;qx.hidden=!query;render()});
 qx.addEventListener("click",function(){query="";qi.value="";qx.hidden=true;render();qi.focus()});
@@ -916,6 +954,7 @@ function renderPlus(v){
   tile("#lieux","map","Lieux","Planques, garages, boutiques",data.places.length);
   tile("#liste","star","Ma liste","Tes fiches épinglées",Object.keys(favs()).length);
   tile("#profil","user","Mon profil","Ta progression et tes réglages");
+  if(SITE&&!standalone())tile(null,"phone","Installer l'app","Sur ton écran d'accueil",null,false,openInstall);
   if(isAdmin){var pc=pendingSugg().length;tile("#propositions","inbox","Propositions","À valider",pc,pc>0)}
   else if(canParticipate())tile(null,"send","Proposer une info","Une voiture, une astuce, une erreur",null,false,function(){openPropose(null,null)});
   v.append(g);
@@ -1109,7 +1148,8 @@ function openDetail(m,id){
       del.disabled=true;db.doc(M.col+"/"+d.id).delete().then(closeModal).catch(function(){del.disabled=false;del.dataset.a="";del.textContent="Échec, réessayer"})});
     body.push(h("div",{class:"adminrow"},h("button",{class:"btn sec",type:"button",onclick:function(){openForm(m,d)}},ic("edit")," Modifier"),
       del))}
-  sheet({kicker:M.label,title:d[M.title]||"Sans titre",actions:[star],body:body,ref:{m:m,id:id}});
+  var shr=SITE&&d.status!=="exemple"?h("button",{class:"x",type:"button","aria-label":"Partager cette fiche",onclick:function(){shareFiche(m,d)}},ic("share")):null;
+  sheet({kicker:M.label,title:d[M.title]||"Sans titre",actions:[shr,star],body:body,ref:{m:m,id:id}});
 }
 
 /* ================= formulaire admin ================= */
@@ -1146,7 +1186,7 @@ function openForm(m,d){imgState={id:d&&d.imageId||null,file:null};
 /* ================= démarrage ================= */
 function refreshOpenSheet(){if(openSheetRef){var r=openSheetRef;var ta=document.getElementById("cm-text");if(ta&&ta.value)return;openDetail(r.m,r.id)}}
 render();
-if(!LS.get("seen",0))setTimeout(openWelcome,400);
+if(!takeDeep()&&!LS.get("seen",0))setTimeout(openWelcome,400);
 if(window.claude&&window.claude.use){
   Promise.all([claude.use("db"),claude.use("user"),claude.use("assets")]).then(function(v){
     db=v[0];user=v[1];assets=v[2];

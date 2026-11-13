@@ -1,0 +1,26 @@
+name: La Planque - pages des fiches
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: la-planque-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Générer les pages
+        run: python3 la-planque/tools/build_pages.py
+      - name: Publier si quelque chose a changé
+        run: |
+          git add -A la-planque
+          if git diff --cached --quiet; then echo "Rien de neuf"; exit 0; fi
+          git -c user.name="la-planque-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "La Planque : pages des fiches mises à jour"
+          git push

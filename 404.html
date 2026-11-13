@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Page introuvable</title>
+<style>:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px/1.5 system-ui,-apple-system,sans-serif;background:Canvas;color:CanvasText;padding:0 16px}main{text-align:center}a{color:inherit}</style>
+<script>
+/* Une fiche de La Planque toute récente n'a pas encore sa page : on l'ouvre directement dans l'app. */
+(function(){var m=/^\/la-planque\/(astuces|argent|vehicules|codes|faune|lieux)\/([A-Za-z0-9_-]{1,80})\/?$/.exec(location.pathname);
+  var mod={vehicules:"voitures"};if(m)location.replace("/la-planque/#voir-"+(mod[m[1]]||m[1])+"-"+m[2]);
+  else if(/^\/la-planque(\/|$)/.test(location.pathname))location.replace("/la-planque/");})();
+</script>
+</head>
+<body><main><h1>Page introuvable</h1><p><a href="/">Retour à l'accueil</a></p></main></body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hojicooks.github.io/la-planque/sitemap.xml
