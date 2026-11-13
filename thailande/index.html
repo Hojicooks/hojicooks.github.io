@@ -764,7 +764,7 @@ function origin(i) {
   const o = ui.origin[i] || 'base';
   if (o !== 'base' && byId[o] && byId[o].s === i && status(o) !== 'no') { const p = byId[o]; return { ll: [p.la, p.lo], id: o, from: 'de ' + p.n, since: 'depuis ' + p.n }; }
   const st = stayFor(i);
-  if (st) { const nm = ' (' + stayLabel(st) + ')'; return { ll: st.ll, id: null, stay: st.id, from: 'du logement' + nm, since: 'depuis le logement' + nm }; }
+  if (st) { const nm = stayLabel(st) === 'Notre logement' ? '' : ' (' + stayLabel(st) + ')'; return { ll: st.ll, id: null, stay: st.id, from: 'du logement' + nm, since: 'depuis le logement' + nm }; }
   return null;
 }
 const distOf = (p, org) => org ? km(org.ll, [p.la, p.lo]) : null;
@@ -1750,7 +1750,8 @@ function renderDisc() {
 function updateDiscDist() {
   const box = $('#discDist'); const p = disc.list[disc.i]; if (!box || !p) return;
   const st = stayFor(p.s, dateOf(p.id)); if (!st) return;
-  const org = { ll: st.ll, id: null, from: 'du logement (' + stayLabel(st) + ')', since: 'depuis le logement (' + stayLabel(st) + ')' };
+  const nm = stayLabel(st) === 'Notre logement' ? '' : ' (' + stayLabel(st) + ')';
+  const org = { ll: st.ll, id: null, from: 'du logement' + nm, since: 'depuis le logement' + nm };
   const tl = travelLine(travel(p, org), org);
   box.replaceChildren(icon(tl.ic), el('b', { text: tl.big }), tl.small);
 }
