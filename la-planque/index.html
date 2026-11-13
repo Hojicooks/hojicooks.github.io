@@ -56,7 +56,8 @@
   window.PLANQUE_AUTH={
     signIn:function(email){return sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:location.origin+location.pathname}}).then(function(r){if(r.error)throw r.error})},
     signOut:function(){return sb.auth.signOut()},
-    setName:function(n){return me().then(function(u){return sb.from("profiles").upsert({user_id:u,name:n,updated_at:now()})}).then(function(r){if(r.error)throw r.error})}};
+    setName:function(n){return me().then(function(u){return sb.from("profiles").upsert({user_id:u,name:n,updated_at:now()})}).then(function(r){if(r.error)throw r.error})},
+    deleteAccount:function(){return sb.rpc("delete_my_account").then(function(r){if(r.error)throw r.error;return sb.auth.signOut({scope:"local"})})}};
   /* rafraîchir ce que font les autres joueurs */
   setInterval(function(){if(!document.hidden)emit("community")},60000);
   document.addEventListener("visibilitychange",function(){if(!document.hidden){emit("community");CONTENT.forEach(function(c){emit("fiches:"+c)})}});
@@ -643,7 +644,7 @@ var MODS={
   body:function(d){return d.notes}}
 };
 var ORDER=["astuces","argent","voitures","codes","faune","lieux"];
-var PLUSROUTES=["plus","voitures","faune","lieux","liste","propositions","profil"];
+var PLUSROUTES=["plus","voitures","faune","lieux","liste","propositions","profil","confidentialite"];
 ORDER.forEach(function(m){var F=MODS[m].fields,si=-1;F.forEach(function(f,i){if(f.k==="source")si=i});if(si<0)si=F.length;
   var add=[];if(!F.some(function(f){return f.type==="image"}))add.push({k:"imageId",label:"Photo",type:"image"});
   add.push({k:"imageCredit",label:"Crédit de la photo (ex : © Rockstar Games)",type:"text"});
@@ -699,7 +700,7 @@ function pendingSugg(){var out=[];Object.keys(sugg).forEach(function(u){(sugg[u]
 function setSuggState(it,state){var d=sugg[it.uid];if(!d)return Promise.reject({});var next=JSON.parse(JSON.stringify(d));next.items=(next.items||[]).map(function(x){if(x.id===it.id)x.state=state;return x});sugg[it.uid]=next;return db.doc("suggestions/"+it.uid).set(next)}
 
 /* ================= navigation ================= */
-var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","liste","propositions","profil"];
+var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","liste","propositions","profil","confidentialite"];
 function route(){var r=(location.hash||"").slice(1);return ROUTES.indexOf(r)>-1?r:"accueil"}
 function renderNav(){var n=document.getElementById("nav");n.innerHTML="";var cur=route();if(PLUSROUTES.indexOf(cur)>-1)cur="plus";
   [["accueil","Accueil","home"],["astuces","Astuces","tip"],["argent","Argent","cash"],["codes","Codes","pad"],["plus","Plus","more"]].forEach(function(x){
@@ -709,7 +710,7 @@ function render(){
   renderNav();var v=document.getElementById("view");v.innerHTML="";renderFabs();
   if(query.trim().length>=2){renderSearch(v);return}
   var r=route();
-  if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
+  if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
 }
 var rq=null;function rerender(){if(rq)return;rq=setTimeout(function(){rq=null;var y=window.scrollY;render();window.scrollTo(0,y)},30)}
 window.addEventListener("hashchange",function(){if(query){query="";qi.value="";qx.hidden=true}render();window.scrollTo(0,0);var v=document.getElementById("view");v.classList.remove("enter");void v.offsetWidth;v.classList.add("enter")});
@@ -804,18 +805,36 @@ function startProfileSync(){if(!db||!uid)return;
     else if(!s.metadata.fromCache){if(!s.exists||(s.data().at||0)<profAt)pushProfile();else profState="ok"}
   },function(){profState="err"})}
 function drawAvatar(el){el.innerHTML="";if(me.avatarUrl)el.append(h("img",{alt:"",src:me.avatarUrl}));else if(me.name)el.textContent=me.name.trim().charAt(0).toUpperCase();else el.append(ic("user"))}
+function renderPrivacy(v){
+  function sec(t,ps){var b=h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:t})));ps.forEach(function(p){b.append(typeof p==="string"?h("p",{class:"muted",style:"margin:0;font-size:14px;line-height:1.55",text:p}):p)});v.append(b)}
+  v.append(h("div",{class:"pagehead"},h("h1",{text:"Confidentialité et mentions légales"}),h("p",{class:"muted",text:"En clair : on garde le strict minimum, et tu peux tout effacer quand tu veux."})));
+  sec("Ce site",["La Planque est un guide de fan non officiel consacré à GTA VI, édité à titre personnel et non commercial. Il n'a aucun lien avec Rockstar Games ni Take-Two Interactive. Grand Theft Auto est une marque de Take-Two Interactive.",
+    "Hébergement des pages : GitHub Pages (GitHub Inc., San Francisco, États-Unis). Base de données et connexion : Supabase, serveurs situés à Paris.",
+    h("p",{class:"muted",style:"margin:0;font-size:14px"},"Contact : ",h("a",{href:"https://github.com/Hojicooks/hojicooks.github.io/issues",target:"_blank",rel:"noopener",style:"color:var(--teal)",text:"page du projet sur GitHub"}),".")]);
+  sec("Sans compte",["Tu peux tout consulter sans te connecter. Tes fiches épinglées, ta progression et ta console restent alors uniquement dans ton navigateur, sur ton appareil.","Le site n'utilise ni publicité, ni traceur, ni cookie publicitaire. Les polices d'écriture sont chargées depuis Google Fonts, qui reçoit ton adresse IP comme tout site que tu visites."]);
+  sec("Avec un compte",["Ton adresse e-mail : elle sert uniquement à t'envoyer le lien de connexion. Elle n'est jamais affichée ni partagée.","Ton pseudo, tes votes et tes commentaires : ils sont publics, c'est le principe du site.","Tes propositions d'infos et de corrections : visibles par toi et par l'administrateur du site.","Tes fiches épinglées et ta progression : visibles par toi seul, pour les retrouver sur tous tes appareils."]);
+  sec("Durée et suppression",["Tes données sont conservées tant que ton compte existe. Le bouton « Supprimer mon compte », dans Mon profil, efface immédiatement et définitivement ton e-mail, ton pseudo, tes votes, tes commentaires, tes propositions et ta progression."]);
+  sec("Tes droits",["Conformément au RGPD, tu peux accéder à tes données, les corriger ou les faire effacer. Écris-nous via la page de contact ci-dessus. Tu peux aussi adresser une réclamation à la CNIL (cnil.fr)."]);
+  sec("Contenus",["Les textes sont rédigés par l'équipe du site à partir de sources citées sur chaque fiche. Les commentaires engagent leurs auteurs. Tout contenu insultant, illégal ou hors sujet peut être supprimé."]);
+}
 function authBlock(){
   var box=h("section",{class:"sec"}),msg=h("div",{class:"notice",hidden:true});
   if(!uid){var em=h("input",{id:"au-mail",type:"email",placeholder:"ton@email.fr",autocomplete:"email",required:true}),go=h("button",{class:"btn",type:"submit",text:"Recevoir mon lien de connexion"});
     var f=h("form",{class:"edit"},h("label",{for:"au-mail"},"Ton e-mail",em),go,msg);
     f.addEventListener("submit",function(e){e.preventDefault();var v=em.value.trim();if(!/^\S+@\S+\.\S+$/.test(v)){msg.hidden=false;msg.textContent="Vérifie ton adresse e-mail.";return}
       go.disabled=true;go.textContent="Envoi…";AUTH.signIn(v).then(function(){msg.hidden=false;msg.textContent="C'est envoyé. Ouvre l'e-mail sur cet appareil et touche le lien pour te connecter.";go.textContent="Lien envoyé"}).catch(function(err){go.disabled=false;go.textContent="Recevoir mon lien de connexion";msg.hidden=false;msg.textContent=err&&/rate|limit/i.test(err.message||"")?"Trop de demandes pour le moment. Réessaie dans quelques minutes.":"L'envoi a échoué. Réessaie dans un instant."})});
-    box.append(h("div",{class:"sech"},h("h2",{text:"Connexion"})),h("p",{class:"muted",style:"margin:0;font-size:13.5px",text:"Pas de mot de passe : tu reçois un lien par e-mail."}),f)}
+    box.append(h("div",{class:"sech"},h("h2",{text:"Connexion"})),h("p",{class:"muted",style:"margin:0;font-size:13.5px",text:"Pas de mot de passe : tu reçois un lien par e-mail."}),f,
+      h("p",{class:"muted",style:"margin:0;font-size:12.5px"},"Ton e-mail sert uniquement à te connecter. ",h("a",{href:"#confidentialite",style:"color:var(--teal)",text:"En savoir plus"})))}
   else{var nm=h("input",{id:"au-name",type:"text",maxlength:"24",minlength:"2",value:me.name||"",placeholder:"Ton pseudo"}),sv=h("button",{class:"btn sec",type:"submit",text:"Enregistrer"});
     var f2=h("form",{class:"edit"},h("label",{for:"au-name"},"Ton pseudo, affiché sur tes commentaires",nm),h("div",{class:"row-actions"},sv,h("button",{class:"btn danger",type:"button",text:"Se déconnecter",onclick:function(){AUTH.signOut().then(function(){location.reload()})}})),msg);
     f2.addEventListener("submit",function(e){e.preventDefault();var v=nm.value.trim();if(v.length<2){msg.hidden=false;msg.textContent="Ton pseudo doit faire au moins 2 caractères.";return}
       sv.disabled=true;AUTH.setName(v).then(function(){me.name=v;drawAvatar(document.getElementById("profBtn"));toast("Pseudo enregistré");render()}).catch(function(){sv.disabled=false;msg.hidden=false;msg.textContent="L'enregistrement a échoué. Réessaie."})});
-    box.append(h("div",{class:"sech"},h("h2",{text:"Mon compte"})),f2)}
+    box.append(h("div",{class:"sech"},h("h2",{text:"Mon compte"})),f2);
+    if(AUTH.deleteAccount){var del=h("button",{type:"button",class:"linkbtn",style:"color:var(--bad);justify-self:start",text:"Supprimer mon compte"});
+      del.addEventListener("click",function(){if(del.dataset.a!=="1"){del.dataset.a="1";del.textContent="Confirmer : mon compte, mes votes et mes commentaires seront effacés";return}
+        del.disabled=true;del.textContent="Suppression…";AUTH.deleteAccount().then(function(){try{Object.keys(localStorage).filter(function(k){return k.indexOf("pl_")===0}).forEach(function(k){localStorage.removeItem(k)})}catch(e){}location.hash="#accueil";location.reload()})
+          .catch(function(){del.disabled=false;del.dataset.a="";del.textContent="La suppression a échoué. Réessayer"})});
+      box.append(del)}}
   return box}
 function renderProfile(v){
   v.append(h("div",{class:"pagehead"},h("h1",{text:"Mon profil"})));
@@ -901,6 +920,7 @@ function renderPlus(v){
   else if(canParticipate())tile(null,"send","Proposer une info","Une voiture, une astuce, une erreur",null,false,function(){openPropose(null,null)});
   v.append(g);
   v.append(h("p",{class:"muted",style:"font-size:12.5px;margin:22px 2px 0",text:"Guide de fan non officiel, sans lien avec Rockstar Games ni Take-Two Interactive. Les infos marquées « à confirmer » ne sont pas officielles."}));
+  v.append(h("p",{style:"font-size:13px;margin:8px 2px 0"},h("a",{href:"#confidentialite",style:"color:var(--teal);font-weight:600",text:"Confidentialité et mentions légales"})));
 }
 
 /* ================= module ================= */
