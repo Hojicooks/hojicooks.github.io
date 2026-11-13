@@ -213,6 +213,11 @@ svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .item .r{grid-row:1;grid-column:2;align-self:start;text-align:right;display:grid;gap:2px;justify-items:end}
 .item .r .num{font-size:17px}
 .item .r small{font-size:11.5px;color:var(--mute)}
+.dt{font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--dim);line-height:1;padding:3px 6px;border-radius:6px;background:var(--card2);white-space:nowrap}
+.dt.fresh{color:var(--teal);background:color-mix(in srgb,var(--teal) 14%,var(--card))}
+.item .r .dt+*{margin-top:4px}
+.tag.when{font-variant-numeric:tabular-nums}
+.tag.when.fresh{color:var(--teal)}
 .item .m{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
 .item .sub{grid-column:1/-1;font-size:13px;color:var(--mute);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .item .subel{grid-column:1/-1}
@@ -620,7 +625,7 @@ var MODS={
   intro:"Les véhicules confirmés. Tri « Top » : les fiches les mieux notées par les joueurs passent devant.",
   fields:[{k:"name",label:"Nom du véhicule",type:"text",req:true},{k:"cls",label:"Catégorie",type:"select",opts:opts(["Super","Sport","Classique","Muscle","Berline","Compacte","SUV","Pick-up","Utilitaire","Tout-terrain","Moto","Bateau","Hélicoptère","Avion","Autre"])},{k:"access",label:"Disponibilité",type:"select",opts:opts(ACCESS)},{k:"imageId",label:"Photo",type:"image"},{k:"value",label:"Valeur de revente ($)",type:"number"},{k:"security",label:"Sécurité",type:"select",num:true,opts:[[1,"Aucune"],[2,"Alarme"],[3,"Clé électronique"],[4,"Antidémarrage"]]},{k:"tool",label:"Outil ou méthode",type:"select",opts:opts(["Bris de vitre","Crochetage (Slim Jim)","Clonage de clé","Contournement d'antidémarrage","Inconnu"])},{k:"tracker",label:"Équipé d'un traceur GPS",type:"bool"},{k:"region",label:"Région",type:"select",opts:opts(REGIONS)},{k:"spawn",label:"Où le trouver",type:"text"},{k:"notes",label:"Notes",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:[{g:"x",l:"Sans traceur",t:function(d){return d.security&&!d.tracker}},{g:"y",l:"Facile à voler",t:function(d){return d.security&&d.security<=2}},{g:"e",l:"Exclusifs",t:function(d){return d.access&&d.access!=="Standard"}}].concat([["Super",["Super"]],["Sport",["Sport","Classique"]],["Muscle",["Muscle"]],["Berlines",["Berline","Compacte"]],["SUV et pick-up",["SUV","Pick-up","Utilitaire"]],["Tout-terrain",["Tout-terrain"]],["Motos",["Moto"]],["Bateaux",["Bateau"]],["Aérien",["Hélicoptère","Avion"]]].map(function(c){return {g:"c",l:c[0],t:function(d){return c[1].indexOf(d.cls)>-1}}})),
-  sorts:[["top","Top"],["profit","Rentable",function(a,b){return (b.value||0)/(b.security||1)-(a.value||0)/(a.security||1)}],["value","Valeur",function(a,b){return (b.value||0)-(a.value||0)}],["easy","Facile",function(a,b){return (a.security||9)-(b.security||9)||(b.value||0)-(a.value||0)}]],
+  sorts:[["top","Top"],["recent","Récentes",byRecent],["profit","Rentable",function(a,b){return (b.value||0)/(b.security||1)-(a.value||0)/(a.security||1)}],["value","Valeur",function(a,b){return (b.value||0)-(a.value||0)}],["easy","Facile",function(a,b){return (a.security||9)-(b.security||9)||(b.value||0)-(a.value||0)}]],
   card:function(d){return {right:d.value?[h("span",{class:"num",text:money(d.value)}),h("small",{text:"revente"})]:null,
     tags:[d.cls?h("span",{class:"tag",text:d.cls}):null,d.access&&d.access!=="Standard"?h("span",{class:"tag gold"},ic("star"),d.access):null,d.security?h("span",{class:"tag",style:"color:"+SECCOL[d.security]},ic("lock"),SEC[d.security]):null,d.tracker?h("span",{class:"tag red"},ic("gps"),"Traceur"):null,regionTag(d.region)],sub:d.spawn}},
   stats:function(d){return [["Revente",d.value?money(d.value):null,true],["Catégorie",d.cls||null],["Disponibilité",d.access&&d.access!=="Standard"?d.access:false],["Sécurité",SEC[d.security]||null],["Outil",d.tool&&d.tool!=="Inconnu"?d.tool:null],["Traceur GPS",d.security?(d.tracker?"Oui, à éviter":"Non"):null],["Région",d.region&&d.region!=="Inconnu"?d.region:null],["Où le trouver",d.spawn||null]]},
@@ -629,7 +634,7 @@ var MODS={
   intro:"Les méthodes classées par les votes des joueurs, puis par gain par heure.",
   fields:[{k:"title",label:"Méthode",type:"text",req:true},{k:"level",label:"Niveau",type:"select",opts:opts(["Débutant","Intermédiaire","Avancé"])},{k:"perHour",label:"Gain estimé par heure ($)",type:"number"},{k:"risk",label:"Risque police",type:"select",num:true,opts:[[0,"Aucun"],[1,"Faible"],[2,"Moyen"],[3,"Élevé"]]},{k:"requires",label:"Prérequis",type:"text"},{k:"steps",label:"Étapes (une par ligne)",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:[{g:"l",l:"Débutant",t:function(d){return d.level==="Débutant"}},{g:"l",l:"Intermédiaire",t:function(d){return d.level==="Intermédiaire"}},{g:"l",l:"Avancé",t:function(d){return d.level==="Avancé"}},{g:"r",l:"Sans police",t:function(d){return !d.risk}}],
-  sorts:[["top","Top"],["gain","Gain/heure",function(a,b){return (b.perHour||0)-(a.perHour||0)}],["risk","Moins risqué",function(a,b){return (a.risk||0)-(b.risk||0)}]],
+  sorts:[["top","Top"],["recent","Récentes",byRecent],["gain","Gain/heure",function(a,b){return (b.perHour||0)-(a.perHour||0)}],["risk","Moins risqué",function(a,b){return (a.risk||0)-(b.risk||0)}]],
   card:function(d){return {right:d.perHour?[h("span",{class:"num",text:money(d.perHour)}),h("small",{text:"par heure"})]:null,
     tags:[d.level?h("span",{class:"tag",text:d.level}):null,h("span",{class:"tag",style:"color:"+(["var(--ok)","var(--gold)","var(--warn)","var(--bad)"][d.risk||0])},ic("siren"),"Police : "+RISK[d.risk||0])],sub:d.requires?"Il te faut : "+d.requires:null}},
   stats:function(d){return [["Gain par heure",d.perHour?money(d.perHour):null,true],["Niveau",d.level||null],["Risque police",RISK[d.risk||0]],["Il te faut",d.requires||"Rien de spécial"]]},
@@ -645,7 +650,7 @@ var MODS={
   intro:"Le compendium des animaux. Étudie un animal en jeu pour l'ajouter à ton carnet, puis coche-le ici.",
   fields:[{k:"name",label:"Espèce",type:"text",req:true},{k:"kind",label:"Type",type:"select",opts:opts(["Mammifère","Reptile","Oiseau","Poisson","Animal marin"])},{k:"region",label:"Région",type:"select",opts:opts(REGIONS)},{k:"habitat",label:"Habitat",type:"text"},{k:"rarity",label:"Rareté",type:"select",opts:opts(["Commun","Peu commun","Rare","Légendaire"])},{k:"imageId",label:"Photo",type:"image"},{k:"tip",label:"Conseil",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:[{g:"d",l:"À trouver",todo:true},{g:"k",l:"Mammifères",t:function(d){return d.kind==="Mammifère"}},{g:"k",l:"Reptiles",t:function(d){return d.kind==="Reptile"}},{g:"k",l:"Oiseaux",t:function(d){return d.kind==="Oiseau"}},{g:"k",l:"Marins",t:function(d){return d.kind==="Animal marin"}},{g:"k",l:"Poissons",t:function(d){return d.kind==="Poisson"}},{g:"r",l:"Rares",t:function(d){return d.rarity==="Rare"||d.rarity==="Légendaire"}}],
-  sorts:[["region","Région",function(a,b){return String(a.region).localeCompare(b.region,"fr")||String(a.name).localeCompare(b.name,"fr")}],["rare","Plus rares",function(a,b){var o=["Légendaire","Rare","Peu commun","Commun"];return o.indexOf(a.rarity)-o.indexOf(b.rarity)}],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}]],
+  sorts:[["region","Région",function(a,b){return String(a.region).localeCompare(b.region,"fr")||String(a.name).localeCompare(b.name,"fr")}],["recent","Récentes",byRecent],["rare","Plus rares",function(a,b){var o=["Légendaire","Rare","Peu commun","Commun"];return o.indexOf(a.rarity)-o.indexOf(b.rarity)}],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}]],
   card:function(d){var rare=d.rarity==="Rare"||d.rarity==="Légendaire";return {right:null,tags:[regionTag(d.region),d.rarity?h("span",{class:"tag"+(rare?" gold":"")},rare?ic("star"):null,d.rarity):null,d.kind?h("span",{class:"tag",text:d.kind}):null],sub:d.habitat}},
   stats:function(d){return [["Région",d.region&&d.region!=="Inconnu"?d.region:null],["Habitat",d.habitat||null],["Rareté",d.rarity||null],["Type",d.kind||null]]},
   body:function(d){return d.tip}},
@@ -653,14 +658,14 @@ var MODS={
   intro:"Tu ne portes que 2 armes longues et 2 armes de poing. Compose ton équipement idéal : il reste enregistré sur ton téléphone.",
   fields:[{k:"name",label:"Nom de l'arme",type:"text",req:true},{k:"type",label:"Type",type:"select",opts:opts(LONG.concat(SHORT).concat(["Corps à corps","Explosif","Autre"]))},{k:"access",label:"Disponibilité",type:"select",opts:opts(ACCESS)},{k:"imageId",label:"Photo",type:"image"},{k:"where",label:"Où l'obtenir",type:"text"},{k:"notes",label:"Notes",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:[{g:"s",l:"Armes longues",t:function(d){return LONG.indexOf(d.type)>-1}},{g:"s",l:"Armes de poing",t:function(d){return SHORT.indexOf(d.type)>-1}},{g:"e",l:"Exclusifs",t:function(d){return d.access&&d.access!=="Standard"}}],
-  sorts:[["type","Par type",function(a,b){var o=LONG.concat(SHORT);var ia=o.indexOf(a.type),ib=o.indexOf(b.type);return (ia<0?99:ia)-(ib<0?99:ib)||String(a.name).localeCompare(b.name,"fr")}],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}]],
+  sorts:[["type","Par type",function(a,b){var o=LONG.concat(SHORT);var ia=o.indexOf(a.type),ib=o.indexOf(b.type);return (ia<0?99:ia)-(ib<0?99:ib)||String(a.name).localeCompare(b.name,"fr")}],["recent","Récentes",byRecent],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}]],
   card:function(d){return {right:null,tags:[d.type?h("span",{class:"tag",text:d.type}):null,d.access&&d.access!=="Standard"?h("span",{class:"tag gold"},ic("star"),d.access):null],sub:d.where||d.notes}},
   stats:function(d){return [["Type",d.type||null],["Emplacement",LONG.indexOf(d.type)>-1?"Arme longue":SHORT.indexOf(d.type)>-1?"Arme de poing":"Hors limite"],["Disponibilité",d.access&&d.access!=="Standard"?d.access:false],["Où l'obtenir",d.where||null]]},
   body:function(d){return d.notes}},
  codes:{col:"codes",label:"Codes de triche",tab:"Codes",icon:"pad",title:"title",vote:"Ce code fonctionne ?",
   intro:"Les combinaisons s'affichent avec les touches de ta manette. Choisis ta console juste en dessous.",
   fields:[{k:"title",label:"Effet du code",type:"text",req:true},{k:"combo",label:"Combinaison (ex : R1 R2 L1 X GAUCHE BAS ; touches : X O CARRE TRIANGLE R1 R2 L1 L2 HAUT BAS GAUCHE DROITE)",type:"text"},{k:"phone",label:"Numéro à composer (si code par téléphone)",type:"text"},{k:"notes",label:"Notes",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
-  chips:[],sorts:[["top","Top"],["name","A à Z",function(a,b){return String(a.title).localeCompare(b.title,"fr")}]],
+  chips:[],sorts:[["top","Top"],["recent","Récentes",byRecent],["name","A à Z",function(a,b){return String(a.title).localeCompare(b.title,"fr")}]],
   card:function(d){return {right:null,tags:[d.phone?h("span",{class:"tag",text:"☎ "+d.phone}):null],subEl:d.combo?comboEl(d.combo):null,sub:d.combo?null:d.notes}},
   stats:function(d){return d.phone?[["Par téléphone",d.phone]]:[]},
   extra:function(d){return d.combo?h("div",{class:"prose"},h("b",{text:"Combinaison"}),comboEl(d.combo)):null},
@@ -668,7 +673,7 @@ var MODS={
  lieux:{col:"places",label:"Lieux",tab:"Lieux",icon:"map",title:"name",
   intro:"Planques, garages, boutiques et lieux connus, classés par région.",
   fields:[{k:"name",label:"Nom du lieu",type:"text",req:true},{k:"kind",label:"Type",type:"select",opts:opts(KINDS.map(function(k){return k[0]}))},{k:"region",label:"Région",type:"select",opts:opts(REGIONS)},{k:"area",label:"Quartier ou adresse",type:"text"},{k:"access",label:"Disponibilité",type:"select",opts:opts(ACCESS)},{k:"notes",label:"Notes",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
-  chips:KINDS.map(function(k){return {g:"k",l:k[0],t:function(d){return d.kind===k[0]}}}),sorts:[["region","Par région",function(a,b){return REGIONS.indexOf(a.region)-REGIONS.indexOf(b.region)||String(a.name).localeCompare(b.name,"fr")}],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}]],
+  chips:KINDS.map(function(k){return {g:"k",l:k[0],t:function(d){return d.kind===k[0]}}}),sorts:[["region","Par région",function(a,b){return REGIONS.indexOf(a.region)-REGIONS.indexOf(b.region)||String(a.name).localeCompare(b.name,"fr")}],["recent","Récentes",byRecent],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}]],
   card:function(d){return {right:null,tags:[d.kind?h("span",{class:"tag",style:"color:"+kindColor(d.kind)},h("span",{class:"dot",style:"background:"+kindColor(d.kind)+";margin-right:0"}),d.kind):null,regionTag(d.region),d.access&&d.access!=="Standard"?h("span",{class:"tag gold"},ic("star"),d.access):null],sub:d.area}},
   stats:function(d){return [["Type",d.kind||null],["Région",d.region&&d.region!=="Inconnu"?d.region:null],["Quartier",d.area||null],["Disponibilité",d.access&&d.access!=="Standard"?d.access:false]]},
   body:function(d){return d.notes}}
@@ -691,6 +696,12 @@ var data={},hasCache=false;ORDER.forEach(function(m){var c=LS.get("c_"+MODS[m].c
 var dbState="wait",db=null,assets=null,user=null,uid=null,isAdmin=false,query="";
 var ui={};ORDER.forEach(function(m){ui[m]={chips:{},sort:MODS[m].sorts[0][0]}});
 var prevVisit=LS.get("lastVisit",0);LS.set("lastVisit",Date.now());
+/* date courte d'une fiche : « Aujourd'hui », « Hier », sinon « 13/11 » */
+function dayDiff(t){var a=new Date(t),b=new Date();return Math.round((new Date(b.getFullYear(),b.getMonth(),b.getDate())-new Date(a.getFullYear(),a.getMonth(),a.getDate()))/864e5)}
+function dshort(t){var n=dayDiff(t),d=new Date(t);if(n===0)return "Aujourd'hui";if(n===1)return "Hier";return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+(d.getFullYear()!==new Date().getFullYear()?"/"+String(d.getFullYear()).slice(2):"")}
+function dfull(t){return new Date(t).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})+" à "+new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
+function dateEl(d){if(!d.updatedAt)return null;var f=dayDiff(d.updatedAt)<=1;return h("span",{class:"dt"+(f?" fresh":""),title:"Mis à jour le "+dfull(d.updatedAt),"aria-label":"Mis à jour le "+dfull(d.updatedAt),text:dshort(d.updatedAt)})}
+function byRecent(a,b){return (b.updatedAt||0)-(a.updatedAt||0)}
 function isNew(d){return prevVisit&&d.updatedAt&&d.updatedAt>prevVisit}
 function done(m){return LS.get("done_"+m,{})}
 function toggleDone(m,id){var p=done(m);if(p[id])delete p[id];else p[id]=1;LS.set("done_"+m,p)}
@@ -786,7 +797,7 @@ function item(m,d,showMod){
   var el=h("button",{type:"button",class:"item"+(d.prio?" prio":"")+" pic",onclick:function(){openDetail(m,d.id)}},
     visual(m,d,false),
     h("span",{class:"t",text:(dn?"✓ ":"")+(d[M.title]||"Sans titre")}),
-    c.right?h("span",{class:"r"},c.right):null,tags,
+    (c.right||d.updatedAt)?h("span",{class:"r"},dateEl(d),c.right):null,tags,
     c.subEl?h("span",{class:"subel"},c.subEl):null,
     c.sub?h("span",{class:"sub",text:c.sub}):null);
   if(!tags.childNodes.length)tags.hidden=true;
@@ -1036,7 +1047,7 @@ function renderModule(v,m){
   rows.sort(sf);
   var list=h("div",{class:"list",style:"margin-top:12px"});
   if(!rows.length)list.append(h("div",{class:"empty",text:all.length?"Aucune fiche avec ces filtres. Retire un filtre pour en voir plus.":(isAdmin?"Aucune fiche pour l'instant. Ajoute la première avec le bouton en bas.":"Aucune fiche pour l'instant.")}));
-  else if(m==="astuces"&&!Object.keys(st.chips).some(function(g){return st.chips[g]!=null})){
+  else if(m==="astuces"&&st.sort!=="recent"&&!Object.keys(st.chips).some(function(g){return st.chips[g]!=null})){
     var groups={};rows.forEach(function(d){(groups[d.theme||"Divers"]=groups[d.theme||"Divers"]||[]).push(d)});
     ["Actu","Bases","Police","Combat","Véhicules","Argent","Santé","Divers"].forEach(function(t){if(!groups[t])return;list.append(h("div",{class:"group",text:t}));groups[t].forEach(function(d){list.append(item(m,d))})})}
   else if(m==="lieux"&&st.sort==="region"){var cur=null;rows.forEach(function(d){var r=d.region&&d.region!=="Inconnu"?d.region:"Région pas encore connue";if(r!==cur){cur=r;list.append(h("div",{class:"group",style:RCOL[r]?"color:"+RCOL[r]:null,text:r}))}list.append(item(m,d))})}
@@ -1147,6 +1158,7 @@ function openDetail(m,id){
   body.push(visual(m,d,true));
   if(d.imageId&&d.imageCredit)body.push(h("p",{class:"credit",text:"Photo : "+d.imageCredit}));
   var tags=h("div",{class:"taglist"});if(d.prio)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));if(isNew(d))tags.append(h("span",{class:"tag new",text:"Nouveau"}));tags.append(statusTag(d.status));
+  if(d.updatedAt)tags.append(h("span",{class:"tag when"+(dayDiff(d.updatedAt)<=1?" fresh":""),title:dfull(d.updatedAt),text:"Mis à jour "+(dayDiff(d.updatedAt)<=1?dshort(d.updatedAt).toLowerCase():"le "+dshort(d.updatedAt))}));
   if(m==="astuces"&&d.theme)tags.append(h("span",{class:"tag",text:d.theme}));
   body.push(tags);
   // chiffres clés : seulement ce qui est connu
@@ -1168,7 +1180,7 @@ function openDetail(m,id){
     body.push(m==="astuces"?pr:blk("Détails",pr))}
   var vb=videoBlock(d);if(vb)body.push(vb);
   var src=d.source&&/^https?:\/\//.test(d.source)?h("a",{href:d.source,target:"_blank",rel:"noopener",style:"color:var(--teal)",text:d.source.replace(/^https?:\/\/(www\.)?/,"").split("/")[0]}):null;
-  body.push(h("div",{class:"foot"},h("span",null,src?"Source : ":null,src,src&&d.updatedAt?" · ":null,d.updatedAt?"mis à jour le "+new Date(d.updatedAt).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}):null),
+  body.push(h("div",{class:"foot"},h("span",null,src?"Source : ":null,src,src&&d.updatedAt?" · ":null,d.updatedAt?"mis à jour le "+dfull(d.updatedAt):null),
     !isAdmin&&canParticipate()?h("button",{type:"button",class:"linkbtn",style:"display:inline-flex;gap:4px;align-items:center",onclick:function(){openPropose(m,d)}},ic("edit"),"Signaler une erreur"):null));
   // vote : seulement pour les infos qu'on peut juger
   if(M.vote&&!STATIC){var s=score(m,id),mv=myVotes[k]||0;
