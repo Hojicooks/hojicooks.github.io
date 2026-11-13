@@ -692,7 +692,7 @@ function counts(list) {
 function loadLocal() {
   let raw = null;
   try {
-    raw = JSON.parse(localStorage.getItem(LKEY) || 'null');
+    raw = JSON.parse(localStorage.getItem(LKEY + '-sauvegarde') || localStorage.getItem(LKEY) || 'null');
     if (!raw) { const old = JSON.parse(localStorage.getItem(OLDKEY) || 'null'); if (old) raw = { c: old }; }
   } catch (e) { raw = null; }
   choices = new Map(); stays = []; trips = [];
@@ -703,7 +703,7 @@ function loadLocal() {
     basesToStays(raw.b, stays);
   }
 }
-function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ v: 3, c: Object.fromEntries(choices), s: stays, t: trips })); } catch (e) {} }
+function saveLocal() { try { localStorage.setItem(LKEY + '-sauvegarde', JSON.stringify({ v: 3, c: Object.fromEntries(choices), s: stays, t: trips })); } catch (e) {} }
 function setChoice(id, patch) {
   const next = { ...(choices.get(id) || {}), ...patch };
   if (!next.s || next.s === 'no' || !next.d) { delete next.d; delete next.t1; delete next.t2; }   // date et heures : seulement pour un lieu gardé
