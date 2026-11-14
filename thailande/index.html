@@ -1040,6 +1040,7 @@ function cleanStay(v) {
   const o = { id: str(v.id, 40) || newId('s'), c, n: str(v.n, 80), a: str(v.a, 160), ll: cleanBase(v.ll) };
   for (const k of ['ci', 'co']) if (isDate(v[k])) o[k] = v[k];
   for (const k of ['ct', 'ce', 'cot']) if (isTime(v[k])) o[k] = v[k];
+  if (v.v === 'r') o.v = 'r';
   return o;
 }
 function cleanTrip(v) {
@@ -1110,12 +1111,17 @@ function applyDoc(raw) {
   // anciennes données sans date de modification : comptent comme « très anciennes »
   for (const k of liveKeys()) if (!mt[k]) mt[k] = 1;
   // un lieu de Bangkok daté pendant le 2e séjour appartient à « Bangkok (retour) »
-  const ret = staysOf(0).filter(x => x.ci).slice(1)[0];
-  if (ret) for (const [id, v] of [...choices]) {
+  migrateReturn();
+}
+function migrateReturn() {
+  const ret = staysOf(0).find(x => x.ci && isReturnStay(x)); if (!ret) return 0;
+  let n = 0;
+  for (const [id, v] of [...choices]) {
     const p = byId[id]; if (!p || p.s !== 0 || !v.d || v.d < ret.ci || choices.has(id + TW)) continue;
-    const now = Date.now(); choices.set(id + TW, v); choices.delete(id);
+    const now = Date.now(); choices.set(id + TW, v); choices.delete(id); n++;
     mt['c:' + id + TW] = Math.max(now, (mt['c:' + id] || 0) + 1); delete mt['c:' + id]; gone['c:' + id] = mt['c:' + id + TW];
   }
+  return n;
 }
 function liveKeys() {
   return [...[...choices.keys()].map(id => 'c:' + id), ...stays.map(x => 's:' + x.id), ...trips.map(x => 't:' + x.id), ...extras.map(x => 'x:' + x.id), ...Object.keys(edits).map(id => 'e:' + id), ...exs.map(x => 'ex:' + x.id)];
@@ -1240,17 +1246,33 @@ function paintSync() {
 
 /* logements : plusieurs possibles par ville (ex. Bangkok au début et à la fin) */
 const staysOf = (k) => stays.filter(s => s.c === k).sort((a, b) => (a.ci || '9').localeCompare(b.ci || '9'));
-// logement montré pour une étape : choisi, sinon le 1er séjour (Bangkok à l'aller) ou le dernier (Bangkok au retour)
-function stayPick(i, placedOnly) {
-  const k = BASEKEY[i]; if (k == null) return null;
-  const all = staysOf(k), xs = placedOnly ? all.filter(s => s.ll) : all; if (!xs.length) return null;
-  return xs.find(s => s.id === ui.stay[i]) || (STAGES[i].visit === 'last' ? xs[xs.length - 1] : xs[0]);
+// Bangkok : un logement est « du retour » s'il commence après une nuit passée ailleurs
+// (sans dates : s'il a été créé depuis l'étape « Bangkok (retour) »)
+function isReturnStay(s) {
+  if (!s || s.c !== 0) return false;
+  if (!s.ci) return s.v === 'r';
+  const other = stays.filter(x => x.c !== 0 && x.ci);
+  if (other.length) return other.some(x => x.ci < s.ci);
+  const first = staysOf(0).find(x => x.ci);
+  return !!first && first.id !== s.id;
 }
+// logements d'une étape : à Bangkok, ceux de l'aller ou ceux du retour, jamais mélangés
+function ownStays(i) {
+  const k = BASEKEY[i]; if (k == null) return [];
+  const all = staysOf(k);
+  return k === 0 ? all.filter(s => isReturnStay(s) === (STAGES[i].visit === 'last')) : all;
+}
+// logement montré pour une étape : celui choisi, sinon le premier de l'étape
+function stayPick(i, placedOnly) {
+  const all = ownStays(i), xs = placedOnly ? all.filter(s => s.ll) : all; if (!xs.length) return null;
+  return xs.find(s => s.id === ui.stay[i]) || xs[0];
+}
+// logement servant de point de départ : celui du jour, sinon celui choisi dans « Trajets depuis », sinon celui de l'étape
 function stayFor(i, day) {
   const k = BASEKEY[i]; if (k == null) return null;
   const xs = staysOf(k).filter(s => s.ll); if (!xs.length) return null;
   if (day) { const m = xs.find(s => s.ci && s.co && s.ci <= day && day <= s.co); if (m) return m; }
-  return stayPick(i, true);
+  return xs.find(s => s.id === ui.stay[i]) || stayPick(i, true);
 }
 const baseOf = (i, day) => stayFor(i, day)?.ll || null;
 const stayLabel = (s) => s.n || 'Notre logement';
@@ -1264,10 +1286,7 @@ function fmtRange(a, b) {
 // séjours d'une étape : Bangkok à l'aller = 1er séjour, au retour = les suivants
 function stageStays(i) {
   const k = BASEKEY[i]; if (k == null) return [];
-  const xs = staysOf(k).filter(s => s.ci);
-  if (STAGES[i].visit === 'first') return xs.slice(0, 1);
-  if (STAGES[i].visit === 'last') return xs.slice(1);
-  return xs;
+  return ownStays(i).filter(s => s.ci);
 }
 function stageDates(i) {
   if (!STAGES[i].step) return '';
@@ -1280,8 +1299,18 @@ function setStayPos(i, ll) {
   const cur = stayPick(i, false);
   const pos = ll ? cleanBase(ll) : null;
   if (cur) { cur.ll = pos; touch('s:' + cur.id); }
-  else if (pos) { const s = { id: newId('s'), c: k, n: 'Notre logement', a: '', ll: pos }; stays.push(s); ui.stay[i] = s.id; touch('s:' + s.id); }
-  saveLocal(); render();
+  else if (pos) {
+    const s = { id: newId('s'), c: k, n: 'Notre logement', a: '', ll: pos };
+    if (k === 0 && STAGES[i].visit === 'last') {
+      s.n = 'Logement du retour'; s.v = 'r';
+      const prev = stays.filter(x => x.c !== 0 && x.co).map(x => x.co).sort().pop();
+      if (prev) s.ci = prev; s.co = DAYS[DAYS.length - 1];
+    }
+    stays.push(s); ui.stay[i] = s.id; touch('s:' + s.id);
+    if (k === 0) migrateReturn();
+    saveLocal(); render(); return s;
+  }
+  saveLocal(); render(); return null;
 }
 // Où dort-on / où est-on un jour donné (d'après les logements)
 function nightStay(day) { return stays.find(s => s.ci && s.co && s.ci <= day && day < s.co) || null; }
@@ -1642,7 +1671,8 @@ function placeAt(i, ll) {
   if (t === 'new') { addPlace(i, ll); return; }
   if (t.startsWith('move:')) { movePlace(t.slice(5), ll); return; }
   if (BASEKEY[i] == null) return;
-  setStayPos(i, ll); fitStage(); toast('Logement placé. Fais glisser la maison pour l’ajuster.');
+  const made = setStayPos(i, ll); fitStage();
+  toast(made && made.v === 'r' ? 'Logement du retour ajouté' + (made.ci ? ' (' + fmtRange(made.ci, made.co) + ')' : '') + '. Donne-lui son nom et ses horaires avec « Modifier ».' : 'Logement placé. Fais glisser la maison pour l’ajuster.');
 }
 function setLayer(name) {
   ui.layer = name === 'sat' || name === 'osm' ? name : 'plan';
@@ -1682,7 +1712,7 @@ function syncMarkers() {
   }
   const cur = stayFor(i);
   for (const st of BASEKEY[i] == null ? [] : staysOf(BASEKEY[i]).filter(x => x.ll)) {
-    const main = cur && st.id === cur.id;
+    const main = cur && st.id === cur.id && ownStays(i).includes(st);
     const bm = L.marker(st.ll, { icon: baseIcon(main ? '' : 'other'), draggable: main, autoPan: true, zIndexOffset: main ? 1500 : 1200 });
     const when = st.ci ? ' · ' + fmtRange(st.ci, st.co) : '';
     bm.bindTooltip(`<b>${esc(stayLabel(st))}</b>${esc(when)}` + (main ? ' · glisser pour déplacer' : ' · cliquer pour mesurer depuis ce logement'), { direction: 'top' });
@@ -2198,7 +2228,7 @@ function renderDistBar(i) {
   const placed = staysOf(k).filter(x => x.ll);
   const osel = el('select', { 'aria-label': 'Point de départ des distances' });
   if (!org) osel.append(el('option', { value: '', text: 'choisir…', selected: true }));
-  if (!placed.length) osel.append(el('option', { value: 'base', text: 'notre logement (à placer)', disabled: true }));
+  if (!placed.length || !stayPick(i, true)) osel.append(el('option', { value: 'base', text: k === 0 && STAGES[i].visit === 'last' ? 'logement du retour (à placer)' : 'notre logement (à placer)', disabled: true }));
   const og1 = el('optgroup', { label: 'Nos logements' });
   for (const st of placed) og1.append(el('option', { value: 'stay:' + st.id, text: stayLabel(st) + (st.ci ? ' (' + fmtRange(st.ci, st.co) + ')' : ''), selected: (org && !org.id && org.stay === st.id) || null }));
   if (placed.length) osel.append(og1);
@@ -2232,7 +2262,7 @@ function renderDistBar(i) {
 function renderBaseBar(i) {
   const slot = $('#baseSlot'); if (!slot) return; slot.replaceChildren();
   const k = BASEKEY[i]; if (k == null) return;
-  const city = BASENAME[k], all = staysOf(k);
+  const city = BASENAME[k], all = ownStays(i), back = k === 0 && STAGES[i].visit === 'last';
   const cur = stayPick(i, false);
   const mb = (act, label, cls, ic) => el('button', { class: 'mini-btn' + (cls ? ' ' + cls : ''), type: 'button', 'data-act': act }, ic ? icon(ic) : null, label);
   const bar = el('div', { class: 'basebar' + (ui.placing ? ' placing' : '') });
@@ -2250,6 +2280,11 @@ function renderBaseBar(i) {
     bar.append(el('span', { class: 'ic' + (cur.ll ? '' : ' off') }, icon('home')),
       el('div', { class: 'txt' }, pick || el('b', { text: stayLabel(cur) }), el('small', { text: (cur.ll ? '' : 'Pas encore placé sur la carte. ') + (when || (k !== i ? 'Logement de ' + city + '.' : 'Fais glisser la maison pour l’ajuster.')) })),
       mb('place', cur.ll ? 'Déplacer' : 'Placer', cur.ll ? null : 'warn', 'cursor-default-click-outline'), mb('search', 'Chercher', null, 'magnify'), el('a', { class: 'mini-btn', href: '#voyage' }, icon('pencil'), 'Modifier'));
+  }
+  else if (back) {
+    const aller = staysOf(0).find(s => !isReturnStay(s));
+    bar.append(el('span', { class: 'ic off' }, icon('home')), el('div', { class: 'txt' }, el('b', { text: 'Où dormez-vous au retour à Bangkok ?' }), el('small', { text: (aller ? 'C’est un logement à part, différent de « ' + stayLabel(aller) + ' » (aller). ' : '') + 'Placez-le pour voir le trajet jusqu’à chaque lieu.' })),
+      mb('place', 'Cliquer sur la carte', 'warn', 'cursor-default-click-outline'), mb('search', 'Chercher une adresse', null, 'magnify'));
   }
   else bar.append(el('span', { class: 'ic off' }, icon('home')), el('div', { class: 'txt' }, el('b', { text: `Où est votre logement à ${city} ?` }), el('small', { text: 'Placez-le pour voir le trajet jusqu’à chaque lieu.' })), mb('place', 'Cliquer sur la carte', 'warn', 'cursor-default-click-outline'), mb('search', 'Chercher une adresse', null, 'magnify'));
   slot.append(bar);
@@ -2418,8 +2453,7 @@ document.addEventListener('click', (e) => {
   else if (act === 'trip-del') { trips = trips.filter(x => x.id !== id); kill('t:' + id); saveLocal(); render(); toast('Trajet supprimé.'); }
   else if (act === 'stay-map') {
     const st = stays.find(x => x.id === id); if (!st) return;
-    const bk = staysOf(st.c).filter(x => x.ci);
-    const stg = st.c === 0 && bk.length > 1 && bk[0].id !== st.id ? 8 : st.c;
+    const stg = isReturnStay(st) ? 8 : st.c;
     ui.stay[stg] = st.id; ui.origin[stg] = 'base'; if (!st.ll) { ui.placingNext = true; ui.target = 'stay'; } location.hash = 'etape-' + stg;
   }
   else if (act === 'prog-mode') { ui.prog = b.dataset.mode; render(); }
@@ -2665,7 +2699,9 @@ function voyageChange(x) {
   if (!x.value) delete next[f];
   const o = isStay ? cleanStay(next) : cleanTrip(next); if (!o) return;
   if (isStay && f === 'c' && o.c !== list[idx].c) o.ll = null;   // autre ville : la position n'a plus de sens
-  list[idx] = o; touch((isStay ? 's:' : 't:') + o.id); saveLocal(); render();
+  list[idx] = o; touch((isStay ? 's:' : 't:') + o.id);
+  if (isStay && o.c === 0) migrateReturn();   // lieux de Bangkok datés pendant le retour → « Bangkok (retour) »
+  saveLocal(); render();
 }
 
 /* ---------- sauvegarde & partage ---------- */
