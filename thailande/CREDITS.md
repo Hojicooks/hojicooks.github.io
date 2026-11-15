@@ -69,3 +69,29 @@ Photos de Wikimedia Commons, sous licences libres. Carnet personnel, non commerc
 - **Wat Paknam Phasi Charoen** : Pablotorrado, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:La_nueva_estupa_de_Wat_Paknam_Bhasicharoen.jpg
 - **Wat Ratchabophit** : Kriengsak Jirasirirojanakorn, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Wat_Ratchabophit_(2).jpg
 - **Îles Similan – île n°8, Donald Duck Bay** : Lakshmi Sawitri, CC BY 2.0 — https://commons.wikimedia.org/wiki/File:View_from_Sail_Rock_S_(15862531450).jpg
+
+## Nouveautés Instagram (15 nov.)
+
+Certaines sont des photos d’ambiance, pas le lieu exact (indiqué sur le site).
+
+- **Vijit Chao Phraya – festival de lumières** : SeanMack, CC BY 2.5 — https://commons.wikimedia.org/wiki/File:Loy_Krathong_Nov2004_SeanMcClean.jpg
+- **Ong Ang Walking Street** : Phoebus 28, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:%E0%B8%84%E0%B8%A5%E0%B8%AD%E0%B8%87%E0%B9%82%E0%B8%AD%E0%B9%88%E0%B8%87%E0%B8%AD%E0%B9%88%E0%B8%B2%E0%B8%87.jpg
+- **Sampheng Market** : Phoebus 28, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Sampheng_Night_Market.jpg
+- **Siam Square – la rue piétonne** : Sry85, CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Siam_Sqaure_23-2-2008_P2.JPG
+- **Banthat Thong Road** : Chainwit., CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:%E0%B8%84%E0%B8%B4%E0%B8%A7%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%88%E0%B9%8A%E0%B8%A7%E0%B8%A3%E0%B8%A3%E0%B8%93.jpg
+- **Benjakitti Park** : Supanut Arunoprayote, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Benjakitti_Forest_Park_(I).jpg
+- **One Bangkok – rooftop gratuit** : Bigcitydata, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:One_Bangkok_Tower_4.jpg
+- **TBB by Thai Battle – shorts de boxe** : muay-siam.com, Domaine public — https://commons.wikimedia.org/wiki/File:Muay_Thai_shorts.jpg
+- **Samatha – massage** : Roberto Faccenda, CC BY-SA 2.0 — https://commons.wikimedia.org/wiki/File:Thai_massage_(2362463368).jpg
+- **MIMIQ Facial Bar** : Keyfwellness, CC0 — https://commons.wikimedia.org/wiki/File:SPA_SKIN_CARE.jpg
+- **Nail Haus Studio – Sathorn** : Tails Wx, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Queer_manicure_example.jpg
+- **Fabrique – robes (EmSphere)** : Suicasmo, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:EmSphere_20240915.jpg
+- **Akara Sky Hanuman** : Bigcitydata, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:One_City_Centre_BKK_September_2022.jpg
+- **Kuan Nom Saow – resto avec vue** : Vyacheslav Argenberg, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Krabi,_Limestone_karst_landscape,_Thailand.jpg
+- **Thankiri Kamnan Park – parc-café** : Vyacheslav Argenberg, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Krabi,_Limestone_landscape,_Thailand.jpg
+- **The Hideaway – déjeuner sur la rivière** : Stefan Fussan, CC BY-SA 4.0 — https://commons.wikimedia.org/wiki/File:Than_Bok_Khorani_National_Park_SF0001.jpg
+- **The Treehouse Cafe** : mohigan, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Tree_house_cafe_-_panoramio.jpg
+- **79 Beach Bar & Jimmy Bar** : kallerna, CC BY-SA 3.0 — https://commons.wikimedia.org/wiki/File:Ao_Nang_beach_5.jpg
+- **Andalay Beach Bar** : Scorewith German, CC BY 3.0 — https://commons.wikimedia.org/wiki/File:Ao_Nang_Sunset_-_panoramio_(1).jpg
+- **Into The Forest – café** : Vyacheslav Argenberg, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Krabi,_Karst_rocks,_Thailand.jpg
+- **RuenMai – resto jardin** : P1898, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Thai_2026-09-09_dishes_01.jpg
