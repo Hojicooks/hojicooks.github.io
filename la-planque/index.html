@@ -1086,7 +1086,7 @@ function renderWiki(v){
   var n=notice();if(n)v.append(n);
   v.append(h("div",{class:"pagehead"},h("h1",{text:"Wiki"}),h("p",{class:"muted",text:"Tout ce que le jeu contient, une fiche par élément. Les infos sont sourcées, les votes restent côté astuces."})));
   var g=h("div",{class:"tiles"});
-  function tile(href,icon,t,s,cnt){g.append(h("a",{class:"tile",href:href},ic(icon),h("b",{text:t}),h("small",{text:s}),cnt!=null?h("span",{class:"cnt",text:String(cnt)}):null))}
+  function tile(href,icon,t,s,cnt){g.append(h("a",{class:"tile",href:href},ic(icon),h("b",{text:t}),h("small",{text:s}),cnt?h("span",{class:"cnt",text:String(cnt)}):null))}
   var fd=data.wildlife.filter(function(d){return done("faune")[d.id]}).length;
   tile("#lexique","book","Lexique","Applis, objets, mécaniques",data.lexicon.length);
   tile("#voitures","car","Véhicules","Les modèles confirmés",data.vehicles.length);
@@ -1131,7 +1131,7 @@ function renderModule(v,m){
   else if(m==="astuces"&&st.sort!=="recent"&&!Object.keys(st.chips).some(function(g){return st.chips[g]!=null})){
     var groups={};rows.forEach(function(d){(groups[d.theme||"Divers"]=groups[d.theme||"Divers"]||[]).push(d)});
     ["Actu","Bases","Police","Combat","Véhicules","Argent","Santé","Divers"].forEach(function(t){if(!groups[t])return;list.append(h("div",{class:"group",text:t}));groups[t].forEach(function(d){list.append(item(m,d))})})}
-  else if(m==="lexique"&&st.sort==="cat"&&st.chips.c==null){var cc=null;rows.forEach(function(d){var c=d.cat||"Autre";if(c!==cc){cc=c;list.append(h("div",{class:"group",style:LEXCOL[c]?"color:"+LEXCOL[c]:null,text:LEXPL[c]||c}))}list.append(item(m,d))})}
+  else if(m==="lexique"&&st.sort==="cat"&&st.chips.c==null){var cc=null;rows.slice().sort(function(a,b){return LEXCAT.indexOf(a.cat||"Autre")-LEXCAT.indexOf(b.cat||"Autre")||(a.prio?0:1)-(b.prio?0:1)||String(a.name).localeCompare(b.name,"fr")}).forEach(function(d){var c=d.cat||"Autre";if(c!==cc){cc=c;list.append(h("div",{class:"group",style:LEXCOL[c]?"color:"+LEXCOL[c]:null,text:LEXPL[c]||c}))}list.append(item(m,d))})}
   else if(m==="lieux"&&st.sort==="region"){var cur=null;rows.forEach(function(d){var r=d.region&&d.region!=="Inconnu"?d.region:"Région pas encore connue";if(r!==cur){cur=r;list.append(h("div",{class:"group",style:RCOL[r]?"color:"+RCOL[r]:null,text:r}))}list.append(item(m,d))})}
   else rows.forEach(function(d){list.append(item(m,d))});
   v.append(list);
