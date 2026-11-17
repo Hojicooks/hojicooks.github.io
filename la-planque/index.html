@@ -87,6 +87,8 @@
     deleteAccount:function(){return sb.rpc("delete_my_account").then(function(r){if(r.error)throw r.error;return sb.auth.signOut({scope:"local"})})}};
   /* rafraîchir ce que font les autres joueurs */
   setInterval(function(){if(!document.hidden)emit("community")},60000);
+  /* nouvelles fiches de la veille : rechargées toutes les 10 minutes */
+  setInterval(function(){if(!document.hidden)CONTENT.forEach(function(c){emit("fiches:"+c)})},600000);
   document.addEventListener("visibilitychange",function(){if(!document.hidden){emit("community");CONTENT.forEach(function(c){emit("fiches:"+c)})}});
 })();
 </script>
