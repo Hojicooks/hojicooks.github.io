@@ -3,7 +3,7 @@
 de catégories, le sommaire et le sitemap, à partir de la base Supabase (lecture publique).
 Usage : python3 la-planque/tools/build_pages.py [--local fichier.json]
 Écrit uniquement dans la-planque/<catégorie>/, la-planque/fiches/ et la-planque/sitemap.xml."""
-import json, os, re, sys, shutil, html, urllib.request
+import json, os, re, sys, shutil, html, unicodedata, urllib.request
 from datetime import datetime, timezone
 
 SITE = "https://hojicooks.github.io/la-planque/"
@@ -46,9 +46,81 @@ def title_of(d): return d.get("title") or d.get("name") or "Sans titre"
 def summary_of(col, d):
     for k in ("body", "notes", "tip", "requires", "spawn", "habitat", "area"):
         if d.get(k):
-            t = re.sub(r"\s+", " ", re.sub(r"^\d+\.\s*", "", str(d[k]))).strip()
+            t = re.sub(r"\s+", " ", re.sub(r"^\d+\.\s*", "", plain(d[k]))).strip()
             return t[:155].rsplit(" ", 1)[0] + "…" if len(t) > 158 else t
     return "Fiche GTA VI sur La Planque, le guide en français."
+
+
+# ---- liens entre fiches (même logique que l'app) ----
+MODSEG = {c[2]: c[1] for c in CATS}
+COLMOD = {c[0]: c[2] for c in CATS}
+LKSKIP = {"pic", "rat", "chat", "autre"}
+MANUAL = re.compile(r"\[\[([^\]|]{1,80})\|([^\]]{1,120})\]\]")
+IDX, WHERE = [], {}
+
+def norm(t): return "".join(c for c in unicodedata.normalize("NFD", str(t or "").lower()) if not unicodedata.combining(c))
+def nmap(t): return "".join((lambda n: n if len(n) == 1 else ch.lower())(norm(ch)) for ch in t)
+def isw(c): return bool(c) and bool(re.match(r"[a-z0-9]", c))
+def plain(t): return MANUAL.sub(lambda m: m.group(1), str(t or ""))
+
+def build_index(rows):
+    IDX.clear(); WHERE.clear()
+    for r in rows:
+        mod, d = COLMOD.get(r["col"]), r["data"]
+        if not mod or d.get("status") == "exemple": continue
+        WHERE[r["id"]] = mod
+        def add(n, cs):
+            n = str(n).strip()
+            if len(n) < 3: return
+            k = n if cs else norm(n)
+            if not cs and k in LKSKIP: return
+            IDX.append((k, cs, mod, r["id"]))
+        n = re.sub(r"\s*\(.*?\)\s*", " ", title_of(d)).strip()
+        if mod in ("faune", "lieux", "voitures"):
+            if len(n) >= 4: add(n, False)
+            if mod == "voitures":
+                md = " ".join(n.split(" ")[1:])
+                if len(md) >= 5: add(md, True)
+        for x in re.split(r"[,;\n]", str(d.get("links") or "")): add(x, False)
+    IDX.sort(key=lambda e: -len(e[0]))
+
+def lk_a(txt, mod, fid):
+    href = f"../../{MODSEG[mod]}/" + (f"{fid}/" if fid else "")
+    return f'<a class="xl" href="{esc(href)}">{esc(txt)}</a>'
+
+def auto_links(t, ctx):
+    nt, hits = nmap(t), []
+    for k, cs, mod, fid in IDX:
+        if fid == ctx["self"] or fid in ctx["used"]: continue
+        hay, frm = (t if cs else nt), 0
+        while True:
+            i = hay.find(k, frm)
+            if i < 0: break
+            frm, j = i + 1, i + len(k)
+            if i > 0 and isw(nt[i - 1]): continue
+            if not cs and j < len(nt) and nt[j] in "sx" and not (j + 1 < len(nt) and isw(nt[j + 1])): j += 1
+            if j < len(nt) and isw(nt[j]): continue
+            if any(i < b and j > a for a, b, _, _ in hits): continue
+            hits.append((i, j, mod, fid)); ctx["used"].add(fid); break
+    out, p = [], 0
+    for a, b, mod, fid in sorted(hits):
+        out.append(esc(t[p:a])); out.append(lk_a(t[a:b], mod, fid)); p = b
+    out.append(esc(t[p:]))
+    return "".join(out)
+
+def linkify(text, ctx):
+    t, out, last = str(text or ""), [], 0
+    for m in MANUAL.finditer(t):
+        out.append(auto_links(t[last:m.start()], ctx))
+        tg, tm, tid = m.group(2).strip(), None, None
+        if tg in MODSEG: tm = tg
+        elif "/" in tg and tg.split("/")[0] in MODSEG: tm, tid = tg.split("/", 1)
+        else: tid, tm = tg, WHERE.get(tg)
+        if tm and (not tid or tid in WHERE): out.append(lk_a(m.group(1), tm, tid)); ctx["used"].add(tid)
+        else: out.append(esc(m.group(1)))
+        last = m.end()
+    out.append(auto_links(t[last:], ctx))
+    return "".join(out)
 
 def thin(col, d):
     if d.get("status") == "exemple": return True
@@ -76,11 +148,11 @@ def stats(col, d):
         s += [("Par téléphone", d.get("phone"))]
     return [(k, v) for k, v in s if v not in (None, "")]
 
-def paras(text):
+def paras(text, ctx):
     ps = [p.strip() for p in re.split(r"\n\s*\n", str(text or "")) if p.strip()]
     if len(ps) > 1 and all(re.match(r"^\d+\.\s", p) for p in ps):
-        return "<ol>" + "".join(f"<li>{esc(re.sub(r'^\d+\.\s*', '', p))}</li>" for p in ps) + "</ol>"
-    return "".join(f"<p>{esc(p)}</p>" for p in ps)
+        return "<ol>" + "".join(f"<li>{linkify(re.sub(r'^\d+\.\s*', '', p), ctx)}</li>" for p in ps) + "</ol>"
+    return "".join(f"<p>{linkify(p, ctx)}</p>" for p in ps)
 
 CSS = """:root{--bg:#0c121c;--card:#141d2b;--line:#26344a;--fg:#eef3fa;--mute:#8d9cb3;--accent:#ff5d4f;--teal:#33d1bc;--ok:#4fd28a;--gold:#ffc35a;color-scheme:dark}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -143,6 +215,7 @@ def fiche_html(cat, row, siblings):
     col, seg, mod, label, ctitle, _ = cat
     d, fid = row["data"], row["id"]
     t = title_of(d)
+    ctx = {"self": fid, "used": set()}
     url = f"{SITE}{seg}/{fid}/"
     tags = [f'<span class="tag">{esc(label)}</span>']
     if d.get("theme"): tags.append(f'<span class="tag">{esc(d["theme"])}</span>')
@@ -169,9 +242,9 @@ def fiche_html(cat, row, siblings):
     s = stats(col, d)
     if s: b.append('<div class="stats">' + "".join(f'<div class="stat"><small>{esc(k)}</small><b>{esc(v)}</b></div>' for k, v in s) + "</div>")
     if col == "money" and d.get("steps"):
-        b.append("<h2>Étape par étape</h2><ol>" + "".join(f"<li>{esc(x.strip())}</li>" for x in str(d["steps"]).split("\n") if x.strip()) + "</ol>")
+        b.append("<h2>Étape par étape</h2><ol>" + "".join(f"<li>{linkify(x.strip(), ctx)}</li>" for x in str(d["steps"]).split("\n") if x.strip()) + "</ol>")
     txt = d.get("body") or d.get("notes") or d.get("tip")
-    if txt: b.append(paras(txt))
+    if txt: b.append(paras(txt, ctx))
     if d.get("videoUrl") and re.match(r"^https?://", d["videoUrl"]):
         b.append(f'<div class="box"><b>Vidéo à voir : <a href="{esc(d["videoUrl"])}" rel="noopener">{esc(d.get("videoTitle") or "Regarder")}</a></b>'
                  + (f' <small>({esc(d["videoBy"])})</small>' if d.get("videoBy") else "")
@@ -209,6 +282,7 @@ def write(path, content):
 def main():
     local = sys.argv[sys.argv.index("--local") + 1] if "--local" in sys.argv else None
     rows = [r for r in load(local) if isinstance(r.get("data"), dict) and SAFE_ID.match(str(r.get("id", "")))]
+    build_index(rows)
     changed, urls, groups = 0, [(SITE, None), (SITE + "fiches/", None)], []
     for cat in CATS:
         col, seg = cat[0], cat[1]
