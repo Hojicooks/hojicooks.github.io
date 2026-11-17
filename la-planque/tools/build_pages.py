@@ -19,7 +19,10 @@ CATS = [
   ("vehicles", "vehicules", "voitures", "Véhicule", "Véhicules de GTA 6", "Les véhicules confirmés de GTA VI : catégorie, sécurité, valeur de revente."),
   ("wildlife", "faune", "faune", "Animal", "Faune et pêche dans GTA 6", "Les animaux de Leonida : où les trouver et à quoi faire attention."),
   ("places", "lieux", "lieux", "Lieu", "Lieux de GTA 6", "Planques, garages, boutiques et lieux connus de Leonida, classés par région."),
+  ("lexicon", "lexique", "lexique", "Lexique", "Lexique de GTA 6", "Les applis, objets et mécaniques de GTA VI, expliqués un par un."),
 ]
+WIKI = {"vehicles", "wildlife", "places", "lexicon", "codes"}
+REFS = {}
 SEC = {1: "Aucune", 2: "Alarme", 3: "Clé électronique", 4: "Antidémarrage"}
 RISK = {0: "Aucun", 1: "Faible", 2: "Moyen", 3: "Élevé"}
 STATUS = {"verifie": "Vérifié", "a-confirmer": "À confirmer", "rumeur": "Rumeur"}
@@ -44,7 +47,7 @@ def load(local=None):
 def title_of(d): return d.get("title") or d.get("name") or "Sans titre"
 
 def summary_of(col, d):
-    for k in ("body", "notes", "tip", "requires", "spawn", "habitat", "area"):
+    for k in ("short", "body", "notes", "tip", "requires", "spawn", "habitat", "area"):
         if d.get(k):
             t = re.sub(r"\s+", " ", re.sub(r"^\d+\.\s*", "", plain(d[k]))).strip()
             return t[:155].rsplit(" ", 1)[0] + "…" if len(t) > 158 else t
@@ -63,6 +66,17 @@ def nmap(t): return "".join((lambda n: n if len(n) == 1 else ch.lower())(norm(ch
 def isw(c): return bool(c) and bool(re.match(r"[a-z0-9]", c))
 def plain(t): return MANUAL.sub(lambda m: m.group(1), str(t or ""))
 
+def text_of(d): return "\n\n".join(str(x) for x in (d.get("steps"), d.get("body") or d.get("notes") or d.get("tip")) if x)
+
+def build_refs(rows):
+    REFS.clear()
+    for r in rows:
+        if r["data"].get("status") == "exemple" or r["col"] not in COLMOD: continue
+        ctx = {"self": r["id"], "used": set()}
+        linkify(text_of(r["data"]), ctx)
+        for fid in ctx["used"]:
+            if fid: REFS.setdefault(fid, []).append(r)
+
 def build_index(rows):
     IDX.clear(); WHERE.clear()
     for r in rows:
@@ -76,7 +90,7 @@ def build_index(rows):
             if not cs and k in LKSKIP: return
             IDX.append((k, cs, mod, r["id"]))
         n = re.sub(r"\s*\(.*?\)\s*", " ", title_of(d)).strip()
-        if mod in ("faune", "lieux", "voitures"):
+        if mod in ("faune", "lieux", "voitures", "lexique"):
             if len(n) >= 4: add(n, False)
             if mod == "voitures":
                 md = " ".join(n.split(" ")[1:])
@@ -240,6 +254,7 @@ def fiche_html(cat, row, siblings):
         b.append(f'<div class="shot"><img src="{esc(img_src(xi, 1024))}" alt="{esc(d.get("imageCaption") or t)}" loading="lazy"></div>'
                  f'<p class="credit">{lab} : <a href="{esc(src)}" rel="noopener">{esc(txt)}</a>{" · " + esc(d["imageCaption"]) if d.get("imageCaption") else ""}</p>')
     s = stats(col, d)
+    if col == "lexicon" and d.get("short"): b.append(f'<p class="lead"><b>{esc(d["short"])}</b></p>')
     if s: b.append('<div class="stats">' + "".join(f'<div class="stat"><small>{esc(k)}</small><b>{esc(v)}</b></div>' for k, v in s) + "</div>")
     if col == "money" and d.get("steps"):
         b.append("<h2>Étape par étape</h2><ol>" + "".join(f"<li>{linkify(x.strip(), ctx)}</li>" for x in str(d["steps"]).split("\n") if x.strip()) + "</ol>")
@@ -252,6 +267,11 @@ def fiche_html(cat, row, siblings):
     if d.get("source") and re.match(r"^https?://", d["source"]):
         host = re.sub(r"^https?://(www\.)?", "", d["source"]).split("/")[0]
         b.append(f'<p><small>Source : <a href="{esc(d["source"])}" rel="noopener nofollow">{esc(host)}</a></small></p>')
+    refs = [x for x in REFS.get(fid, []) if x["id"] != fid] if col in WIKI else []
+    if refs:
+        segof = {c[0]: c[1] for c in CATS}
+        b.append("<h2>Mentionné dans</h2><ul class=\"list\">" + "".join(
+            f'<li><a href="../../{segof[x["col"]]}/{esc(x["id"])}/">{esc(title_of(x["data"]))}</a></li>' for x in refs[:8]) + "</ul>")
     b.append(f'<div class="cta"><a class="btn" href="../../#voir-{mod}-{esc(fid)}">Voir dans l\'app</a><a class="btn sec" href="../">{esc(ctitle)}</a></div>')
     others = [r for r in siblings if r["id"] != fid and not thin(col, r["data"])][:6]
     if others:
@@ -270,7 +290,7 @@ def cat_html(cat, rows):
 
 def hub_html(groups):
     lis = "".join(f'<li><a href="../{c[1]}/">{esc(c[4])}<small>{len([r for r in rows if r["data"].get("status")!="exemple"])} fiches</small></a></li>' for c, rows in groups)
-    intro = "Toutes les fiches de La Planque, le guide GTA VI en français : astuces, argent, codes, véhicules, faune et lieux."
+    intro = "Toutes les fiches de La Planque, le guide GTA VI en français : astuces, argent, codes, véhicules, faune, lieux et lexique du jeu."
     body = f'<div class="crumb"><a href="../">La Planque</a></div><h1>Toutes les fiches GTA 6</h1><p>{esc(intro)}</p><ul class="list">{lis}</ul>'
     return page("Toutes les fiches GTA 6 | La Planque", intro, f"{SITE}fiches/", body, rel="../")
 
@@ -283,6 +303,7 @@ def main():
     local = sys.argv[sys.argv.index("--local") + 1] if "--local" in sys.argv else None
     rows = [r for r in load(local) if isinstance(r.get("data"), dict) and SAFE_ID.match(str(r.get("id", "")))]
     build_index(rows)
+    build_refs(rows)
     changed, urls, groups = 0, [(SITE, None), (SITE + "fiches/", None)], []
     for cat in CATS:
         col, seg = cat[0], cat[1]

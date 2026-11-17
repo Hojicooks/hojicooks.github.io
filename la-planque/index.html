@@ -29,7 +29,7 @@
 /* Version hébergée : fiches, votes, commentaires et comptes dans Supabase. */
 (function(){
   var sb=supabase.createClient("https://sonpigelysgbfvbeotgj.supabase.co","sb_publishable_yzD2ln5tGuEZZyYttiFCWA__bK-4psf");
-  var CONTENT=["tips","money","vehicles","codes","wildlife","places"],ROWS={community:1,suggestions:1};
+  var CONTENT=["tips","money","vehicles","codes","wildlife","places","lexicon"],ROWS={community:1,suggestions:1};
   var sess=sb.auth.getSession().then(function(r){return r.data.session}).catch(function(){return null});
   function me(){return sess.then(function(s){return s?s.user.id:null})}
   var subs={};function reg(k,f){(subs[k]=subs[k]||[]).push(f);f()}
@@ -335,6 +335,13 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .hero.photo{height:0!important;padding-top:min(56.25%,300px);aspect-ratio:auto;max-height:none;flex:none}
 .hero.photo img{position:absolute;inset:0}
 .credit a{color:inherit}
+.lexshort{margin:2px 0 0;font-size:16.5px;font-weight:600;line-height:1.45;text-wrap:pretty}
+.refs{display:flex;flex-wrap:wrap;gap:8px}
+.ref{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:7px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13.5px;line-height:1.3}
+.ref span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ref svg.i{width:15px;height:15px;flex:none;color:var(--teal)}
+.ref:hover{border-color:var(--teal)}
+.ref:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 .xl{color:var(--teal);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--teal) 55%,transparent)}
 .xl:hover{text-decoration-color:currentColor}
 .backlk{all:unset;cursor:pointer;display:inline-flex;gap:4px;font-size:13.5px;color:var(--teal);margin:0 0 10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -514,7 +521,7 @@ form.edit label.inline input{width:22px;height:22px}
   <symbol id="ic-cmp" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></symbol>
   <symbol id="ic-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 2h6l1-2h5"/></symbol>
   <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></symbol>
-  <symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
+  <symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8M8 11h6"/></symbol><symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
   <symbol id="ic-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol>
   <symbol id="ic-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 12v8h14v-8"/></symbol>
   <symbol id="ic-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
@@ -597,6 +604,7 @@ function vis(m,d){
   if(m==="astuces"){var t=THEME[d.theme]||THEME.Divers;return ["#ic-"+t[0],t[1]]}
   if(m==="argent")return ["#ic-cash",["#4fd28a","#ffc35a","#ffb347","#ff6378"][d.risk||0]];
   if(m==="codes")return ["#ic-pad","#33d1bc"];
+  if(m==="lexique")return ["#ic-book",LEXCOL[d.cat]||"#33d1bc"];
   if(m==="lieux")return ["#ic-"+(KICON[d.kind]||"gps"),kindColor(d.kind)];
   return ["#ic-tip","#8d9cb3"]}
 /* ---- illustrations d'ambiance : dessins originaux, pas des images du jeu ---- */
@@ -626,6 +634,7 @@ function sceneFor(m,d){
   if(m==="faune")return [RSCENE[d.region]&&RSCENE[d.region]!=="road"?RSCENE[d.region]:(d.kind==="Animal marin"||d.kind==="Poisson"?"sea":"swamp")];
   if(m==="lieux")return [RSCENE[d.region]||"city"];
   if(m==="argent")return ["city","#2f9c6b"];
+  if(m==="lexique")return ["city",({Appli:"#2aa59a",Objet:"#c9903a","Mécanique":"#b0569a",Radio:"#7a5cc9"})[d.cat]];
   return ["city"]}
 /* captures officielles de Rockstar (rockstargames.com/VI/media), affichées depuis leur site avec crédit */
 var RIMG="https://www.rockstargames.com/VI/_next/static/media/";
@@ -648,8 +657,9 @@ function comboEl(str){var map=LS.get("console","ps")==="xb"?XB:PS,box=h("div",{c
     box.append(v?h("span",{class:"btnk"+(v[2]?" round":""),style:v[1]?"color:"+v[1]:null,text:v[0]}):h("span",{class:"btnk",text:t}))});return box}
 
 /* ================= modules ================= */
+var LEXCAT=["Appli","Objet","Mécanique","Radio","Autre"],LEXPL={Appli:"Applis",Objet:"Objets","Mécanique":"Mécaniques",Radio:"Radios",Autre:"Autres"},LEXCOL={Appli:"#33d1bc",Objet:"#ffc35a","Mécanique":"#ff8ad8",Radio:"#b48cff",Autre:"#c7d2e4"};
 var MODS={
- voitures:{col:"vehicles",label:"Véhicules à voler",tab:"Véhicules",icon:"car",title:"name",done:"Volé",pic:true,vote:"Ces infos sont justes ?",
+ voitures:{col:"vehicles",label:"Véhicules à voler",tab:"Véhicules",icon:"car",title:"name",wiki:true,done:"Volé",pic:true,vote:"Ces infos sont justes ?",
   intro:"Les véhicules confirmés. Tri « Top » : les fiches les mieux notées par les joueurs passent devant.",
   fields:[{k:"name",label:"Nom du véhicule",type:"text",req:true},{k:"cls",label:"Catégorie",type:"select",opts:opts(["Super","Sport","Classique","Muscle","Berline","Compacte","SUV","Pick-up","Utilitaire","Tout-terrain","Moto","Bateau","Hélicoptère","Avion","Autre"])},{k:"access",label:"Disponibilité",type:"select",opts:opts(ACCESS)},{k:"imageId",label:"Photo",type:"image"},{k:"value",label:"Valeur de revente ($)",type:"number"},{k:"security",label:"Sécurité",type:"select",num:true,opts:[[1,"Aucune"],[2,"Alarme"],[3,"Clé électronique"],[4,"Antidémarrage"]]},{k:"tool",label:"Outil ou méthode",type:"select",opts:opts(["Bris de vitre","Crochetage (Slim Jim)","Clonage de clé","Contournement d'antidémarrage","Inconnu"])},{k:"tracker",label:"Équipé d'un traceur GPS",type:"bool"},{k:"region",label:"Région",type:"select",opts:opts(REGIONS)},{k:"spawn",label:"Où le trouver",type:"text"},{k:"notes",label:"Notes",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"imageUrl",label:"Image officielle (lien d'une capture sur rockstargames.com/VI/media)",type:"text"},{k:"imageCaption",label:"Légende de l'image",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:[{g:"x",l:"Sans traceur",t:function(d){return d.security&&!d.tracker}},{g:"y",l:"Facile à voler",t:function(d){return d.security&&d.security<=2}},{g:"e",l:"Exclusifs",t:function(d){return d.access&&d.access!=="Standard"}}].concat([["Super",["Super"]],["Sport",["Sport","Classique"]],["Muscle",["Muscle"]],["Berlines",["Berline","Compacte"]],["SUV et pick-up",["SUV","Pick-up","Utilitaire"]],["Tout-terrain",["Tout-terrain"]],["Motos",["Moto"]],["Bateaux",["Bateau"]],["Aérien",["Hélicoptère","Avion"]]].map(function(c){return {g:"c",l:c[0],t:function(d){return c[1].indexOf(d.cls)>-1}}})),
@@ -674,7 +684,7 @@ var MODS={
   sorts:[["top","Top"],["recent","Récentes",function(a,b){return (b.updatedAt||0)-(a.updatedAt||0)}]],
   card:function(d){return {right:null,tags:[d.theme?h("span",{class:"tag",text:d.theme}):null],sub:d.body}},
   stats:function(){return []},body:function(d){return d.body}},
- faune:{col:"wildlife",label:"Faune et pêche",tab:"Faune",icon:"paw",title:"name",done:"Repéré",pic:true,
+ faune:{col:"wildlife",label:"Faune et pêche",tab:"Faune",icon:"paw",title:"name",wiki:true,done:"Repéré",pic:true,
   intro:"Le compendium des animaux. Étudie un animal en jeu pour l'ajouter à ton carnet, puis coche-le ici.",
   fields:[{k:"name",label:"Espèce",type:"text",req:true},{k:"kind",label:"Type",type:"select",opts:opts(["Mammifère","Reptile","Oiseau","Poisson","Animal marin"])},{k:"region",label:"Région",type:"select",opts:opts(REGIONS)},{k:"habitat",label:"Habitat",type:"text"},{k:"rarity",label:"Rareté",type:"select",opts:opts(["Commun","Peu commun","Rare","Légendaire"])},{k:"imageId",label:"Photo",type:"image"},{k:"tip",label:"Conseil",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"imageUrl",label:"Image officielle (lien d'une capture sur rockstargames.com/VI/media)",type:"text"},{k:"imageCaption",label:"Légende de l'image",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:[{g:"d",l:"À trouver",todo:true},{g:"k",l:"Mammifères",t:function(d){return d.kind==="Mammifère"}},{g:"k",l:"Reptiles",t:function(d){return d.kind==="Reptile"}},{g:"k",l:"Oiseaux",t:function(d){return d.kind==="Oiseau"}},{g:"k",l:"Marins",t:function(d){return d.kind==="Animal marin"}},{g:"k",l:"Poissons",t:function(d){return d.kind==="Poisson"}},{g:"r",l:"Rares",t:function(d){return d.rarity==="Rare"||d.rarity==="Légendaire"}}],
@@ -690,7 +700,7 @@ var MODS={
   card:function(d){return {right:null,tags:[d.type?h("span",{class:"tag",text:d.type}):null,d.access&&d.access!=="Standard"?h("span",{class:"tag gold"},ic("star"),d.access):null],sub:d.where||d.notes}},
   stats:function(d){return [["Type",d.type||null],["Emplacement",LONG.indexOf(d.type)>-1?"Arme longue":SHORT.indexOf(d.type)>-1?"Arme de poing":"Hors limite"],["Disponibilité",d.access&&d.access!=="Standard"?d.access:false],["Où l'obtenir",d.where||null]]},
   body:function(d){return d.notes}},
- codes:{col:"codes",label:"Codes de triche",tab:"Codes",icon:"pad",title:"title",vote:"Ce code fonctionne ?",
+ codes:{col:"codes",label:"Codes de triche",tab:"Codes",icon:"pad",title:"title",wiki:true,vote:"Ce code fonctionne ?",
   intro:"Les combinaisons s'affichent avec les touches de ta manette. Choisis ta console juste en dessous.",
   fields:[{k:"title",label:"Effet du code",type:"text",req:true},{k:"combo",label:"Combinaison (ex : R1 R2 L1 X GAUCHE BAS ; touches : X O CARRE TRIANGLE R1 R2 L1 L2 HAUT BAS GAUCHE DROITE)",type:"text"},{k:"phone",label:"Numéro à composer (si code par téléphone)",type:"text"},{k:"notes",label:"Notes",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"imageUrl",label:"Image officielle (lien d'une capture sur rockstargames.com/VI/media)",type:"text"},{k:"imageCaption",label:"Légende de l'image",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:[],sorts:[["top","Top"],["recent","Récentes",byRecent],["name","A à Z",function(a,b){return String(a.title).localeCompare(b.title,"fr")}]],
@@ -698,7 +708,16 @@ var MODS={
   stats:function(d){return d.phone?[["Par téléphone",d.phone]]:[]},
   extra:function(d){return d.combo?h("div",{class:"prose"},h("b",{text:"Combinaison"}),comboEl(d.combo)):null},
   body:function(d){return d.notes}},
- lieux:{col:"places",label:"Lieux",tab:"Lieux",icon:"map",title:"name",
+ lexique:{col:"lexicon",label:"Lexique du jeu",tab:"Lexique",icon:"book",title:"name",wiki:true,
+  intro:"Chaque appli, objet et mécanique du jeu, expliqué en une fiche. Les mots soulignés dans le reste du site mènent ici.",
+  fields:[{k:"name",label:"Nom exact dans le jeu",type:"text",req:true},{k:"cat",label:"Catégorie",type:"select",opts:opts(LEXCAT)},{k:"short",label:"En une phrase : à quoi ça sert",type:"text"},{k:"body",label:"Détails",type:"textarea"},{k:"where",label:"Où le trouver / comment l'obtenir",type:"text"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
+  chips:LEXCAT.map(function(t){return {g:"c",l:LEXPL[t]||t,t:function(d){return d.cat===t}}}),
+  sorts:[["cat","Par catégorie",function(a,b){return LEXCAT.indexOf(a.cat)-LEXCAT.indexOf(b.cat)||String(a.name).localeCompare(b.name,"fr")}],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}],["recent","Récentes",byRecent]],
+  card:function(d){return {right:null,tags:[d.cat?h("span",{class:"tag",style:"color:"+(LEXCOL[d.cat]||"#c7d2e4")},d.cat):null],sub:d.short||d.body}},
+  stats:function(d){return [["Catégorie",d.cat||null],["Où le trouver",d.where||false]]},
+  extra:function(d){return d.short?h("p",{class:"lexshort",text:d.short}):null},
+  body:function(d){return d.body}},
+ lieux:{col:"places",label:"Lieux",tab:"Lieux",icon:"map",title:"name",wiki:true,
   intro:"Planques, garages, boutiques et lieux connus, classés par région.",
   fields:[{k:"name",label:"Nom du lieu",type:"text",req:true},{k:"kind",label:"Type",type:"select",opts:opts(KINDS.map(function(k){return k[0]}))},{k:"region",label:"Région",type:"select",opts:opts(REGIONS)},{k:"area",label:"Quartier ou adresse",type:"text"},{k:"access",label:"Disponibilité",type:"select",opts:opts(ACCESS)},{k:"notes",label:"Notes",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"imageUrl",label:"Image officielle (lien d'une capture sur rockstargames.com/VI/media)",type:"text"},{k:"imageCaption",label:"Légende de l'image",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
   chips:KINDS.map(function(k){return {g:"k",l:k[0],t:function(d){return d.kind===k[0]}}}),sorts:[["region","Par région",function(a,b){return REGIONS.indexOf(a.region)-REGIONS.indexOf(b.region)||String(a.name).localeCompare(b.name,"fr")}],["recent","Récentes",byRecent],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}]],
@@ -706,8 +725,8 @@ var MODS={
   stats:function(d){return [["Type",d.kind||null],["Région",d.region&&d.region!=="Inconnu"?d.region:null],["Quartier",d.area||null],["Disponibilité",d.access&&d.access!=="Standard"?d.access:false]]},
   body:function(d){return d.notes}}
 };
-var ORDER=["astuces","argent","voitures","codes","faune","lieux"];
-var PLUSROUTES=["plus","voitures","faune","lieux","liste","propositions","profil","confidentialite"];
+var ORDER=["astuces","argent","voitures","codes","faune","lieux","lexique"];
+var PLUSROUTES=["plus","liste","propositions","profil","confidentialite"],WIKIROUTES=["wiki","lexique","voitures","faune","lieux","codes"];
 ORDER.forEach(function(m){var F=MODS[m].fields,si=-1;F.forEach(function(f,i){if(f.k==="source")si=i});if(si<0)si=F.length;
   var add=[];if(!F.some(function(f){return f.type==="image"}))add.push({k:"imageId",label:"Photo",type:"image"});
   add.push({k:"imageCredit",label:"Crédit de la photo (ex : © Rockstar Games)",type:"text"});
@@ -769,13 +788,13 @@ function pendingSugg(){var out=[];Object.keys(sugg).forEach(function(u){(sugg[u]
 function setSuggState(it,state){var d=sugg[it.uid];if(!d)return Promise.reject({});var next=JSON.parse(JSON.stringify(d));next.items=(next.items||[]).map(function(x){if(x.id===it.id)x.state=state;return x});sugg[it.uid]=next;return db.doc("suggestions/"+it.uid).set(next)}
 
 /* ================= navigation ================= */
-var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","liste","propositions","profil","confidentialite"];
+var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","wiki","lexique","liste","propositions","profil","confidentialite"];
 var DEEP=/^#?voir-([a-z]+)-([A-Za-z0-9_-]{1,80})$/;
 function route(){var r=(location.hash||"").slice(1),dm=DEEP.exec(r);if(dm&&ORDER.indexOf(dm[1])>-1)return dm[1];return ROUTES.indexOf(r)>-1?r:"accueil"}
 /* lien direct vers une fiche (partage, pages Google) : ouvre la fiche puis remet l'adresse du module */
 function takeDeep(){var dm=DEEP.exec(location.hash||"");if(!dm||ORDER.indexOf(dm[1])<0)return false;try{history.replaceState(null,"","#"+dm[1])}catch(_){}
   var col=MODS[dm[1]].col;if(data[col]&&data[col].some(function(x){return x.id===dm[2]}))openDetail(dm[1],dm[2]);else pendingOpen={m:dm[1],id:dm[2]};return true}
-var SITE=window.PLANQUE_SITE||null,SEG={astuces:"astuces",argent:"argent",voitures:"vehicules",codes:"codes",faune:"faune",lieux:"lieux"};
+var SITE=window.PLANQUE_SITE||null,SEG={astuces:"astuces",argent:"argent",voitures:"vehicules",codes:"codes",faune:"faune",lieux:"lieux",lexique:"lexique"};
 function shareFiche(m,d){var url=SITE+SEG[m]+"/"+encodeURIComponent(d.id)+"/",t=(d[MODS[m].title]||"Fiche GTA VI")+" · La Planque";
   if(navigator.share){navigator.share({title:t,url:url}).catch(function(){});return}
   var fb=function(){toast("Ton lien : "+url)};
@@ -789,15 +808,15 @@ function openInstall(){var I=window.PLANQUE_INSTALL;
     :and?[st(1,"Ouvre cette page dans Chrome."),st(2,"Touche le menu ⋮ en haut à droite."),st(3,"Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil ».")]
     :[st(1,"Ouvre cette page dans Chrome ou Edge."),st(2,"Clique sur l'icône d'installation à droite de la barre d'adresse."),st(3,"Confirme avec « Installer ».")];
   sheet({kicker:"Installer",title:"La Planque sur ton écran d'accueil",body:[h("p",{class:"muted",style:"margin:0 0 12px",text:"Elle s'ouvre comme une vraie appli, en plein écran, en un geste."}),h("ol",{class:"isteps"},steps),h("button",{type:"button",class:"btn",text:"Compris",onclick:closeModal})]})}
-function renderNav(){var n=document.getElementById("nav");n.innerHTML="";var cur=route();if(PLUSROUTES.indexOf(cur)>-1)cur="plus";
-  [["accueil","Accueil","home"],["astuces","Astuces","tip"],["argent","Argent","cash"],["codes","Codes","pad"],["plus","Plus","more"]].forEach(function(x){
+function renderNav(){var n=document.getElementById("nav");n.innerHTML="";var cur=route();if(PLUSROUTES.indexOf(cur)>-1)cur="plus";if(WIKIROUTES.indexOf(cur)>-1)cur="wiki";
+  [["accueil","Accueil","home"],["astuces","Astuces","tip"],["argent","Argent","cash"],["wiki","Wiki","book"],["plus","Plus","more"]].forEach(function(x){
     n.append(h("a",{href:"#"+x[0],"aria-current":cur===x[0]&&!query?"page":null},ic(x[2]),x[1]))});
 }
 function render(){
   renderNav();var v=document.getElementById("view");v.innerHTML="";renderFabs();
   if(query.trim().length>=2){renderSearch(v);return}
   var r=route();
-  if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
+  if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="wiki")renderWiki(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
 }
 var rq=null;function rerender(){if(rq)return;rq=setTimeout(function(){rq=null;var y=window.scrollY;render();window.scrollTo(0,y)},30)}
 window.addEventListener("hashchange",function(){if(query){query="";qi.value="";qx.hidden=true}render();window.scrollTo(0,0);var v=document.getElementById("view");v.classList.remove("enter");void v.offsetWidth;v.classList.add("enter");takeDeep()});
@@ -1029,7 +1048,7 @@ var NOSEARCH={id:1,source:1,videoUrl:1,imageId:1,imageCredit:1,status:1,updatedA
 function hay(d){var t=[];for(var k in d)if(!NOSEARCH[k]&&typeof d[k]==="string")t.push(d[k]);return norm(plain(t.join(" ")))}
 function renderSearch(v){
   var words=norm(query).trim().split(/\s+/).filter(Boolean),total=0;
-  ORDER.forEach(function(m){var M=MODS[m];
+  ["lexique"].concat(ORDER.filter(function(x){return x!=="lexique"})).forEach(function(m){var M=MODS[m];
     var hits=data[M.col].filter(function(d){var t=hay(d);return words.every(function(w){return t.indexOf(w)>-1})})
       .sort(function(a,b){var ta=norm(a[M.title]),tb=norm(b[M.title]),at=words.every(function(w){return ta.indexOf(w)>-1})?0:1,bt=words.every(function(w){return tb.indexOf(w)>-1})?0:1;return at-bt||topSort(m)(a,b)});
     if(!hits.length)return;total+=hits.length;
@@ -1052,10 +1071,6 @@ function renderPlus(v){
   v.append(h("div",{class:"pagehead"},h("h1",{text:"Plus"})));
   var g=h("div",{class:"tiles"});
   function tile(href,icon,t,s,cnt,hot,onclick){g.append(h(onclick?"button":"a",{class:"tile",href:onclick?null:href,type:onclick?"button":null,onclick:onclick||null},ic(icon),h("b",{text:t}),h("small",{text:s}),cnt!=null?h("span",{class:"cnt"+(hot?" hot":""),text:String(cnt)}):null))}
-  var fd=data.wildlife.filter(function(d){return done("faune")[d.id]}).length;
-  tile("#voitures","car","Véhicules","Les modèles confirmés",data.vehicles.length);
-  tile("#faune","paw","Faune et pêche","Le compendium à cocher",fd+"/"+data.wildlife.length);
-  tile("#lieux","map","Lieux","Planques, garages, boutiques",data.places.length);
   tile("#liste","star","Ma liste","Tes fiches épinglées",Object.keys(favs()).length);
   tile("#profil","user","Mon profil","Ta progression et tes réglages");
   if(SITE&&!standalone())tile(null,"phone","Installer l'app","Sur ton écran d'accueil",null,false,openInstall);
@@ -1064,6 +1079,28 @@ function renderPlus(v){
   v.append(g);
   v.append(h("p",{class:"muted",style:"font-size:12.5px;margin:22px 2px 0",text:"Guide de fan non officiel, sans lien avec Rockstar Games ni Take-Two Interactive. Les infos marquées « à confirmer » ne sont pas officielles."}));
   v.append(h("p",{style:"font-size:13px;margin:8px 2px 0"},h("a",{href:"#confidentialite",style:"color:var(--teal);font-weight:600",text:"Confidentialité et mentions légales"})));
+}
+
+/* ================= wiki : tout ce que le jeu contient ================= */
+function renderWiki(v){
+  var n=notice();if(n)v.append(n);
+  v.append(h("div",{class:"pagehead"},h("h1",{text:"Wiki"}),h("p",{class:"muted",text:"Tout ce que le jeu contient, une fiche par élément. Les infos sont sourcées, les votes restent côté astuces."})));
+  var g=h("div",{class:"tiles"});
+  function tile(href,icon,t,s,cnt){g.append(h("a",{class:"tile",href:href},ic(icon),h("b",{text:t}),h("small",{text:s}),cnt!=null?h("span",{class:"cnt",text:String(cnt)}):null))}
+  var fd=data.wildlife.filter(function(d){return done("faune")[d.id]}).length;
+  tile("#lexique","book","Lexique","Applis, objets, mécaniques",data.lexicon.length);
+  tile("#voitures","car","Véhicules","Les modèles confirmés",data.vehicles.length);
+  tile("#faune","paw","Faune et pêche","Le compendium à cocher",fd+"/"+data.wildlife.length);
+  tile("#lieux","map","Lieux","Planques, garages, boutiques",data.places.length);
+  tile("#codes","pad","Codes de triche","Avec les touches de ta manette",data.codes.filter(function(d){return d.status!=="exemple"}).length);
+  v.append(g);
+  var cats=h("div",{class:"chips",style:"margin-top:18px"});
+  LEXCAT.forEach(function(t,i){var c=data.lexicon.filter(function(d){return d.cat===t}).length;if(!c)return;
+    cats.append(h("button",{type:"button",class:"chip",onclick:function(){ui.lexique.chips={c:i};location.hash="#lexique"}},(LEXPL[t]||t)+" · "+c))});
+  if(cats.childNodes.length)v.append(h("div",{class:"group",text:"Le lexique par catégorie"}),cats);
+  var rec=[];ORDER.forEach(function(m){if(!MODS[m].wiki)return;data[MODS[m].col].forEach(function(d){if(d.status!=="exemple"&&d.updatedAt)rec.push([m,d])})});
+  rec.sort(function(a,b){return b[1].updatedAt-a[1].updatedAt});
+  if(rec.length){v.append(h("div",{class:"group",text:"Derniers ajouts"}));var l=h("div",{class:"list"});rec.slice(0,5).forEach(function(x){l.append(item(x[0],x[1],true))});v.append(l)}
 }
 
 /* ================= module ================= */
@@ -1094,6 +1131,7 @@ function renderModule(v,m){
   else if(m==="astuces"&&st.sort!=="recent"&&!Object.keys(st.chips).some(function(g){return st.chips[g]!=null})){
     var groups={};rows.forEach(function(d){(groups[d.theme||"Divers"]=groups[d.theme||"Divers"]||[]).push(d)});
     ["Actu","Bases","Police","Combat","Véhicules","Argent","Santé","Divers"].forEach(function(t){if(!groups[t])return;list.append(h("div",{class:"group",text:t}));groups[t].forEach(function(d){list.append(item(m,d))})})}
+  else if(m==="lexique"&&st.sort==="cat"&&st.chips.c==null){var cc=null;rows.forEach(function(d){var c=d.cat||"Autre";if(c!==cc){cc=c;list.append(h("div",{class:"group",style:LEXCOL[c]?"color:"+LEXCOL[c]:null,text:LEXPL[c]||c}))}list.append(item(m,d))})}
   else if(m==="lieux"&&st.sort==="region"){var cur=null;rows.forEach(function(d){var r=d.region&&d.region!=="Inconnu"?d.region:"Région pas encore connue";if(r!==cur){cur=r;list.append(h("div",{class:"group",style:RCOL[r]?"color:"+RCOL[r]:null,text:r}))}list.append(item(m,d))})}
   else rows.forEach(function(d){list.append(item(m,d))});
   v.append(list);
@@ -1203,7 +1241,7 @@ function findFiche(id){for(var i=0;i<ORDER.length;i++){var M=MODS[ORDER[i]];if(d
 function lkIndex(){var out=[];ORDER.forEach(function(m){var M=MODS[m];(data[M.col]||[]).forEach(function(d){if(d.status==="exemple")return;
   var add=function(n,cs){n=String(n).trim();if(n.length<3)return;var k=cs?n:norm(n);if(!cs&&LKSKIP[k])return;out.push({k:k,cs:cs,m:m,id:d.id})};
   var n=String(d[M.title]||"").replace(/\s*\(.*?\)\s*/g," ").trim();
-  if(m==="faune"||m==="lieux"||m==="voitures"){if(n.length>=4)add(n,false);if(m==="voitures"){var md=n.split(" ").slice(1).join(" ");if(md.length>=5)add(md,true)}}
+  if(m==="faune"||m==="lieux"||m==="voitures"||m==="lexique"){if(n.length>=4)add(n,false);if(m==="voitures"){var md=n.split(" ").slice(1).join(" ");if(md.length>=5)add(md,true)}}
   String(d.links||"").split(/[,;\n]/).forEach(function(x){add(x,false)})})});
   return out.sort(function(a,b){return b.k.length-a.k.length})}
 function nmap(t){var o="";for(var i=0;i<t.length;i++){var c=norm(t[i]);o+=c.length===1?c:t[i].toLowerCase()}return o}
@@ -1227,6 +1265,11 @@ function autoLinks(t,ctx){var nt=nmap(t),hits=[];
       hits.push({i:i,j:j,m:e.m,id:e.id});ctx.used[e.id]=1;break}});
   if(!hits.length)return [t];hits.sort(function(a,b){return a.i-b.i});
   var out=[],p=0;hits.forEach(function(x){if(x.i>p)out.push(t.slice(p,x.i));out.push(lkA(t.slice(x.i,x.j),x.m,x.id));p=x.j});if(p<t.length)out.push(t.slice(p));return out}
+function backlinks(m,id){var idx=lkIndex(),out=[];
+  ORDER.forEach(function(mm){var MM=MODS[mm];(data[MM.col]||[]).forEach(function(d){if(d.status==="exemple"||(mm===m&&d.id===id))return;
+    var ctx={self:d.id,used:{},idx:idx},t=[d.steps,MM.body?MM.body(d):null].filter(Boolean).join("\n\n");if(!t)return;
+    var hit=linkify(t,ctx).some(function(x){return x&&x.tagName==="A"&&x.getAttribute("href")==="#voir-"+m+"-"+id});if(hit)out.push([mm,d])})});
+  return out.sort(function(a,b){return (MODS[a[0]].wiki?1:0)-(MODS[b[0]].wiki?1:0)||(b[1].updatedAt||0)-(a[1].updatedAt||0)})}
 function blk(title,nodes){return h("div",{class:"blk"},title?h("h3",{text:title}):null,nodes)}
 function openDetail(m,id){
   var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};
@@ -1260,6 +1303,8 @@ function openDetail(m,id){
     else{pr=h("div",{class:"prose"+(paras.length>1?" lead":"")});paras.forEach(function(p){pr.append(h("p",null,linkify(p,lctx)))})}
     body.push(m==="astuces"?pr:blk("Détails",pr))}
   var vb=videoBlock(d);if(vb)body.push(vb);
+  if(M.wiki){var refs=backlinks(m,id);if(refs.length){var rl=h("div",{class:"refs"});refs.slice(0,8).forEach(function(x){var XM=MODS[x[0]];rl.append(h("button",{type:"button",class:"ref",onclick:function(){if(openSheetRef)navStack.push({m:openSheetRef.m,id:openSheetRef.id});openDetail(x[0],x[1].id)}},svgUse("#ic-"+XM.icon),h("span",{text:x[1][XM.title]||"Sans titre"})))});
+    body.push(blk("Mentionné dans",rl))}}
   var src=d.source&&/^https?:\/\//.test(d.source)?h("a",{href:d.source,target:"_blank",rel:"noopener",style:"color:var(--teal)",text:d.source.replace(/^https?:\/\/(www\.)?/,"").split("/")[0]}):null;
   body.push(h("div",{class:"foot"},h("span",null,src?"Source : ":null,src,src&&d.updatedAt?" · ":null,d.updatedAt?"mis à jour le "+dfull(d.updatedAt):null),
     !isAdmin&&canParticipate()?h("button",{type:"button",class:"linkbtn",style:"display:inline-flex;gap:4px;align-items:center",onclick:function(){openPropose(m,d)}},ic("edit"),"Signaler une erreur"):null));
