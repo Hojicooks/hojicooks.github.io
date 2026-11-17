@@ -39,6 +39,10 @@
   function now(){return new Date().toISOString()}
   function slug(d){var t=String(d.name||d.title||"fiche").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)||"fiche";return t+"-"+Math.random().toString(36).slice(2,6)}
   function nodoc(){return {onSnapshot:function(cb){setTimeout(function(){cb({exists:false,data:function(){return null},metadata:{fromCache:false}})},0);return function(){}},set:function(){return Promise.reject({code:"error"})},delete:function(){return Promise.reject({code:"error"})}}}
+  function configDoc(k){return {
+    onSnapshot:function(cb){reg("config:"+k,function(){sb.from("settings").select("value").eq("key",k).maybeSingle().then(function(r){var v=r&&r.data?r.data.value:null;cb({exists:!!v,data:function(){return v},metadata:{fromCache:false}})})});return function(){}},
+    set:function(d){return sb.from("settings").upsert({key:k,value:d,updated_at:now()}).then(ok("config:"+k))},
+    delete:function(){return Promise.reject({code:"error"})}}}
   function rowDoc(table,id){return {
     onSnapshot:function(cb,err){reg(table,function(){sb.from(table).select("data").eq("user_id",id).maybeSingle().then(function(r){if(r.error){if(err)err(r.error);return}cb({exists:!!r.data,data:function(){return r.data?r.data.data:null},metadata:{fromCache:false}})})});return function(){}},
     set:function(d){return me().then(function(u){return u===id?sb.from(table).upsert({user_id:id,data:d,updated_at:now()}):sb.from(table).update({data:d,updated_at:now()}).eq("user_id",id)}).then(ok(table))},
@@ -59,7 +63,7 @@
       var m=/^data\/users\/([0-9a-f-]{36})$/.exec(c);
       if(m)return {doc:function(){return rowDoc("user_state",m[1])},onSnapshot:function(){return function(){}}};
       return {onSnapshot:function(cb){cb({docs:[],metadata:{fromCache:false}});return function(){}},doc:nodoc,add:function(){return Promise.reject({code:"error"})}}},
-    doc:function(path){var p=path.split("/");if(p.length===2&&CONTENT.indexOf(p[0])>-1)return ficheDoc(p[0],p[1]);if(p.length===2&&ROWS[p[0]])return rowDoc(p[0],p[1]);return nodoc()}};
+    doc:function(path){var p=path.split("/");if(p.length===2&&CONTENT.indexOf(p[0])>-1)return ficheDoc(p[0],p[1]);if(p.length===2&&ROWS[p[0]])return rowDoc(p[0],p[1]);if(p.length===2&&p[0]==="config"&&/^[a-z0-9-]{1,40}$/.test(p[1]))return configDoc(p[1]);return nodoc()}};
   var user={
     id:me,
     canEdit:function(){return sess.then(function(s){return s?sb.rpc("is_admin").then(function(r){return !!r.data}):false})},
@@ -375,6 +379,8 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .composer textarea{flex:1;min-width:0;min-height:44px;max-height:140px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:16px;color:var(--fg)}
 .composer button{width:44px;height:44px;border-radius:12px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;flex:none}
 .adminrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+.adminrow .btn{height:44px;margin:0;line-height:1;align-self:center;box-sizing:border-box;vertical-align:middle}
+.adminrow .btn svg.i{width:18px;height:18px}
 @media (min-width:700px){.scrim{align-items:center;padding:24px}.sheet{max-width:600px;max-height:86vh;border-radius:22px;border-bottom:1px solid var(--line)}.grab{display:none}.shd{cursor:auto;padding-top:14px}}
 .foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;font-size:13px;color:var(--mute)}
 .foot a{color:var(--teal)}
@@ -463,6 +469,14 @@ form.edit label.inline input{width:22px;height:22px}
 .banner p{margin:0;font-size:13px;color:#c9d3e3}
 /* Grand compte à rebours en tête d'accueil */
 .banner.big{height:auto}
+.banner .bnimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block}
+.banner.big.pic{min-height:min(78vw,380px);display:flex;flex-direction:column;justify-content:flex-end}
+.banner .bncred{position:absolute;top:8px;right:10px;font-size:10.5px;color:rgba(255,255,255,.85);text-shadow:0 1px 3px #000;text-decoration:none}
+.banner .bnedit{position:absolute;top:8px;left:8px;height:32px;padding:0 10px;border-radius:10px;background:rgba(8,12,20,.7);color:#fff;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.pickgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pickgrid button{border-radius:12px;overflow:hidden;border:2px solid transparent;aspect-ratio:16/9;background:var(--card2)}
+.pickgrid button.on{border-color:var(--accent)}
+.pickgrid img{width:100%;height:100%;object-fit:cover;display:block}
 .banner.big .txt{position:relative;padding:16px 14px 14px;background:linear-gradient(to top,rgba(8,12,20,.88),rgba(8,12,20,.35));gap:10px}
 .banner.big .lab{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff}
 .cd{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -819,10 +833,25 @@ function topSort(m){var v=!!MODS[m].vote;return function(a,b){return (a.prio?0:1
 /* ================= accueil ================= */
 var RELEASE=new Date(2026,10,19,0,0,0),cdTimer=null,homeUi={tab:"top",n:6};
 function feedPool(){var out=[];["astuces","argent","codes","voitures"].forEach(function(m){data[MODS[m].col].forEach(function(d){if(m==="voitures"&&!d.value)return;if(d.status==="exemple")return;out.push([m,d])})});return out}
+/* image derrière le compte à rebours : réglée par l'admin (config/home), captures officielles Rockstar uniquement */
+var homeCfg=LS.get("home",null),HOME_PICKS=[["Jason_Lucia_Rooftop_landscape.0c6p5do~-8~7..jpg","Jason et Lucia, artwork officiel"],["Jason_Lucia_Lock_And_Load_landscape.0l9s5w7ih9p~3.jpg","Jason et Lucia, artwork officiel"],["GTAVI_Official_Cover_Art_Landscape.03y6bcce9e2jr.jpg","La jaquette officielle"],["hero.0q5-tr6h86ai7.jpg","Vice City et au-delà"],["Vice_City_15.11tb0mz68edqo.jpg","Vice City"],["Leonida_Keys_01.0zgz7tveur6y8.jpg","Les Leonida Keys"],["Vice_City_27.0d2e~w_r93hmh.jpg","Vice City de nuit"],["Jason_and_Lucia_14.10e7v.06pcm_t.jpg","Jason et Lucia"]];
+function homeBg(bn){var c=homeCfg||{},u=extImg(c);
+  if(u){var im=h("img",{class:"bnimg",alt:"",src:imgSrc(u,1280)});im.onerror=function(){im.remove();bn.classList.remove("pic");var cr=bn.querySelector(".bncred");if(cr)cr.remove()};bn.append(im);bn.classList.add("pic");
+    bn.append(h("a",{class:"bncred",href:u.indexOf(RIMG)===0?"https://www.rockstargames.com/VI/media":"https://commons.wikimedia.org",target:"_blank",rel:"noopener",text:u.indexOf(RIMG)===0?"© Rockstar Games":(c.imageCredit||"Wikimedia Commons")}))}
+  if(isAdmin&&!STATIC)bn.append(h("button",{type:"button",class:"bnedit",onclick:openHomeImg},ic("edit"),"Image"))}
+function openHomeImg(){var cur=(homeCfg&&homeCfg.imageUrl)||"",sel=cur,cap=(homeCfg&&homeCfg.imageCaption)||"";
+  var inp=h("input",{type:"url",id:"hi-url",placeholder:"https://www.rockstargames.com/VI/_next/static/media/…",value:cur}),msg=h("p",{class:"notice",hidden:true});
+  var grid=h("div",{class:"pickgrid"});HOME_PICKS.forEach(function(p){var u=RIMG+p[0],b=h("button",{type:"button",class:u===cur?"on":"","aria-label":p[1],onclick:function(){sel=u;cap=p[1];inp.value=u;[].forEach.call(grid.children,function(x){x.classList.remove("on")});b.classList.add("on")}},h("img",{alt:"",loading:"lazy",src:imgSrc(u,480)}));grid.append(b)});
+  inp.addEventListener("input",function(){sel=inp.value.trim();cap=""});
+  var save=h("button",{type:"button",class:"btn",text:"Enregistrer",onclick:function(){var u=sel.trim();
+    if(u&&!extImg({imageUrl:u})){msg.hidden=false;msg.textContent="Colle le lien d'une capture de rockstargames.com/VI/media (sans « ? » à la fin), ou d'une photo libre de Wikimedia.";return}
+    save.disabled=true;db.doc("config/home").set({imageUrl:u,imageCaption:cap}).then(function(){homeCfg={imageUrl:u,imageCaption:cap};closeModal();toast("Image de l'accueil mise à jour");rerender()}).catch(function(){save.disabled=false;msg.hidden=false;msg.textContent="Enregistrement impossible."})}});
+  var none=h("button",{type:"button",class:"btn sec",text:"Remettre l'illustration",onclick:function(){sel="";cap="";inp.value="";[].forEach.call(grid.children,function(x){x.classList.remove("on")})}});
+  sheet({kicker:"Accueil",title:"Image du compte à rebours",body:[h("p",{class:"muted",style:"margin:0",text:"Choisis une image officielle de Rockstar, ou colle le lien d'une capture de rockstargames.com/VI/media."}),grid,h("label",{for:"hi-url",class:"muted",style:"font-size:13px"},"Lien de l'image",inp),msg,h("div",{class:"adminrow"},save,none)]})}
 function renderHome(v){
   var n=notice();
   if(cdTimer)clearInterval(cdTimer);
-  var pre=new Date()<RELEASE,hi=me.name?"Salut "+me.name.split(" ")[0]+", tu cherches quoi ?":"Tu cherches quoi ?",bn=h("div",{class:"banner"+(pre?" big":"")});bn.innerHTML=sceneSVG("city");
+  var pre=new Date()<RELEASE,hi=me.name?"Salut "+me.name.split(" ")[0]+", tu cherches quoi ?":"Tu cherches quoi ?",bn=h("div",{class:"banner"+(pre?" big":"")});bn.innerHTML=sceneSVG("city");homeBg(bn);
   if(pre){var u={};var cdb=h("div",{class:"cd",role:"timer","aria-label":"Temps avant la sortie"});[["d","jours"],["h","heures"],["m","min"],["s","sec"]].forEach(function(x){u[x[0]]=h("b",{text:"0"});cdb.append(h("div",null,u[x[0]],h("small",{text:x[1]})))});
     var tick=function(){var t=Math.max(0,Math.floor((RELEASE-new Date())/1000));u.d.textContent=Math.floor(t/86400);u.h.textContent=String(Math.floor(t%86400/3600)).padStart(2,"0");u.m.textContent=String(Math.floor(t%3600/60)).padStart(2,"0");u.s.textContent=String(t%60).padStart(2,"0");if(!t){clearInterval(cdTimer);rerender()}};
     tick();cdTimer=setInterval(tick,1000);
@@ -1269,6 +1298,7 @@ if(window.claude&&window.claude.use){
       isAdmin=!!ok;document.getElementById("adminFlag").hidden=!ok;
       if(user&&uid)user.profiles([uid]).then(function(ps){var p=ps[uid]||{};me={name:p.name||"",avatarUrl:p.avatarUrl||""};drawAvatar(document.getElementById("profBtn"));rerender()}).catch(function(){});
       startProfileSync();
+      try{db.doc("config/home").onSnapshot(function(sn){var v=sn&&typeof sn.data==="function"?sn.data():null;homeCfg=v||{};LS.set("home",homeCfg);if(route()==="accueil")rerender()},function(){})}catch(_){}
       var pending=ORDER.length,timer=setTimeout(function(){if(dbState==="wait"){dbState="slow";render()}},10000);
       ORDER.forEach(function(m){var col=MODS[m].col,first=true;
         db.collection(col).onSnapshot(function(s){
