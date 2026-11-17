@@ -97,12 +97,18 @@ h1{font-size:clamp(26px,6vw,34px);line-height:1.2;margin:6px 0 10px;text-wrap:ba
 .stat small{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}.stat b{font-size:16px}
 ol{padding-left:22px}li{margin:6px 0}.combo{font-size:22px;letter-spacing:.08em;font-weight:700}
 .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:16px 0}
+.shot{margin:14px 0 6px;border-radius:16px;overflow:hidden;aspect-ratio:16/9;background:var(--card)}.shot img{width:100%;height:100%;object-fit:cover;display:block}.credit{font-size:12.5px;color:var(--mute);margin:0 0 14px}.credit a{color:var(--mute)}
 .cta{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0}
 ul.list{list-style:none;padding:0;margin:0;display:grid;gap:8px}ul.list a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--fg);text-decoration:none;font-weight:600}
 ul.list small{display:block;color:var(--mute);font-weight:400;font-size:13px}
 footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mute)}"""
 
-def page(title, desc, url, body, noindex=False, rel=""):
+RIMG = "https://www.rockstargames.com/VI/_next/static/media/"
+def ext_img(d):
+    u = d.get("imageUrl")
+    return u if isinstance(u, str) and u.startswith(RIMG) and not re.search(r"[?#\"'<>\s]", u) else None
+
+def page(title, desc, url, body, noindex=False, rel="", og=None):
     robots = '<meta name="robots" content="noindex,follow">\n' if noindex else ""
     return f"""<!doctype html>
 <html lang="fr">
@@ -114,11 +120,11 @@ def page(title, desc, url, body, noindex=False, rel=""):
 {robots}<link rel="canonical" href="{esc(url)}">
 <meta property="og:type" content="article"><meta property="og:site_name" content="La Planque"><meta property="og:locale" content="fr_FR">
 <meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}">
-<meta property="og:url" content="{esc(url)}"><meta property="og:image" content="{SITE}og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="{esc(url)}">{f'<meta property="og:image" content="{esc(og)}">' if og else f'<meta property="og:image" content="{SITE}og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0c121c">
 <link rel="icon" href="{rel}icon-192.png"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; script-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: https://www.rockstargames.com; script-src 'none'; base-uri 'none'">
 <style>{CSS}</style>
 </head>
 <body><div class="w">
@@ -143,6 +149,11 @@ def fiche_html(cat, row, siblings):
         toks = str(d["combo"]).upper().split()
         b.append('<div class="box"><small>PlayStation</small><div class="combo">' + esc(" ".join(PS.get(x, x) for x in toks)) +
                  '</div><small>Xbox</small><div class="combo">' + esc(" ".join(XB.get(x, x) for x in toks)) + "</div></div>")
+    xi = ext_img(d)
+    if xi:
+        src = d.get("imageSource") if str(d.get("imageSource") or "").startswith("https://www.rockstargames.com/") else "https://www.rockstargames.com/VI/media"
+        b.append(f'<div class="shot"><img src="{esc(xi)}?akim=1&amp;imwidth=1024" alt="{esc(d.get("imageCaption") or t)}" loading="lazy"></div>'
+                 f'<p class="credit">Image : <a href="{esc(src)}" rel="noopener">capture officielle © Rockstar Games</a>{" · " + esc(d["imageCaption"]) if d.get("imageCaption") else ""}</p>')
     s = stats(col, d)
     if s: b.append('<div class="stats">' + "".join(f'<div class="stat"><small>{esc(k)}</small><b>{esc(v)}</b></div>' for k, v in s) + "</div>")
     if col == "money" and d.get("steps"):
@@ -161,7 +172,7 @@ def fiche_html(cat, row, siblings):
     if others:
         b.append("<h2>À voir aussi</h2><ul class=\"list\">" + "".join(
             f'<li><a href="../{esc(r["id"])}/">{esc(title_of(r["data"]))}</a></li>' for r in others) + "</ul>")
-    return page(f"{t} – GTA 6 | La Planque", summary_of(col, d), url, "\n".join(b), noindex=thin(col, d), rel="../../")
+    return page(f"{t} – GTA 6 | La Planque", summary_of(col, d), url, "\n".join(b), noindex=thin(col, d), rel="../../", og=(xi + "?akim=1&imwidth=1280") if xi else None)
 
 def cat_html(cat, rows):
     col, seg, mod, label, ctitle, intro = cat
