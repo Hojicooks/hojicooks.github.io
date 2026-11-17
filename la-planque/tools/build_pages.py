@@ -264,6 +264,11 @@ def fiche_html(cat, row, siblings):
         b.append(f'<div class="box"><b>Vidéo à voir : <a href="{esc(d["videoUrl"])}" rel="noopener">{esc(d.get("videoTitle") or "Regarder")}</a></b>'
                  + (f' <small>({esc(d["videoBy"])})</small>' if d.get("videoBy") else "")
                  + (f"<p>{esc(d['videoSummary'])}</p>" if d.get("videoSummary") else "") + "</div>")
+    for line in str(d.get("moreVideos") or "").split("\n"):
+        pp = [x.strip() for x in line.split("|")]
+        if pp and re.match(r"^https?://[^\s\"'<>]+$", pp[0]):
+            b.append(f'<div class="box"><b>Vidéo à voir aussi : <a href="{esc(pp[0])}" rel="noopener">{esc(pp[1] if len(pp) > 1 and pp[1] else "Regarder")}</a></b>'
+                     + (f' <small>({esc(pp[2])})</small>' if len(pp) > 2 and pp[2] else "") + (f"<p>{esc(pp[3])}</p>" if len(pp) > 3 and pp[3] else "") + "</div>")
     if d.get("source") and re.match(r"^https?://", d["source"]):
         host = re.sub(r"^https?://(www\.)?", "", d["source"]).split("/")[0]
         b.append(f'<p><small>Source : <a href="{esc(d["source"])}" rel="noopener nofollow">{esc(host)}</a></small></p>')

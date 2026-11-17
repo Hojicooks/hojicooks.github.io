@@ -730,13 +730,16 @@ var PLUSROUTES=["plus","liste","propositions","profil","confidentialite"],WIKIRO
 ORDER.forEach(function(m){var F=MODS[m].fields,si=-1;F.forEach(function(f,i){if(f.k==="source")si=i});if(si<0)si=F.length;
   var add=[];if(!F.some(function(f){return f.type==="image"}))add.push({k:"imageId",label:"Photo",type:"image"});
   add.push({k:"imageCredit",label:"Crédit de la photo (ex : © Rockstar Games)",type:"text"});
-  add.push({k:"videoUrl",label:"Vidéo (lien YouTube ou TikTok)",type:"text"},{k:"videoTitle",label:"Titre de la vidéo",type:"text"},{k:"videoBy",label:"Chaîne",type:"text"},{k:"videoSummary",label:"Résumé de la vidéo (2 à 3 phrases)",type:"textarea"});
+  add.push({k:"videoUrl",label:"Vidéo (lien YouTube ou TikTok)",type:"text"},{k:"videoTitle",label:"Titre de la vidéo",type:"text"},{k:"videoBy",label:"Chaîne",type:"text"},{k:"videoSummary",label:"Résumé de la vidéo (2 à 3 phrases)",type:"textarea"},{k:"moreVideos",label:"Autres vidéos sur le même sujet (une par ligne : lien | titre | chaîne | résumé)",type:"textarea"});
   F.splice.apply(F,[si,0].concat(add))});
-function videoBlock(d){if(!d.videoUrl||!/^https?:\/\//.test(d.videoUrl))return null;
-  var plat=/tiktok\.com/.test(d.videoUrl)?"TikTok":/youtu\.?be/.test(d.videoUrl)?"YouTube":"Vidéo";
-  return h("div",{class:"blk"},h("h3",{text:"Vidéo à voir"}),
-    h("a",{class:"vid",href:d.videoUrl,target:"_blank",rel:"noopener"},h("span",{class:"play"},ic("play")),h("span",{class:"vt"},h("b",{text:d.videoTitle||"Regarder la vidéo"}),h("small",{text:(d.videoBy?d.videoBy+" · ":"")+plat})),ic("ext")),
-    d.videoSummary?h("div",{class:"vsum"},h("small",{text:"En bref"}),h("p",{text:d.videoSummary})):null)}
+function vids(d){var a=[];if(d.videoUrl&&/^https?:\/\//.test(d.videoUrl))a.push({u:d.videoUrl,t:d.videoTitle,b:d.videoBy,s:d.videoSummary});
+  String(d.moreVideos||"").split(/\n+/).forEach(function(l){var p=l.split("|").map(function(x){return x.trim()});if(/^https?:\/\/[^\s"'<>]+$/.test(p[0]))a.push({u:p[0],t:p[1],b:p[2],s:p[3]})});return a}
+function videoBlock(d){var a=vids(d);if(!a.length)return null;
+  var box=h("div",{class:"blk"},h("h3",{text:a.length>1?"Vidéos à voir · "+a.length:"Vidéo à voir"}));
+  a.forEach(function(v,i){var plat=/tiktok\.com/.test(v.u)?"TikTok":/youtu\.?be/.test(v.u)?"YouTube":"Vidéo";
+    box.append(h("a",{class:"vid",href:v.u,target:"_blank",rel:"noopener",style:i?"margin-top:12px":null},h("span",{class:"play"},ic("play")),h("span",{class:"vt"},h("b",{text:v.t||"Regarder la vidéo"}),h("small",{text:(v.b?v.b+" · ":"")+plat})),ic("ext")),
+      v.s?h("div",{class:"vsum"},h("small",{text:"En bref"}),h("p",{text:v.s})):null)});
+  return box}
 
 /* ================= état ================= */
 var data={},hasCache=false;ORDER.forEach(function(m){var c=LS.get("c_"+MODS[m].col,[]);data[MODS[m].col]=Array.isArray(c)?c:[];if(data[MODS[m].col].length)hasCache=true});
@@ -837,7 +840,7 @@ function item(m,d,showMod){
   var mt=h("span",{class:"mt"}),sc=M.vote?score(m,d.id):0,nc=ncom(m,d.id);
   if(sc)mt.append(h("span",{class:"deg",style:"color:"+tempColor(sc)},sc>0?ic("flame"):null,(sc>0?"+":"")+sc+"°"));
   if(nc)mt.append(h("span",null,ic("chat"),nc+" commentaire"+(nc>1?"s":"")));
-  if(d.videoUrl)mt.append(h("span",null,ic("play"),"Vidéo"));
+  var nv=vids(d).length;if(nv)mt.append(h("span",null,ic("play"),nv>1?nv+" vidéos":"Vidéo"));
   if(showMod&&m!=="astuces")tags.append(h("span",{class:"tag"},ic(M.icon),M.tab));
   c.tags.forEach(function(t){if(t)tags.append(t)});
   if(d.status!=="verifie")tags.append(statusTag(d.status));
