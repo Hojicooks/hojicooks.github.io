@@ -553,15 +553,15 @@ function ago(t){var s=(Date.now()-t)/1000;if(s<60)return "à l'instant";if(s<360
 function uid8(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function toast(t){var host=document.getElementById("toastHost");host.innerHTML="";var el=h("div",{class:"toast",role:"status",text:t});host.append(el);setTimeout(function(){if(el.parentNode)el.remove()},2600)}
 
-var STATUS=[["verifie","Vérifié"],["a-confirmer","À confirmer"],["exemple","Exemple"]];
+var STATUS=[["verifie","Vérifié"],["a-confirmer","À confirmer"],["rumeur","Rumeur"],["exemple","Exemple"]];
 var REGIONS=["Vice City","Leonida Keys","Grassrivers","Port Gellhorn","Ambrosia","Mont Kalaga","Partout","Inconnu"];
 var RCOL={"Vice City":"#ff6fb5","Leonida Keys":"#33d1bc","Grassrivers":"#7ccf5a","Port Gellhorn":"#5aa9ff","Ambrosia":"#ffb347","Mont Kalaga":"#b48cff"};
 function regionTag(r){if(!r||r==="Inconnu")return null;var c=RCOL[r];return h("span",{class:"tag",style:c?"color:"+c+";background:color-mix(in srgb,"+c+" 14%,var(--card))":null},ic("gps"),r)}
 var SEC={1:"Aucune",2:"Alarme",3:"Clé électronique",4:"Antidémarrage"};
 var SECCOL={1:"var(--ok)",2:"var(--gold)",3:"var(--warn)",4:"var(--bad)"};
 var RISK={0:"Aucun",1:"Faible",2:"Moyen",3:"Élevé"};
-function statusTag(s){if(s==="verifie")return h("span",{class:"tag green"},ic("check"),"Vérifié");if(s==="a-confirmer")return h("span",{class:"tag gold",text:"À confirmer"});return h("span",{class:"tag ex",text:"Exemple"})}
-function rank(d){return (d.status==="verifie"?0:d.status==="a-confirmer"?1:2)}
+function statusTag(s){if(s==="verifie")return h("span",{class:"tag green"},ic("check"),"Vérifié");if(s==="a-confirmer")return h("span",{class:"tag gold",text:"À confirmer"});if(s==="rumeur")return h("span",{class:"tag red",title:"Rumeur non vérifiée (réseaux sociaux, fuite ou source unique)",text:"Rumeur"});return h("span",{class:"tag ex",text:"Exemple"})}
+function rank(d){return (d.status==="verifie"?0:d.status==="a-confirmer"?1:d.status==="rumeur"?2:3)}
 var VIC={"Super":"car","Sport":"car","Classique":"car","Muscle":"car","Berline":"car","Compacte":"car","SUV":"suv","Pick-up":"pickup","Utilitaire":"van","Tout-terrain":"buggy","Moto":"moto","Bateau":"boat","Hélicoptère":"heli","Avion":"plane"};
 var LONG=["Fusil d'assaut","Fusil à pompe","Fusil de précision","Mitraillette"],SHORT=["Pistolet","Revolver"];
 var THEME={"Actu":["flame","#ff5d4f"],"Bases":["star","#ffc35a"],"Police":["siren","#5aa9ff"],"Combat":["target","#ff6378"],"Véhicules":["car","#ffb347"],"Argent":["cash","#4fd28a"],"Santé":["heart","#ff8ad8"],"Divers":["tip","#33d1bc"]};

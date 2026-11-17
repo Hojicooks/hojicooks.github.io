@@ -22,7 +22,7 @@ CATS = [
 ]
 SEC = {1: "Aucune", 2: "Alarme", 3: "Clé électronique", 4: "Antidémarrage"}
 RISK = {0: "Aucun", 1: "Faible", 2: "Moyen", 3: "Élevé"}
-STATUS = {"verifie": "Vérifié", "a-confirmer": "À confirmer"}
+STATUS = {"verifie": "Vérifié", "a-confirmer": "À confirmer", "rumeur": "Rumeur"}
 PS = {"X": "✕", "O": "○", "CARRE": "□", "TRIANGLE": "△", "HAUT": "↑", "BAS": "↓", "GAUCHE": "←", "DROITE": "→"}
 XB = {"X": "A", "O": "B", "CARRE": "X", "TRIANGLE": "Y", "R1": "RB", "R2": "RT", "L1": "LB", "L2": "LT", "R3": "RS", "L3": "LS",
       "HAUT": "↑", "BAS": "↓", "GAUCHE": "←", "DROITE": "→"}
@@ -92,7 +92,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .crumb{font-size:13px;color:var(--mute)}.crumb a{color:var(--mute)}
 h1{font-size:clamp(26px,6vw,34px);line-height:1.2;margin:6px 0 10px;text-wrap:balance}h2{font-size:18px;margin:28px 0 10px}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}.tag{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:8px;background:var(--card);color:var(--mute)}
-.tag.ok{color:var(--ok)}.tag.gold{color:var(--gold)}
+.tag.ok{color:var(--ok)}.tag.gold{color:var(--gold)}.tag.rum{color:var(--accent)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:14px 0}.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .stat small{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}.stat b{font-size:16px}
 ol{padding-left:22px}li{margin:6px 0}.combo{font-size:22px;letter-spacing:.08em;font-weight:700}
@@ -136,7 +136,7 @@ def fiche_html(cat, row, siblings):
     tags = [f'<span class="tag">{esc(label)}</span>']
     if d.get("theme"): tags.append(f'<span class="tag">{esc(d["theme"])}</span>')
     st = STATUS.get(d.get("status"))
-    if st: tags.append(f'<span class="tag {"ok" if d.get("status")=="verifie" else "gold"}">{esc(st)}</span>')
+    if st: tags.append(f'<span class="tag { {"verifie":"ok","rumeur":"rum"}.get(d.get("status"),"gold") }">{esc(st)}</span>')
     b = [f'<div class="crumb"><a href="../../">La Planque</a> › <a href="../">{esc(ctitle)}</a></div>',
          f"<h1>{esc(t)}</h1>", '<div class="tags">' + "".join(tags) + "</div>"]
     if col == "codes" and d.get("combo"):
