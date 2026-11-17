@@ -17,7 +17,7 @@
 <meta property="og:description" content="Astuces vérifiées, argent, codes de triche, véhicules, faune et lieux de GTA VI. Trouve l'info en une minute.">
 <meta property="og:url" content="https://hojicooks.github.io/la-planque/"><meta property="og:image" content="https://hojicooks.github.io/la-planque/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sonpigelysgbfvbeotgj.supabase.co; img-src 'self' data: blob: https://sonpigelysgbfvbeotgj.supabase.co https://www.rockstargames.com; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sonpigelysgbfvbeotgj.supabase.co; img-src 'self' data: blob: https://sonpigelysgbfvbeotgj.supabase.co https://www.rockstargames.com https://upload.wikimedia.org https://thumb.wikimedia.org; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230c121c'/%3E%3Crect x='10' y='10' width='12' height='12' rx='2.5' fill='%23ff5d4f' transform='rotate(45 16 16)'/%3E%3C/svg%3E">
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -328,6 +328,9 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .hero{width:100%;height:108px;border-radius:16px;background:radial-gradient(circle at 50% 130%,color-mix(in srgb,var(--tc,var(--accent)) 34%,var(--bg)),var(--bg) 72%);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
 .hero.photo{height:auto;aspect-ratio:16/9;max-height:280px;max-width:100%}
 .hero img{width:100%;height:100%;object-fit:cover}
+.hero.photo{height:0!important;padding-top:min(56.25%,300px);aspect-ratio:auto;max-height:none;flex:none}
+.hero.photo img{position:absolute;inset:0}
+.credit a{color:inherit}
 .hero svg.i{width:auto;height:70%;color:inherit;stroke-width:1.2}
 .hero.slim{height:72px}
 .hero.slim svg.i{height:56%;stroke-width:1.5}
@@ -608,10 +611,12 @@ function sceneFor(m,d){
   return ["city"]}
 /* captures officielles de Rockstar (rockstargames.com/VI/media), affichées depuis leur site avec crédit */
 var RIMG="https://www.rockstargames.com/VI/_next/static/media/";
-function extImg(d){return typeof d.imageUrl==="string"&&d.imageUrl.indexOf(RIMG)===0&&!/[?#"'<>\s]/.test(d.imageUrl)?d.imageUrl:null}
+var WIMG=["https://upload.wikimedia.org/wikipedia/commons/","https://thumb.wikimedia.org/wikipedia/commons/"];
+function extImg(d){var u=d.imageUrl;return typeof u==="string"&&(u.indexOf(RIMG)===0||u.indexOf(WIMG[0])===0||u.indexOf(WIMG[1])===0)&&!/[?#"'<>\s]/.test(u)?u:null}
+function imgSrc(u,w){return u.indexOf(RIMG)===0?u+"?akim=1&imwidth="+w:u}
 function visual(m,d,big){var v=vis(m,d),xi=extImg(d),pic=d.imageId||xi,slim=big&&m!=="voitures"&&m!=="faune"&&!pic;
   var box=h("div",{class:big?"hero"+(pic?" photo":"")+(slim?" slim":""):"thumb",style:"color:"+v[1]+";--tc:"+v[1]});
-  if(pic){var im=h("img",{alt:"",src:d.imageId?"/_blob/"+d.imageId:xi+"?akim=1&imwidth="+(big?1024:320),loading:"lazy"});im.onerror=function(){im.replaceWith(svgUse(v[0]))};box.append(im)}
+  if(pic){var im=h("img",{alt:"",src:d.imageId?"/_blob/"+d.imageId:imgSrc(xi,big?1024:320),loading:"lazy"});im.onerror=function(){im.replaceWith(svgUse(v[0]))};box.append(im)}
   else if(big){var sc=sceneFor(m,d);box.innerHTML=sceneSVG(sc[0],sc[1]);box.append(h("span",{class:"badge"},svgUse(v[0])))}
   else box.append(svgUse(v[0]));return box}
 var ACCESS=["Standard","Édition Ultime","Bonus précommande"];
@@ -1163,7 +1168,8 @@ function openDetail(m,id){
   // visuel + étiquettes
   body.push(visual(m,d,true));
   if(d.imageId&&d.imageCredit)body.push(h("p",{class:"credit",text:"Photo : "+d.imageCredit}));
-  else if(extImg(d))body.push(h("p",{class:"credit"},"Image : ",h("a",{href:/^https:\/\/www\.rockstargames\.com\//.test(d.imageSource||"")?d.imageSource:"https://www.rockstargames.com/VI/media",target:"_blank",rel:"noopener",text:"capture officielle © Rockstar Games"}),d.imageCaption?" · "+d.imageCaption:""));
+  else if(extImg(d)){var rk=extImg(d).indexOf(RIMG)===0,src=String(d.imageSource||"");
+    body.push(h("p",{class:"credit"},rk?"Image : ":"Photo réelle : ",h("a",{href:rk?(/^https:\/\/www\.rockstargames\.com\//.test(src)?src:"https://www.rockstargames.com/VI/media"):(/^https:\/\/commons\.wikimedia\.org\//.test(src)?src:"https://commons.wikimedia.org"),target:"_blank",rel:"noopener",text:rk?"capture officielle © Rockstar Games":(d.imageCredit||"Wikimedia Commons")}),d.imageCaption?" · "+d.imageCaption:""))}
   var tags=h("div",{class:"taglist"});if(d.prio)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));if(isNew(d))tags.append(h("span",{class:"tag new",text:"Nouveau"}));tags.append(statusTag(d.status));
   if(d.updatedAt)tags.append(h("span",{class:"tag when"+(dayDiff(d.updatedAt)<=1?" fresh":""),title:dfull(d.updatedAt),text:"Mis à jour "+(dayDiff(d.updatedAt)<=1?dshort(d.updatedAt).toLowerCase():"le "+dshort(d.updatedAt))}));
   if(m==="astuces"&&d.theme)tags.append(h("span",{class:"tag",text:d.theme}));
