@@ -161,7 +161,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px;color:var(--fg);text-decoration:none}.logo i{width:11px;height:11px;border-radius:3px;background:var(--accent);transform:rotate(45deg)}
 .btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:12px;background:var(--accent);color:#1d0806;font-weight:700;text-decoration:none}
 .btn.sec{background:var(--card);color:var(--fg);border:1px solid var(--line)}
-.crumb{font-size:13px;color:var(--mute)}.crumb a{color:var(--mute)}
+.w p{white-space:pre-line}.crumb{font-size:13px;color:var(--mute)}.crumb a{color:var(--mute)}
 h1{font-size:clamp(26px,6vw,34px);line-height:1.2;margin:6px 0 10px;text-wrap:balance}h2{font-size:18px;margin:28px 0 10px}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}.tag{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:8px;background:var(--card);color:var(--mute)}
 .tag.ok{color:var(--ok)}.tag.gold{color:var(--gold)}.tag.rum{color:var(--accent)}
