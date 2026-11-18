@@ -1336,7 +1336,6 @@ function openDetail(m,id){
   if(isAdmin){var del=h("button",{class:"btn danger",type:"button",text:"Supprimer"});
     del.addEventListener("click",function(){if(del.dataset.a!=="1"){del.dataset.a="1";del.textContent="Confirmer la suppression";return}
       del.disabled=true;db.doc(M.col+"/"+d.id).delete().then(closeModal).catch(function(){del.disabled=false;del.dataset.a="";del.textContent="Échec, réessayer"})});
-    body.push(h("p",{class:"muted",style:"margin:4px 0 0;font-size:12.5px"},"Pour faire un lien vers cette fiche ailleurs : ",h("code",{text:"[[mot|"+d.id+"]]"})));
     body.push(h("div",{class:"adminrow"},h("button",{class:"btn sec",type:"button",onclick:function(){openForm(m,d)}},ic("edit")," Modifier"),
       del))}
   var shr=SITE&&d.status!=="exemple"?h("button",{class:"x",type:"button","aria-label":"Partager cette fiche",onclick:function(){shareFiche(m,d)}},ic("share")):null;
