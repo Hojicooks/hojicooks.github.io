@@ -111,6 +111,7 @@
   --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
   --navh:64px;
+  --sab:env(safe-area-inset-bottom,0px);
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -122,7 +123,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 .isteps{margin:0 0 18px;padding:0;list-style:none;display:grid;gap:10px}.isteps li{background:var(--card2);border-radius:12px;padding:11px 13px;line-height:1.45}
 svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.app{max-width:760px;margin:0 auto;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 90px)}
+.app{max-width:760px;margin:0 auto;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-bottom:calc(var(--navh) + var(--sab) + 90px)}
 
 /* Barre du haut */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:10px 8px;display:grid;gap:10px}
@@ -140,7 +141,7 @@ svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .sbox button{color:var(--mute);display:grid;place-items:center;width:28px;height:28px}
 
 /* Navigation du bas */
-.nav{position:fixed;left:0;right:0;bottom:0;z-index:25;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:25;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:var(--sab);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .nav div{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--navh)}
 .nav a{display:grid;place-items:center;align-content:center;gap:3px;color:var(--dim);text-decoration:none;font-size:11px;font-weight:600}
 .nav a[aria-current="page"]{color:var(--fg)}
@@ -324,7 +325,7 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .x{width:38px;height:38px;border-radius:12px;background:var(--card2);display:grid;place-items:center;flex:none;color:var(--fg);cursor:pointer}
 .x.on{color:var(--gold)}
 .x.on svg{fill:var(--gold)}
-.sbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:grid;gap:16px;align-content:start;padding:16px max(18px,env(safe-area-inset-right,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
+.sbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:grid;gap:16px;align-content:start;padding:16px max(18px,env(safe-area-inset-right,0px)) calc(28px + var(--sab)) max(18px,env(safe-area-inset-left,0px))}
 .sbody > *{min-width:0}
 .blk{display:grid;gap:10px}
 .blk > h3{margin:0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
@@ -401,7 +402,7 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .btn.danger{background:transparent;border:1px solid var(--line);color:var(--bad)}
 .btn:disabled{opacity:.5}
 .row-actions{display:flex;gap:8px;flex-wrap:wrap}
-.fabs{position:fixed;right:max(16px,env(safe-area-inset-right,0px));left:max(16px,env(safe-area-inset-left,0px));bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 14px);z-index:24;display:flex;justify-content:flex-end;gap:8px;pointer-events:none}
+.fabs{position:fixed;right:max(16px,env(safe-area-inset-right,0px));left:max(16px,env(safe-area-inset-left,0px));bottom:calc(var(--navh) + var(--sab) + 14px);z-index:24;display:flex;justify-content:flex-end;gap:8px;pointer-events:none}
 .fab{pointer-events:auto;height:50px;padding:0 18px;border-radius:16px;background:var(--accent);color:var(--accent-fg);font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
 .fab.alt{background:var(--teal);color:var(--bg)}
 form.edit{display:grid;gap:12px}
@@ -416,7 +417,7 @@ form.edit label.inline input{width:22px;height:22px}
 .sugg{display:grid;gap:8px;padding:13px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
 .sugg p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
 .sugg .meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--mute)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 76px);z-index:60;background:var(--fg);color:var(--bg);font-weight:600;font-size:14px;padding:10px 16px;border-radius:12px;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navh) + var(--sab) + 76px);z-index:60;background:var(--fg);color:var(--bg);font-weight:600;font-size:14px;padding:10px 16px;border-radius:12px;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* Passe de sobriété : dans les listes, seuls « Essentiel » et « Nouveau » restent des pastilles ; le reste devient une ligne de texte */
 .item.prio{border-color:var(--line)}
@@ -803,6 +804,14 @@ function shareFiche(m,d){var url=SITE+SEG[m]+"/"+encodeURIComponent(d.id)+"/",t=
   var fb=function(){toast("Ton lien : "+url)};
   try{navigator.clipboard.writeText(url).then(function(){toast("Lien copié, colle-le où tu veux")},fb)}catch(_){fb()}}
 function standalone(){try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(_){return false}}
+/* iOS 26 (appli installée) : la zone affichable s'arrête déjà au-dessus de la barre d'accueil.
+   Ajouter la marge de sécurité en plus laisse un grand vide sous la barre d'onglets : on la retire dans ce cas. */
+function fixSafeBottom(){var r=document.documentElement;try{
+  var portrait=innerHeight>=innerWidth,sh=portrait?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
+  if(standalone()&&sh-innerHeight>=20)r.style.setProperty("--sab","4px");else r.style.removeProperty("--sab")}catch(_){}}
+fixSafeBottom();
+["resize","orientationchange","pageshow"].forEach(function(e){addEventListener(e,fixSafeBottom)});
+try{visualViewport.addEventListener("resize",fixSafeBottom)}catch(_){}
 function openInstall(){var I=window.PLANQUE_INSTALL;
   if(I&&I.can()){I.prompt().then(function(ok){if(ok)toast("La Planque est installée")});return}
   var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1),and=/Android/.test(ua);
