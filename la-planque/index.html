@@ -26,6 +26,8 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script>
+/* Anti-clickjacking : GitHub Pages ne permet pas l'en-tête frame-ancestors, donc on refuse d'être affiché dans le cadre d'un autre site. */
+if(window.top!==window.self){document.documentElement.style.display="none";try{window.top.location.replace(window.self.location.href)}catch(e){}}
 /* Version hébergée : fiches, votes, commentaires et comptes dans Supabase. */
 (function(){
   var sb=supabase.createClient("https://sonpigelysgbfvbeotgj.supabase.co","sb_publishable_yzD2ln5tGuEZZyYttiFCWA__bK-4psf");
@@ -763,11 +765,15 @@ var loadout=LS.get("loadout",{long:[],short:[]});
 /* communauté */
 var comm={},scores={},commentsBy={},myVotes={};
 function recompute(){scores={};commentsBy={};
-  Object.keys(comm).forEach(function(u){var d=comm[u]||{},v=d.votes||{};
-    for(var k in v){var x=v[k]>0?1:v[k]<0?-1:0;if(x)scores[k]=(scores[k]||0)+x}
-    (d.comments||[]).forEach(function(c){if(!c||!c.target)return;(commentsBy[c.target]=commentsBy[c.target]||[]).push({uid:u,id:c.id,text:c.text,at:c.at,target:c.target})})});
+  /* données écrites par les joueurs : on ignore tout ce qui n'a pas la bonne forme (une ligne piégée ne doit pas faire planter le site) */
+  var OKK=/^[a-z]+__[A-Za-z0-9_-]{1,80}$/;
+  Object.keys(comm).forEach(function(u){var d=comm[u];if(!d||typeof d!=="object")return;
+    var v=d.votes&&typeof d.votes==="object"&&!Array.isArray(d.votes)?d.votes:{};
+    Object.keys(v).forEach(function(k){if(!OKK.test(k))return;var x=v[k]>0?1:v[k]<0?-1:0;if(x)scores[k]=(scores[k]||0)+x});
+    (Array.isArray(d.comments)?d.comments:[]).forEach(function(c){if(!c||typeof c!=="object"||typeof c.target!=="string"||!OKK.test(c.target))return;
+      (commentsBy[c.target]=commentsBy[c.target]||[]).push({uid:u,id:String(c.id||""),text:String(c.text||"").slice(0,600),at:Number(c.at)||0,target:c.target})})});
   Object.keys(commentsBy).forEach(function(k){commentsBy[k].sort(function(a,b){return (a.at||0)-(b.at||0)})});
-  myVotes=(uid&&comm[uid]&&comm[uid].votes)||{}}
+  var mv=uid&&comm[uid]&&comm[uid].votes;myVotes=mv&&typeof mv==="object"&&!Array.isArray(mv)?mv:{}}
 function score(m,id){return scores[KEY(m,id)]||0}
 function ncom(m,id){return (commentsBy[KEY(m,id)]||[]).length}
 function tempColor(s){return s>=10?"var(--accent)":s>=3?"#ff8a4f":s>0?"var(--gold)":s<0?"var(--cold)":"var(--dim)"}
@@ -788,7 +794,7 @@ function deleteComment(c){
   var other=comm[c.uid];if(!other)return Promise.reject({});var next=JSON.parse(JSON.stringify(other));next.comments=(next.comments||[]).filter(function(x){return x.id!==c.id});comm[c.uid]=next;recompute();return db.doc("community/"+c.uid).set(next)}
 var sugg={};
 function addSuggestion(o){return writeMine("suggestions",sugg,function(d){d.items=d.items||[];d.items.push(Object.assign({id:uid8(),at:Date.now(),state:"new"},o))})}
-function pendingSugg(){var out=[];Object.keys(sugg).forEach(function(u){(sugg[u].items||[]).forEach(function(it){if(it.state==="new"){var o=Object.assign({uid:u},it);if(!/^https?:\/\//.test(o.link||""))o.link="";if(!/^[\w-]+$/.test(o.imageId||""))o.imageId=null;o.text=String(o.text||"").slice(0,800);out.push(o)}})});return out.sort(function(a,b){return (b.at||0)-(a.at||0)})}
+function pendingSugg(){var out=[];Object.keys(sugg).forEach(function(u){var s=sugg[u];(s&&Array.isArray(s.items)?s.items:[]).forEach(function(it){if(it&&typeof it==="object"&&it.state==="new"){var o=Object.assign({uid:u},it);if(!/^https?:\/\//.test(o.link||""))o.link="";if(!/^[\w-]+$/.test(o.imageId||""))o.imageId=null;o.text=String(o.text||"").slice(0,800);out.push(o)}})});return out.sort(function(a,b){return (b.at||0)-(a.at||0)})}
 function setSuggState(it,state){var d=sugg[it.uid];if(!d)return Promise.reject({});var next=JSON.parse(JSON.stringify(d));next.items=(next.items||[]).map(function(x){if(x.id===it.id)x.state=state;return x});sugg[it.uid]=next;return db.doc("suggestions/"+it.uid).set(next)}
 
 /* ================= navigation ================= */
