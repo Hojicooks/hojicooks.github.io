@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="La Planque : le guide GTA VI en français. Astuces vérifiées, argent, codes, véhicules, faune et lieux, à portée de main.">
-<meta name="theme-color" content="#0c121c">
+<meta name="theme-color" content="#1d1532">
+<script>/* Thème de couleur choisi par le visiteur, appliqué avant l'affichage */(function(){try{var t=JSON.parse(localStorage.getItem("pl_theme"));var c={keys:"#0e2a33",glades:"#1a1f17",motel:"#fbe7e3"};if(c[t]){document.documentElement.setAttribute("data-theme",t);document.querySelector('meta[name="theme-color"]').setAttribute("content",c[t])}}catch(e){}})();</script>
 <link rel="canonical" href="https://hojicooks.github.io/la-planque/">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -19,7 +20,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sonpigelysgbfvbeotgj.supabase.co; img-src 'self' data: blob: https://sonpigelysgbfvbeotgj.supabase.co https://www.rockstargames.com https://upload.wikimedia.org https://thumb.wikimedia.org; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230c121c'/%3E%3Crect x='10' y='10' width='12' height='12' rx='2.5' fill='%23ff5d4f' transform='rotate(45 16 16)'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='#1d1532'/%3E%3Cg transform='rotate(-14 16 16)'%3E%3Cpath d='M2.5 16 8 9h20a2.5 2.5 0 0 1 2.5 2.5v9A2.5 2.5 0 0 1 28 23H8z' fill='#ff7eb3'/%3E%3Ccircle cx='8.3' cy='16' r='1.9' fill='#1d1532'/%3E%3Ctext x='19.5' y='20.2' text-anchor='middle' font-family='Arial,sans-serif' font-weight='900' font-size='11' fill='#3a0a22'%3E6%3C/text%3E%3C/g%3E%3C/svg%3E">
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>La Planque · Guide GTA VI en français</title>
 </head>
@@ -31,7 +32,7 @@ if(window.top!==window.self){document.documentElement.style.display="none";try{w
 /* Version hébergée : fiches, votes, commentaires et comptes dans Supabase. */
 (function(){
   var sb=supabase.createClient("https://sonpigelysgbfvbeotgj.supabase.co","sb_publishable_yzD2ln5tGuEZZyYttiFCWA__bK-4psf");
-  var CONTENT=["tips","money","vehicles","codes","wildlife","places","lexicon"],ROWS={community:1,suggestions:1};
+  var CONTENT=["tips","money","vehicles","codes","wildlife","places","lexicon","completion"],ROWS={community:1,suggestions:1};
   var sess=sb.auth.getSession().then(function(r){return r.data.session}).catch(function(){return null});
   function me(){return sess.then(function(s){return s?s.user.id:null})}
   var subs={};function reg(k,f){(subs[k]=subs[k]||[]).push(f);f()}
@@ -101,17 +102,18 @@ if(window.top!==window.self){document.documentElement.style.display="none";try{w
 
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800&family=Yellowtail&display=swap">
 <style>
-/* Layout: app compagnon à une main — recherche collée en haut, navigation en bas, cartes empilées, fiches en panneau qui monte du bas. Thème nuit unique, choisi pour jouer le soir à côté de la console. */
+/* Identité « clé de motel » : La Planque, c'est la chambre de motel où l'on cache le butin. Thème par défaut Vice City la nuit ; trois autres thèmes au choix (Keys, Grassrivers, Motel clair). Polices : Overpass (signalisation routière) et Yellowtail (enseigne néon) pour le seul logo. */
 :root{
-  --bg:#0c121c; --card:#141d2b; --card2:#1b2638; --line:#26344a;
-  --fg:#eef3fa; --mute:#8d9cb3; --dim:#5f6f88;
-  --accent:#ff5d4f; --accent-fg:#1d0806; --teal:#33d1bc; --gold:#ffc35a; --cold:#5aa9ff;
-  --ok:#4fd28a; --warn:#ffbe55; --bad:#ff6378;
-  --display:"Space Grotesk",system-ui,sans-serif;
-  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --bg:#1d1532; --card:#271e42; --card2:#32284f; --line:#43375f;
+  --fg:#fbf3ff; --mute:#bdb0d8; --dim:#9486b6;
+  --accent:#ff7eb3; --accent-fg:#3a0a22; --teal:#6fe3d4; --gold:#ffc768; --cold:#8fb4ff;
+  --ok:#5fe0a0; --warn:#ffc768; --bad:#ff6b8a;
+  --display:"Overpass",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Overpass",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Overpass",system-ui,sans-serif;
+  --script:"Yellowtail","Brush Script MT",cursive;
   --navh:64px;
   --sab:env(safe-area-inset-bottom,0px);
   color-scheme:dark;
@@ -497,6 +499,61 @@ form.edit label.inline input{width:22px;height:22px}
 .cd div{background:rgba(8,12,20,.62);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px 4px 8px;text-align:center}
 .cd b{display:block;font-family:var(--mono);font-size:clamp(26px,8vw,36px);line-height:1.05;color:#fff;font-variant-numeric:tabular-nums}
 .cd small{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#c9d3e3}
+/* ================= Refonte : identité clé de motel, thèmes, listes d'un seul tenant ================= */
+:root[data-theme="keys"]{--bg:#0e2a33;--card:#133641;--card2:#18424f;--line:#24535f;--fg:#effbfd;--mute:#a9d0d7;--dim:#7eaab3;--accent:#ffcf5a;--accent-fg:#2e2200;--teal:#82e8f3;--gold:#ffcf5a;--cold:#8fd0ff;--ok:#6fe0a8;--warn:#ffcf5a;--bad:#ff7d86;color-scheme:dark}
+:root[data-theme="glades"]{--bg:#1a1f17;--card:#232a1f;--card2:#2c3527;--line:#3b4634;--fg:#f4f6ea;--mute:#c2c9ab;--dim:#97a07e;--accent:#f2a33a;--accent-fg:#2d1800;--teal:#a9db8e;--gold:#f2c14e;--cold:#9cc7d9;--ok:#8fd77a;--warn:#f2c14e;--bad:#ff7d6b;color-scheme:dark}
+:root[data-theme="motel"]{--bg:#fbe7e3;--card:#fff7f4;--card2:#f5dbd5;--line:#e8c4bd;--fg:#2b1622;--mute:#6c4f5d;--dim:#86687a;--accent:#d81b6a;--accent-fg:#fff;--teal:#0a7a82;--gold:#9a5d06;--cold:#2f5fc4;--ok:#1d7f46;--warn:#9a5d06;--bad:#c42644;color-scheme:light}
+body{font-size:15.5px;line-height:1.5}
+h1,h2,h3,.pagehead h1,.hello h1,.banner h1,.sech h2{font-family:var(--display);font-weight:800;letter-spacing:-.005em}
+.num,.cd b,.pstat b,.btnk,.item .mt .deg,.tile .cnt{font-family:var(--body);font-variant-numeric:tabular-nums}
+.cd b,.pstat b{font-weight:800}
+/* Logo : porte-clés de motel, chambre 6, et enseigne au néon */
+.logo{gap:9px;font-family:var(--script);font-weight:400;font-size:28px;line-height:1;letter-spacing:0;color:var(--fg)}
+.logo span{transform:translateY(2px)}
+.logo .fob{width:42px;height:25px;flex:none;color:var(--accent);transform:rotate(-8deg)}
+/* Libellés en phrase, sans majuscules espacées */
+.group{font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--fg);margin:20px 2px 8px}
+.blk > h3{font-size:14px;letter-spacing:0;text-transform:none;color:var(--mute);font-weight:700}
+.stat small,.slot small,.vsum small,.must .k,.banner.big .lab,.cd small,.admin,table.cmp tbody th{letter-spacing:0;text-transform:none}
+.stat small,.slot small,.vsum small{font-size:12.5px;font-weight:600}
+.must .k{font-size:12.5px}
+/* Listes : une seule surface, des lignes séparées par un filet */
+.list{gap:0;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.list:empty{display:none}
+.list > .item{border:0;border-radius:0;border-top:1px solid var(--line);background:transparent;padding:13px 14px}
+.list > .item:first-child,.list > .group + .item{border-top:0}
+.list > .item:hover{background:color-mix(in srgb,var(--fg) 4%,transparent)}
+.list > .item:active{transform:none;background:color-mix(in srgb,var(--fg) 7%,transparent)}
+.list > .group{margin:0;padding:16px 14px 8px;border-top:1px solid var(--line);font-size:13.5px}
+.list > .group:first-child{border-top:0}
+.list > .empty{padding:18px 14px}
+.thumb{border-radius:11px}
+.dt{background:none!important;padding:0;font-size:12.5px;font-weight:600;color:var(--dim)}
+.dt.fresh{color:var(--teal)}
+/* Situations : des boutons qui se suivent, pas une grille de cartes */
+.situ{display:flex;flex-wrap:wrap;gap:8px}
+.situ button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 13px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.situ .si{width:auto;height:auto;background:none;border-radius:0}
+.situ button b{font-size:14.5px;font-weight:700;line-height:1.2}
+.situ button svg.i,.situ .si svg.i{width:19px;height:19px}
+/* Raccourcis (Wiki, Plus) : une liste, pas des tuiles */
+.tiles{grid-template-columns:1fr;gap:0;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.tile{grid-template-columns:26px minmax(0,1fr) auto;column-gap:14px;row-gap:1px;align-items:center;padding:14px 16px;border:0;border-radius:0;border-top:1px solid var(--line);background:transparent}
+.tile:first-child{border-top:0}
+.tile:hover{background:color-mix(in srgb,var(--fg) 4%,transparent)}
+.tile svg.i{grid-row:1/3;grid-column:1;width:24px;height:24px;color:var(--accent)}
+.tile b{grid-column:2;font-size:15.5px}
+.tile small{grid-column:2;font-size:13px}
+.tile .cnt{position:static;grid-column:3;grid-row:1/3;font-size:14px;font-weight:700;color:var(--mute)}
+.tile .cnt.hot{padding:2px 8px}
+/* Choix des couleurs */
+.themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.themes button{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;align-items:center;text-align:left;padding:12px;border-radius:14px;background:var(--card);border:2px solid var(--line)}
+.themes button[aria-checked="true"]{border-color:var(--accent)}
+.themes .sw{grid-row:1/3;width:38px;height:38px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.themes b{font-size:14.5px}
+.themes small{font-size:12.5px;color:var(--mute)}
+@media (max-width:360px){.themes{grid-template-columns:1fr}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -524,7 +581,7 @@ form.edit label.inline input{width:22px;height:22px}
   <symbol id="ic-cmp" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></symbol>
   <symbol id="ic-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 2h6l1-2h5"/></symbol>
   <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></symbol>
-  <symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8M8 11h6"/></symbol><symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
+  <symbol id="ic-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/></symbol><symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8M8 11h6"/></symbol><symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
   <symbol id="ic-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol>
   <symbol id="ic-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 12v8h14v-8"/></symbol>
   <symbol id="ic-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
@@ -549,7 +606,7 @@ form.edit label.inline input{width:22px;height:22px}
 <div class="app">
   <div class="top">
     <div class="toprow">
-      <a class="logo" href="#accueil"><i></i>La Planque <small>GTA VI · FR</small></a>
+      <a class="logo" href="#accueil" aria-label="La Planque, accueil"><svg class="fob" viewBox="0 0 44 26" aria-hidden="true"><path d="M3.5 13 11 3.5h28a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H11z" fill="currentColor"/><path d="M8.3 13 12.6 7H38a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H12.6z" fill="none" stroke="var(--accent-fg)" stroke-opacity=".3"/><circle cx="11.2" cy="13" r="2.4" fill="var(--bg)"/><text x="27.5" y="18.3" text-anchor="middle" font-family="Overpass,system-ui,sans-serif" font-weight="800" font-size="14" fill="var(--accent-fg)">6</text></svg><span>La Planque</span></a>
       <div class="topbtns">
         <span class="admin" id="adminFlag" hidden>Admin</span>
         <a class="avatar" href="#profil" aria-label="Mon profil" id="profBtn"><svg class="i"><use href="#ic-user"/></svg></a>
@@ -608,6 +665,7 @@ function vis(m,d){
   if(m==="argent")return ["#ic-cash",["#4fd28a","#ffc35a","#ffb347","#ff6378"][d.risk||0]];
   if(m==="codes")return ["#ic-pad","#33d1bc"];
   if(m==="lexique")return ["#ic-book",LEXCOL[d.cat]||"#33d1bc"];
+  if(m==="cent")return ["#ic-trophy",CENTCOL[d.group]||"#ffc35a"];
   if(m==="lieux")return ["#ic-"+(KICON[d.kind]||"gps"),kindColor(d.kind)];
   return ["#ic-tip","#8d9cb3"]}
 /* ---- illustrations d'ambiance : dessins originaux, pas des images du jeu ---- */
@@ -637,6 +695,7 @@ function sceneFor(m,d){
   if(m==="faune")return [RSCENE[d.region]&&RSCENE[d.region]!=="road"?RSCENE[d.region]:(d.kind==="Animal marin"||d.kind==="Poisson"?"sea":"swamp")];
   if(m==="lieux")return [RSCENE[d.region]||"city"];
   if(m==="argent")return ["city","#2f9c6b"];
+  if(m==="cent")return ["city",({"Coups et business":"#b0563a","Activités":"#2aa59a",Collection:"#c9903a","Découverte":"#4f74c9","Défis à trophée":"#b0569a"})[d.group]];
   if(m==="lexique")return ["city",({Appli:"#2aa59a",Objet:"#c9903a","Mécanique":"#b0569a",Radio:"#7a5cc9"})[d.cat]];
   return ["city"]}
 /* captures officielles de Rockstar (rockstargames.com/VI/media), affichées depuis leur site avec crédit */
@@ -660,6 +719,7 @@ function comboEl(str){var map=LS.get("console","ps")==="xb"?XB:PS,box=h("div",{c
     box.append(v?h("span",{class:"btnk"+(v[2]?" round":""),style:v[1]?"color:"+v[1]:null,text:v[0]}):h("span",{class:"btnk",text:t}))});return box}
 
 /* ================= modules ================= */
+var CENTG=["Coups et business","Activités","Collection","Découverte","Défis à trophée"],CENTCOL={"Coups et business":"#ff8a5c","Activités":"#33d1bc","Collection":"#ffc35a","Découverte":"#8fb4ff","Défis à trophée":"#ff8ad8"};
 var LEXCAT=["Appli","Objet","Mécanique","Radio","Autre"],LEXPL={Appli:"Applis",Objet:"Objets","Mécanique":"Mécaniques",Radio:"Radios",Autre:"Autres"},LEXCOL={Appli:"#33d1bc",Objet:"#ffc35a","Mécanique":"#ff8ad8",Radio:"#b48cff",Autre:"#c7d2e4"};
 var MODS={
  voitures:{col:"vehicles",label:"Véhicules à voler",tab:"Véhicules",icon:"car",title:"name",wiki:true,done:"Volé",pic:true,vote:"Ces infos sont justes ?",
@@ -711,6 +771,15 @@ var MODS={
   stats:function(d){return d.phone?[["Par téléphone",d.phone]]:[]},
   extra:function(d){return d.combo?h("div",{class:"prose"},h("b",{text:"Combinaison"}),comboEl(d.combo)):null},
   body:function(d){return d.notes}},
+ cent:{col:"completion",label:"Objectif 100 %",tab:"100 %",icon:"trophy",title:"name",wiki:true,done:"Terminé",
+  intro:"Tout ce qui compte pour le 100 % et les trophées, sans spoiler. Coche au fur et à mesure : ta progression reste sur ton téléphone.",
+  fields:[{k:"name",label:"Objectif",type:"text",req:true},{k:"group",label:"Catégorie",type:"select",opts:opts(CENTG)},{k:"total",label:"Nombre au total",type:"text"},{k:"need",label:"Nombre requis pour le 100 %",type:"text"},{k:"trophy",label:"Trophée lié",type:"text"},{k:"how",label:"Comment faire",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
+  chips:[{g:"d",l:"À faire",todo:true}].concat(CENTG.map(function(t){return {g:"c",l:t,t:function(d){return d.group===t}}})).concat([{g:"t",l:"Avec trophée",t:function(d){return !!d.trophy}}]),
+  sorts:[["group","Par catégorie",function(a,b){return CENTG.indexOf(a.group)-CENTG.indexOf(b.group)||(a.prio?0:1)-(b.prio?0:1)||String(a.name).localeCompare(b.name,"fr")}],["name","A à Z",function(a,b){return String(a.name).localeCompare(b.name,"fr")}],["recent","Récentes",byRecent]],
+  card:function(d){var nn=d.need&&/^\d/.test(d.need)&&d.need!==d.total;return {right:d.total?[h("span",{class:"num",text:d.total}),h("small",{text:nn?d.need+" requis":"au total"})]:null,
+    tags:[d.trophy?h("span",{class:"tag gold"},ic("trophy"),d.trophy.split(" (")[0]):null],sub:plain(d.how).split("\n")[0]}},
+  stats:function(d){return [["Au total",d.total||null],["Pour le 100 %",d.need||false],["Trophée",d.trophy||false]]},
+  body:function(d){return d.how}},
  lexique:{col:"lexicon",label:"Lexique du jeu",tab:"Lexique",icon:"book",title:"name",wiki:true,
   intro:"Chaque appli, objet et mécanique du jeu, expliqué en une fiche. Les mots soulignés dans le reste du site mènent ici.",
   fields:[{k:"name",label:"Nom exact dans le jeu",type:"text",req:true},{k:"cat",label:"Catégorie",type:"select",opts:opts(LEXCAT)},{k:"short",label:"En une phrase : à quoi ça sert",type:"text"},{k:"body",label:"Détails",type:"textarea"},{k:"where",label:"Où le trouver / comment l'obtenir",type:"text"},{k:"source",label:"Source (lien)",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
@@ -728,8 +797,8 @@ var MODS={
   stats:function(d){return [["Type",d.kind||null],["Région",d.region&&d.region!=="Inconnu"?d.region:null],["Quartier",d.area||null],["Disponibilité",d.access&&d.access!=="Standard"?d.access:false]]},
   body:function(d){return d.notes}}
 };
-var ORDER=["astuces","argent","voitures","codes","faune","lieux","lexique"];
-var PLUSROUTES=["plus","liste","propositions","profil","confidentialite"],WIKIROUTES=["wiki","lexique","voitures","faune","lieux","codes"];
+var ORDER=["astuces","argent","voitures","codes","faune","lieux","lexique","cent"];
+var PLUSROUTES=["plus","liste","propositions","profil","confidentialite"],WIKIROUTES=["wiki","lexique","cent","voitures","faune","lieux","codes"];
 ORDER.forEach(function(m){var F=MODS[m].fields,si=-1;F.forEach(function(f,i){if(f.k==="source")si=i});if(si<0)si=F.length;
   var add=[];if(!F.some(function(f){return f.type==="image"}))add.push({k:"imageId",label:"Photo",type:"image"});
   add.push({k:"imageCredit",label:"Crédit de la photo (ex : © Rockstar Games)",type:"text"});
@@ -798,13 +867,13 @@ function pendingSugg(){var out=[];Object.keys(sugg).forEach(function(u){var s=su
 function setSuggState(it,state){var d=sugg[it.uid];if(!d)return Promise.reject({});var next=JSON.parse(JSON.stringify(d));next.items=(next.items||[]).map(function(x){if(x.id===it.id)x.state=state;return x});sugg[it.uid]=next;return db.doc("suggestions/"+it.uid).set(next)}
 
 /* ================= navigation ================= */
-var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","wiki","lexique","liste","propositions","profil","confidentialite"];
+var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","wiki","lexique","cent","liste","propositions","profil","confidentialite"];
 var DEEP=/^#?voir-([a-z]+)-([A-Za-z0-9_-]{1,80})$/;
 function route(){var r=(location.hash||"").slice(1),dm=DEEP.exec(r);if(dm&&ORDER.indexOf(dm[1])>-1)return dm[1];return ROUTES.indexOf(r)>-1?r:"accueil"}
 /* lien direct vers une fiche (partage, pages Google) : ouvre la fiche puis remet l'adresse du module */
 function takeDeep(){var dm=DEEP.exec(location.hash||"");if(!dm||ORDER.indexOf(dm[1])<0)return false;try{history.replaceState(null,"","#"+dm[1])}catch(_){}
   var col=MODS[dm[1]].col;if(data[col]&&data[col].some(function(x){return x.id===dm[2]}))openDetail(dm[1],dm[2]);else pendingOpen={m:dm[1],id:dm[2]};return true}
-var SITE=window.PLANQUE_SITE||null,SEG={astuces:"astuces",argent:"argent",voitures:"vehicules",codes:"codes",faune:"faune",lieux:"lieux",lexique:"lexique"};
+var SITE=window.PLANQUE_SITE||null,SEG={astuces:"astuces",argent:"argent",voitures:"vehicules",codes:"codes",faune:"faune",lieux:"lieux",lexique:"lexique",cent:"100-pourcent"};
 function shareFiche(m,d){var url=SITE+SEG[m]+"/"+encodeURIComponent(d.id)+"/",t=(d[MODS[m].title]||"Fiche GTA VI")+" · La Planque";
   if(navigator.share){navigator.share({title:t,url:url}).catch(function(){});return}
   var fb=function(){toast("Ton lien : "+url)};
@@ -1084,6 +1153,9 @@ var QS=["codes","argent","police","traceur","garage","édition","soigner"];
   qi.addEventListener("blur",function(){setTimeout(function(){box.hidden=true},150)})})();
 
 /* ================= Plus ================= */
+function setTheme(t){var c={vice:"#1d1532",keys:"#0e2a33",glades:"#1a1f17",motel:"#fbe7e3"};if(!c[t])t="vice";
+  if(t==="vice")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);
+  var mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.setAttribute("content",c[t]);LS.set("theme",t);rerender()}
 function renderPlus(v){
   var n=notice();if(n)v.append(n);
   v.append(h("div",{class:"pagehead"},h("h1",{text:"Plus"})));
@@ -1095,6 +1167,11 @@ function renderPlus(v){
   if(isAdmin){var pc=pendingSugg().length;tile("#propositions","inbox","Propositions","À valider",pc,pc>0)}
   else if(canParticipate())tile(null,"send","Proposer une info","Une voiture, une astuce, une erreur",null,false,function(){openPropose(null,null)});
   v.append(g);
+  var THEMES=[["vice","Vice City","Nuit violette, rose flamant",["#1d1532","#ff7eb3","#6fe3d4"]],["keys","Leonida Keys","Lagon et plein soleil",["#0e2a33","#ffcf5a","#82e8f3"]],["glades","Grassrivers","Marais et ambre",["#1a1f17","#f2a33a","#a9db8e"]],["motel","Motel","Clair, rose stuc",["#fbe7e3","#d81b6a","#0a7a82"]]];
+  var curT=LS.get("theme","vice"),tg=h("div",{class:"themes",role:"radiogroup","aria-label":"Couleurs du site"});
+  THEMES.forEach(function(t){var c=t[3];tg.append(h("button",{type:"button",role:"radio","aria-checked":curT===t[0]?"true":"false",onclick:function(){setTheme(t[0])}},
+    h("span",{class:"sw",style:"background:conic-gradient("+c[1]+" 0 25%,"+c[2]+" 25% 50%,"+c[0]+" 50% 100%)"}),h("b",{text:t[1]}),h("small",{text:t[2]})))});
+  v.append(h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:"Couleurs du site"})),tg));
   v.append(h("p",{class:"muted",style:"font-size:12.5px;margin:22px 2px 0",text:"Guide de fan non officiel, sans lien avec Rockstar Games ni Take-Two Interactive. Les infos marquées « à confirmer » ne sont pas officielles."}));
   v.append(h("p",{style:"font-size:13px;margin:8px 2px 0"},h("a",{href:"#confidentialite",style:"color:var(--teal);font-weight:600",text:"Confidentialité et mentions légales"})));
 }
@@ -1106,6 +1183,8 @@ function renderWiki(v){
   var g=h("div",{class:"tiles"});
   function tile(href,icon,t,s,cnt){g.append(h("a",{class:"tile",href:href},ic(icon),h("b",{text:t}),h("small",{text:s}),cnt?h("span",{class:"cnt",text:String(cnt)}):null))}
   var fd=data.wildlife.filter(function(d){return done("faune")[d.id]}).length;
+  var cd=data.completion.filter(function(d){return done("cent")[d.id]}).length;
+  tile("#cent","trophy","Objectif 100 %","Trophées et objectifs à cocher",data.completion.length?cd+"/"+data.completion.length:0);
   tile("#lexique","book","Lexique","Applis, objets, mécaniques",data.lexicon.length);
   tile("#voitures","car","Véhicules","Les modèles confirmés",data.vehicles.length);
   tile("#faune","paw","Faune et pêche","Le compendium à cocher",fd+"/"+data.wildlife.length);
@@ -1114,7 +1193,7 @@ function renderWiki(v){
   v.append(g);
   var cats=h("div",{class:"chips",style:"margin-top:18px"});
   LEXCAT.forEach(function(t,i){var c=data.lexicon.filter(function(d){return d.cat===t}).length;if(!c)return;
-    cats.append(h("button",{type:"button",class:"chip",onclick:function(){ui.lexique.chips={c:i};location.hash="#lexique"}},(LEXPL[t]||t)+" · "+c))});
+    cats.append(h("button",{type:"button",class:"chip",onclick:function(){ui.lexique.chips={c:i};location.hash="#lexique"}},(LEXPL[t]||t)+" ("+c+")"))});
   if(cats.childNodes.length)v.append(h("div",{class:"group",text:"Le lexique par catégorie"}),cats);
   var rec=[];ORDER.forEach(function(m){if(!MODS[m].wiki)return;data[MODS[m].col].forEach(function(d){if(d.status!=="exemple"&&d.updatedAt)rec.push([m,d])})});
   rec.sort(function(a,b){return b[1].updatedAt-a[1].updatedAt});
@@ -1150,6 +1229,7 @@ function renderModule(v,m){
     var groups={};rows.forEach(function(d){(groups[d.theme||"Divers"]=groups[d.theme||"Divers"]||[]).push(d)});
     ["Actu","Bases","Police","Combat","Véhicules","Argent","Santé","Divers"].forEach(function(t){if(!groups[t])return;list.append(h("div",{class:"group",text:t}));groups[t].forEach(function(d){list.append(item(m,d))})})}
   else if(m==="lexique"&&st.sort==="cat"&&st.chips.c==null){var cc=null;rows.slice().sort(function(a,b){return LEXCAT.indexOf(a.cat||"Autre")-LEXCAT.indexOf(b.cat||"Autre")||(a.prio?0:1)-(b.prio?0:1)||String(a.name).localeCompare(b.name,"fr")}).forEach(function(d){var c=d.cat||"Autre";if(c!==cc){cc=c;list.append(h("div",{class:"group",style:LEXCOL[c]?"color:"+LEXCOL[c]:null,text:LEXPL[c]||c}))}list.append(item(m,d))})}
+  else if(m==="cent"&&st.sort==="group"&&st.chips.c==null){var cg=null;rows.slice().sort(MODS.cent.sorts[0][2]).forEach(function(d){var c=d.group||"Défis à trophée";if(c!==cg){cg=c;list.append(h("div",{class:"group",style:CENTCOL[c]?"color:"+CENTCOL[c]:null,text:c}))}list.append(item(m,d))})}
   else if(m==="lieux"&&st.sort==="region"){var cur=null;rows.forEach(function(d){var r=d.region&&d.region!=="Inconnu"?d.region:"Région pas encore connue";if(r!==cur){cur=r;list.append(h("div",{class:"group",style:RCOL[r]?"color:"+RCOL[r]:null,text:r}))}list.append(item(m,d))})}
   else rows.forEach(function(d){list.append(item(m,d))});
   v.append(list);

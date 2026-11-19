@@ -20,8 +20,9 @@ CATS = [
   ("wildlife", "faune", "faune", "Animal", "Faune et pêche dans GTA 6", "Les animaux de Leonida : où les trouver et à quoi faire attention."),
   ("places", "lieux", "lieux", "Lieu", "Lieux de GTA 6", "Planques, garages, boutiques et lieux connus de Leonida, classés par région."),
   ("lexicon", "lexique", "lexique", "Lexique", "Lexique de GTA 6", "Les applis, objets et mécaniques de GTA VI, expliqués un par un."),
+  ("completion", "100-pourcent", "cent", "Objectif", "Objectif 100 % de GTA 6", "Trophées, collectibles et activités à faire pour le 100 % de GTA VI, sans spoiler."),
 ]
-WIKI = {"vehicles", "wildlife", "places", "lexicon", "codes"}
+WIKI = {"vehicles", "wildlife", "places", "lexicon", "codes", "completion"}
 REFS = {}
 SEC = {1: "Aucune", 2: "Alarme", 3: "Clé électronique", 4: "Antidémarrage"}
 RISK = {0: "Aucun", 1: "Faible", 2: "Moyen", 3: "Élevé"}
@@ -47,7 +48,7 @@ def load(local=None):
 def title_of(d): return d.get("title") or d.get("name") or "Sans titre"
 
 def summary_of(col, d):
-    for k in ("short", "body", "notes", "tip", "requires", "spawn", "habitat", "area"):
+    for k in ("short", "how", "body", "notes", "tip", "requires", "spawn", "habitat", "area"):
         if d.get(k):
             t = re.sub(r"\s+", " ", re.sub(r"^\d+\.\s*", "", plain(d[k]))).strip()
             return t[:155].rsplit(" ", 1)[0] + "…" if len(t) > 158 else t
@@ -66,7 +67,7 @@ def nmap(t): return "".join((lambda n: n if len(n) == 1 else ch.lower())(norm(ch
 def isw(c): return bool(c) and bool(re.match(r"[a-z0-9]", c))
 def plain(t): return MANUAL.sub(lambda m: m.group(1), str(t or ""))
 
-def text_of(d): return "\n\n".join(str(x) for x in (d.get("steps"), d.get("body") or d.get("notes") or d.get("tip")) if x)
+def text_of(d): return "\n\n".join(str(x) for x in (d.get("steps"), d.get("body") or d.get("notes") or d.get("tip") or d.get("how")) if x)
 
 def build_refs(rows):
     REFS.clear()
@@ -160,6 +161,10 @@ def stats(col, d):
               ("Quartier", d.get("area")), ("Disponibilité", d.get("access") if d.get("access") not in (None, "", "Standard") else None)]
     elif col == "codes":
         s += [("Par téléphone", d.get("phone"))]
+    elif col == "completion":
+        s += [("Catégorie", d.get("group")), ("Au total", d.get("total")), ("Pour le 100 %", d.get("need")), ("Trophée", d.get("trophy"))]
+    elif col == "lexicon":
+        s += [("Catégorie", d.get("cat")), ("Où le trouver", d.get("where"))]
     return [(k, v) for k, v in s if v not in (None, "")]
 
 def paras(text, ctx):
@@ -168,19 +173,19 @@ def paras(text, ctx):
         return "<ol>" + "".join(f"<li>{linkify(re.sub(r'^\d+\.\s*', '', p), ctx)}</li>" for p in ps) + "</ol>"
     return "".join(f"<p>{linkify(p, ctx)}</p>" for p in ps)
 
-CSS = """:root{--bg:#0c121c;--card:#141d2b;--line:#26344a;--fg:#eef3fa;--mute:#8d9cb3;--accent:#ff5d4f;--teal:#33d1bc;--ok:#4fd28a;--gold:#ffc35a;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+CSS = """:root{--bg:#1d1532;--card:#271e42;--line:#43375f;--fg:#fbf3ff;--mute:#bdb0d8;--accent:#ff7eb3;--teal:#6fe3d4;--ok:#5fe0a0;--gold:#ffc768;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 Overpass,system-ui,-apple-system,"Segoe UI",sans-serif}
 a{color:var(--teal)}.w{max-width:720px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px)) 48px max(16px,env(safe-area-inset-right,0px))}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
-.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px;color:var(--fg);text-decoration:none}.logo i{width:11px;height:11px;border-radius:3px;background:var(--accent);transform:rotate(45deg)}
-.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:12px;background:var(--accent);color:#1d0806;font-weight:700;text-decoration:none}
+.logo{display:flex;align-items:center;gap:9px;font-family:Yellowtail,"Brush Script MT",cursive;font-size:28px;line-height:1;color:var(--fg);text-decoration:none}.logo svg{width:40px;height:24px;color:var(--accent);transform:rotate(-8deg)}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:12px;background:var(--accent);color:#3a0a22;font-weight:700;text-decoration:none}
 .btn.sec{background:var(--card);color:var(--fg);border:1px solid var(--line)}
 .w p{white-space:pre-line}.crumb{font-size:13px;color:var(--mute)}.crumb a{color:var(--mute)}
 h1{font-size:clamp(26px,6vw,34px);line-height:1.2;margin:6px 0 10px;text-wrap:balance}h2{font-size:18px;margin:28px 0 10px}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}.tag{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:8px;background:var(--card);color:var(--mute)}
 .tag.ok{color:var(--ok)}.tag.gold{color:var(--gold)}.tag.rum{color:var(--accent)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:14px 0}.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
-.stat small{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}.stat b{font-size:16px}
+.stat small{display:block;font-size:12.5px;font-weight:600;color:var(--mute)}.stat b{font-size:16px}
 ol{padding-left:22px}li{margin:6px 0}.combo{font-size:22px;letter-spacing:.08em;font-weight:700}
 .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:16px 0}
 .shot{margin:14px 0 6px;border-radius:16px;overflow:hidden;aspect-ratio:16/9;background:var(--card)}.shot img{width:100%;height:100%;object-fit:cover;display:block}.credit{font-size:12.5px;color:var(--mute);margin:0 0 14px}.credit a{color:var(--mute)}
@@ -213,13 +218,13 @@ def page(title, desc, url, body, noindex=False, rel="", og=None):
 <meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}">
 <meta property="og:url" content="{esc(url)}">{f'<meta property="og:image" content="{esc(og)}">' if og else f'<meta property="og:image" content="{SITE}og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'}
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0c121c">
-<link rel="icon" href="{rel}icon-192.png"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: https://www.rockstargames.com https://upload.wikimedia.org https://thumb.wikimedia.org; script-src 'none'; base-uri 'none'">
+<meta name="theme-color" content="#1d1532">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&family=Yellowtail&display=swap"><link rel="icon" href="{rel}icon-192.png"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://www.rockstargames.com https://upload.wikimedia.org https://thumb.wikimedia.org; script-src 'none'; base-uri 'none'">
 <style>{CSS}</style>
 </head>
 <body><div class="w">
-<header><a class="logo" href="{rel}"><i></i>La Planque</a><a class="btn" href="{rel}">Ouvrir l'app</a></header>
+<header><a class="logo" href="{rel}"><svg viewBox="0 0 44 26" aria-hidden="true"><path d="M3.5 13 11 3.5h28a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H11z" fill="currentColor"/><circle cx="11.2" cy="13" r="2.4" fill="#1d1532"/><text x="27.5" y="18.3" text-anchor="middle" font-family="Overpass,system-ui,sans-serif" font-weight="800" font-size="14" fill="#3a0a22">6</text></svg>La Planque</a><a class="btn" href="{rel}">Ouvrir l'app</a></header>
 {body}
 <footer>La Planque, guide de fan non officiel, sans lien avec Rockstar Games ni Take-Two Interactive. <a href="{rel}#confidentialite">Confidentialité</a></footer>
 </div></body></html>
@@ -258,7 +263,7 @@ def fiche_html(cat, row, siblings):
     if s: b.append('<div class="stats">' + "".join(f'<div class="stat"><small>{esc(k)}</small><b>{esc(v)}</b></div>' for k, v in s) + "</div>")
     if col == "money" and d.get("steps"):
         b.append("<h2>Étape par étape</h2><ol>" + "".join(f"<li>{linkify(x.strip(), ctx)}</li>" for x in str(d["steps"]).split("\n") if x.strip()) + "</ol>")
-    txt = d.get("body") or d.get("notes") or d.get("tip")
+    txt = d.get("body") or d.get("notes") or d.get("tip") or d.get("how")
     if txt: b.append(paras(txt, ctx))
     if d.get("videoUrl") and re.match(r"^https?://", d["videoUrl"]):
         b.append(f'<div class="box"><b>Vidéo à voir : <a href="{esc(d["videoUrl"])}" rel="noopener">{esc(d.get("videoTitle") or "Regarder")}</a></b>'
