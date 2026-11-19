@@ -1,0 +1,37 @@
+name: La Planque - sauvegarde des fiches
+# Chaque nuit, copie toutes les fiches (table publique « fiches ») dans la branche « sauvegardes ».
+# Les comptes, commentaires et notes perso ne sont pas copiés ici : ils restent dans Supabase.
+on:
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: la-planque-sauvegarde
+  cancel-in-progress: false
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exporter les fiches
+        env:
+          URL: https://sonpigelysgbfvbeotgj.supabase.co/rest/v1/fiches?select=col,id,data,updated_at&order=col,id
+          KEY: sb_publishable_yzD2ln5tGuEZZyYttiFCWA__bK-4psf
+        run: |
+          curl -sSf "$URL" -H "apikey: $KEY" -H "Accept: application/json" -o /tmp/fiches.json
+          python3 -c "import json;d=json.load(open('/tmp/fiches.json'));assert isinstance(d,list) and len(d)>50,'export trop petit';print(len(d),'fiches')"
+      - name: Ranger dans la branche sauvegardes
+        env:
+          GH_REPO: ${{ github.repository }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir work && cd work && git init -q
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GH_REPO}.git"
+          if git fetch -q --depth 1 origin sauvegardes; then git checkout -q -b sauvegardes FETCH_HEAD; else git checkout -q --orphan sauvegardes; fi
+          cp /tmp/fiches.json fiches.json
+          printf '%s\n' "# Sauvegarde des fiches de La Planque" "" "fiches.json : toutes les fiches (col, id, data, updated_at), copiées chaque nuit depuis Supabase." "Pour restaurer une fiche : reprends son objet data et réinsère-le dans la table public.fiches." > README.md
+          git add fiches.json README.md
+          if git diff --cached --quiet; then echo "Rien de neuf"; exit 0; fi
+          git -c user.name="la-planque-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Sauvegarde du $(date -u +%F)"
+          git push -q origin sauvegardes

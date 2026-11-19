@@ -3,7 +3,7 @@
 de catégories, le sommaire et le sitemap, à partir de la base Supabase (lecture publique).
 Usage : python3 la-planque/tools/build_pages.py [--local fichier.json]
 Écrit uniquement dans la-planque/<catégorie>/, la-planque/fiches/ et la-planque/sitemap.xml."""
-import json, os, re, sys, shutil, html, unicodedata, urllib.request
+import json, os, re, sys, shutil, html, unicodedata, urllib.request, hashlib, base64
 from datetime import datetime, timezone, timedelta
 
 SITE = "https://hojicooks.github.io/la-planque/"
@@ -23,6 +23,12 @@ CATS = [
   ("completion", "100-pourcent", "cent", "Objectif", "Objectif 100 % de GTA 6", "Trophées, collectibles et activités à faire pour le 100 % de GTA VI, sans spoiler."),
 ]
 WIKI = {"vehicles", "wildlife", "places", "lexicon", "codes", "completion"}
+# Mesure d'audience anonyme (sans cookie ni identifiant) : une page vue = un appel à la fonction hit de la base.
+HIT_JS = ('(function(){try{if(sessionStorage.getItem("pl_hit_"+location.pathname))return;sessionStorage.setItem("pl_hit_"+location.pathname,"1")}catch(e){}'
+          'var p="page-"+location.pathname.replace(/^\\/la-planque\\//,"").replace(/\\/$/,"").toLowerCase().replace(/[^a-z0-9_-]+/g,"-").slice(0,85);'
+          'var r=document.referrer||"",u=navigator.userAgent||"",s=/musical_ly|BytedanceWebview|TikTok/i.test(u)||/tiktok\\./.test(r)?"tiktok":/google\\./.test(r)?"google":!r?"direct":"autre";'
+          'try{fetch("https://sonpigelysgbfvbeotgj.supabase.co/rest/v1/rpc/hit",{method:"POST",keepalive:true,headers:{"apikey":"sb_publishable_yzD2ln5tGuEZZyYttiFCWA__bK-4psf","Content-Type":"application/json"},body:JSON.stringify({p_path:p,p_src:s})}).catch(function(){})}catch(e){}})()')
+HIT_SHA = "sha256-" + base64.b64encode(hashlib.sha256(HIT_JS.encode("utf-8")).digest()).decode()
 REFS = {}
 SEC = {1: "Aucune", 2: "Alarme", 3: "Clé électronique", 4: "Antidémarrage"}
 RISK = {0: "Aucun", 1: "Faible", 2: "Moyen", 3: "Élevé"}
@@ -227,13 +233,13 @@ def page(title, desc, url, body, noindex=False, rel="", og=None):
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1d1532">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&family=Yellowtail&display=swap"><link rel="icon" href="{rel}icon-192.png"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://www.rockstargames.com https://upload.wikimedia.org https://thumb.wikimedia.org; script-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://www.rockstargames.com https://upload.wikimedia.org https://thumb.wikimedia.org; script-src '{HIT_SHA}'; connect-src https://sonpigelysgbfvbeotgj.supabase.co; base-uri 'none'">
 <style>{CSS}</style>
 </head>
 <body><div class="w">
 <header><a class="logo" href="{rel}"><svg viewBox="0 0 44 26" aria-hidden="true"><path d="M3.5 13 11 3.5h28a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H11z" fill="currentColor"/><circle cx="11.2" cy="13" r="2.4" fill="#1d1532"/><text x="27.5" y="18.3" text-anchor="middle" font-family="Overpass,system-ui,sans-serif" font-weight="800" font-size="14" fill="#3a0a22">6</text></svg>La Planque</a><a class="btn" href="{rel}">Ouvrir l'app</a></header>
 {body}
-<footer>La Planque, guide de fan non officiel, sans lien avec Rockstar Games ni Take-Two Interactive. <a href="{rel}#confidentialite">Confidentialité</a></footer>
+<footer>La Planque, guide de fan non officiel, sans lien avec Rockstar Games ni Take-Two Interactive. <a href="{rel}#confidentialite">Mentions légales et confidentialité</a></footer>\n<script>{HIT_JS}</script>
 </div></body></html>
 """
 

@@ -37,7 +37,9 @@ if(window.top!==window.self){document.documentElement.style.display="none";try{w
   function me(){return sess.then(function(s){return s?s.user.id:null})}
   var subs={};function reg(k,f){(subs[k]=subs[k]||[]).push(f);f()}
   function emit(k){(subs[k]||[]).forEach(function(f){f()})}
-  function fail(e){throw {code:e&&(e.code==="42501"||e.code==="PGRST301")?"invalid_argument":"error",message:e&&e.message}}
+  function fail(e){throw {code:e&&/rate_limited/.test(e.message||"")?"rate":e&&(e.code==="42501"||e.code==="PGRST301")?"invalid_argument":"error",message:e&&e.message}}
+  window.plStats={hit:function(p,s){return sb.rpc("hit",{p_path:p,p_src:s}).then(function(){},function(){})},
+    read:function(since){return sb.from("stats_daily").select("day,path,src,views").gte("day",since).limit(5000).then(function(r){if(r.error)throw r.error;return r.data||[]})}};
   function ok(k){return function(r){if(r.error)fail(r.error);if(k)emit(k);return r}}
   function now(){return new Date().toISOString()}
   function slug(d){var t=String(d.name||d.title||"fiche").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)||"fiche";return t+"-"+Math.random().toString(36).slice(2,6)}
@@ -432,7 +434,7 @@ form.edit label.inline input{width:22px;height:22px}
 .imgpick label.btn{display:inline-flex;align-items:center;cursor:pointer}
 .sugg{display:grid;gap:8px;padding:13px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
 .sugg p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.sugg .meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--mute)}.sugg.hot{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}.quote{margin:0;padding:8px 12px;border-left:3px solid var(--bad);background:var(--bg);border-radius:4px 10px 10px 4px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}.reasons{border:0;padding:0;margin:0;display:grid;gap:8px;min-width:0}.reasons legend{font-size:13px;color:var(--mute);margin-bottom:6px;padding:0}.edit label.rsn,.rsn{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:15px;color:var(--fg);cursor:pointer}.rsn:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}.edit .rsn input,.rsn input{accent-color:var(--accent);width:20px;height:20px;min-height:0;margin:0;padding:0;border:0;background:none;flex:none;box-shadow:none}.rsn span{min-width:0}.cm .rep{color:var(--mute);font-size:12px;font-weight:600;margin-left:6px}.mynote{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px dashed color-mix(in srgb,var(--accent) 40%,var(--line))}.mynote.empty{padding:0;border:0;background:none}.mynote .nhead{display:flex;align-items:center;gap:8px;font-size:13.5px}.mynote .nhead .muted{margin-left:auto;font-size:12px}.mynote p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}.mynote textarea{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--fg);width:100%;font-size:16px;min-height:84px;resize:vertical;font-family:inherit}.mynote .row-actions{align-items:center}.mynote .row-actions .muted{margin-left:auto;font-size:12px}
+.sugg .meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--mute)}.statbox{display:grid;gap:4px;min-width:0}.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}.kpi{background:var(--card);border-radius:14px;padding:12px 14px;display:grid;gap:2px}.kpi small{color:var(--mute);font-size:12.5px}.kpi b{font-size:26px;line-height:1.1}.days{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;align-items:end;height:120px;padding:8px 10px;background:var(--card);border-radius:14px}.day{display:grid;grid-template-rows:minmax(0,1fr) 13px;height:100%;gap:4px;justify-items:center}.day i{align-self:end;width:100%;border-radius:4px 4px 2px 2px;background:var(--accent);min-height:2px}.day small{font-size:10.5px;line-height:13px;height:13px;color:var(--mute)}.brows{display:grid;gap:10px;background:var(--card);border-radius:14px;padding:12px 14px}.brow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:14px}.brow .bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.brow .bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--teal)}.sugg.hot{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}.quote{margin:0;padding:8px 12px;border-left:3px solid var(--bad);background:var(--bg);border-radius:4px 10px 10px 4px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}.reasons{border:0;padding:0;margin:0;display:grid;gap:8px;min-width:0}.reasons legend{font-size:13px;color:var(--mute);margin-bottom:6px;padding:0}.edit label.rsn,.rsn{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:15px;color:var(--fg);cursor:pointer}.rsn:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}.edit .rsn input,.rsn input{accent-color:var(--accent);width:20px;height:20px;min-height:0;margin:0;padding:0;border:0;background:none;flex:none;box-shadow:none}.rsn span{min-width:0}.cm .rep{color:var(--mute);font-size:12px;font-weight:600;margin-left:6px}.mynote{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px dashed color-mix(in srgb,var(--accent) 40%,var(--line))}.mynote.empty{padding:0;border:0;background:none}.mynote .nhead{display:flex;align-items:center;gap:8px;font-size:13.5px}.mynote .nhead .muted{margin-left:auto;font-size:12px}.mynote p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}.mynote textarea{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--fg);width:100%;font-size:16px;min-height:84px;resize:vertical;font-family:inherit}.mynote .row-actions{align-items:center}.mynote .row-actions .muted{margin-left:auto;font-size:12px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navh) + var(--sab) + 76px);z-index:60;background:var(--fg);color:var(--bg);font-weight:600;font-size:14px;padding:10px 16px;border-radius:12px;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* Passe de sobriété : dans les listes, seuls « Essentiel » et « Nouveau » restent des pastilles ; le reste devient une ligne de texte */
@@ -514,7 +516,7 @@ form.edit label.inline input{width:22px;height:22px}
 /* ================= Refonte : identité clé de motel, thèmes, listes d'un seul tenant ================= */
 :root[data-theme="keys"]{--bg:#0e2a33;--card:#133641;--card2:#18424f;--line:#24535f;--fg:#effbfd;--mute:#a9d0d7;--dim:#7eaab3;--accent:#ffcf5a;--accent-fg:#2e2200;--teal:#82e8f3;--gold:#ffcf5a;--cold:#8fd0ff;--ok:#6fe0a8;--warn:#ffcf5a;--bad:#ff7d86;color-scheme:dark}
 :root[data-theme="glades"]{--bg:#1a1f17;--card:#232a1f;--card2:#2c3527;--line:#3b4634;--fg:#f4f6ea;--mute:#c2c9ab;--dim:#97a07e;--accent:#f2a33a;--accent-fg:#2d1800;--teal:#a9db8e;--gold:#f2c14e;--cold:#9cc7d9;--ok:#8fd77a;--warn:#f2c14e;--bad:#ff7d6b;color-scheme:dark}
-:root[data-theme="motel"]{--bg:#fbe7e3;--card:#fff7f4;--card2:#f5dbd5;--line:#e8c4bd;--fg:#2b1622;--mute:#6c4f5d;--dim:#86687a;--accent:#d81b6a;--accent-fg:#fff;--teal:#0a7a82;--gold:#9a5d06;--cold:#2f5fc4;--ok:#1d7f46;--warn:#9a5d06;--bad:#c42644;color-scheme:light}
+:root[data-theme="motel"]{--bg:#fbe7e3;--card:#fff7f4;--card2:#f5dbd5;--line:#e8c4bd;--fg:#2b1622;--mute:#6c4f5d;--dim:#755b6b;--accent:#be175d;--accent-fg:#fff;--teal:#096d74;--gold:#8d5505;--cold:#2e5dc0;--ok:#19713e;--warn:#8d5505;--bad:#bc2441;color-scheme:light}
 body{font-size:15.5px;line-height:1.5}
 h1,h2,h3,.pagehead h1,.hello h1,.banner h1,.sech h2{font-family:var(--display);font-weight:800;letter-spacing:-.005em}
 .num,.cd b,.pstat b,.btnk,.item .mt .deg,.tile .cnt{font-family:var(--body);font-variant-numeric:tabular-nums}
@@ -592,7 +594,7 @@ h1,h2,h3,.pagehead h1,.hello h1,.banner h1,.sech h2{font-family:var(--display);f
   <symbol id="ic-pad" viewBox="0 0 24 24"><path d="M7 7h10a5 5 0 0 1 4.8 6.3l-1 3.6a2.2 2.2 0 0 1-3.8.8L15 15H9l-2 2.7a2.2 2.2 0 0 1-3.8-.8l-1-3.6A5 5 0 0 1 7 7z"/><path d="M7 10v4M5 12h4"/><circle cx="16" cy="11" r=".8"/><circle cx="18" cy="13" r=".8"/></symbol>
   <symbol id="ic-cmp" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></symbol>
   <symbol id="ic-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 2h6l1-2h5"/></symbol>
-  <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></symbol><symbol id="ic-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2.5 4L16 12H5"/></symbol>
+  <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></symbol><symbol id="ic-chart" viewBox="0 0 24 24"><path d="M5 20V11M11 20V5M17 20v-6M3 20h18"/></symbol><symbol id="ic-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2.5 4L16 12H5"/></symbol>
   <symbol id="ic-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/></symbol><symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8M8 11h6"/></symbol><symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
   <symbol id="ic-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol>
   <symbol id="ic-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 12v8h14v-8"/></symbol>
@@ -717,7 +719,7 @@ function extImg(d){var u=d.imageUrl;return typeof u==="string"&&(u.indexOf(RIMG)
 function imgSrc(u,w){return u.indexOf(RIMG)===0?u+"?akim=1&imwidth="+w:u}
 function visual(m,d,big){var v=vis(m,d),xi=extImg(d),pic=d.imageId||xi,slim=big&&m!=="voitures"&&m!=="faune"&&!pic;
   var box=h("div",{class:big?"hero"+(pic?" photo":"")+(slim?" slim":""):"thumb",style:"color:"+v[1]+";--tc:"+v[1]});
-  if(pic){var im=h("img",{alt:"",src:d.imageId?"/_blob/"+d.imageId:imgSrc(xi,big?1024:320),loading:"lazy"});im.onerror=function(){im.replaceWith(svgUse(v[0]))};box.append(im)}
+  if(pic){var im=h("img",{alt:big?(d.imageCaption||d[MODS[m].title]||""):"",src:d.imageId?"/_blob/"+d.imageId:imgSrc(xi,big?1024:320),loading:"lazy",decoding:"async"});im.onerror=function(){im.replaceWith(svgUse(v[0]))};box.append(im)}
   else if(big){var sc=sceneFor(m,d);box.innerHTML=sceneSVG(sc[0],sc[1]);box.append(h("span",{class:"badge"},svgUse(v[0])))}
   else box.append(svgUse(v[0]));return box}
 var ACCESS=["Standard","Édition Ultime","Bonus précommande"];
@@ -877,7 +879,7 @@ function writeMine(path,store,mut){
   var p=wq.then(function(){var had=uid in store,cur=store[uid]||{};var next=JSON.parse(JSON.stringify(cur));mut(next);next.updatedAt=Date.now();store[uid]=next;if(store===comm)recompute();
     return db.doc(path+"/"+uid).set(next).catch(function(e){if(had)store[uid]=cur;else delete store[uid];if(store===comm)recompute();throw e})});
   wq=p.catch(function(){});return p}
-function participationError(e){toast(e&&e.code==="noid"?(AUTH?"Connecte-toi pour participer : onglet Plus, puis Mon profil.":"Connecte-toi à claude.ai pour participer."):e&&e.code==="invalid_argument"?"La participation n'est pas ouverte sur ce lien.":"Ça n'a pas marché, réessaie.")}
+function participationError(e){toast(e&&e.code==="rate"?"Doucement : attends quelques secondes avant de reposter.":e&&e.code==="noid"?(AUTH?"Connecte-toi pour participer : onglet Plus, puis Mon profil.":"Connecte-toi à claude.ai pour participer."):e&&e.code==="invalid_argument"?"La participation n'est pas ouverte sur ce lien.":"Ça n'a pas marché, réessaie.")}
 function vote(m,id,v){var k=KEY(m,id),cur=myVotes[k]||0,nv=cur===v?0:v;
   return writeMine("community",comm,function(d){d.votes=d.votes||{};if(nv)d.votes[k]=nv;else delete d.votes[k];d.comments=d.comments||[]}).catch(function(e){participationError(e)})}
 function addComment(m,id,text){return writeMine("community",comm,function(d){d.votes=d.votes||{};d.comments=d.comments||[];d.comments.push({id:uid8(),target:KEY(m,id),text:text.slice(0,600),at:Date.now()})})}
@@ -891,7 +893,15 @@ function suggPrio(o){return o.kind==="comment"||/^(spoiler|choquant|pub)$/.test(
 function setSuggState(it,state){var d=sugg[it.uid];if(!d)return Promise.reject({});var next=JSON.parse(JSON.stringify(d));next.items=(next.items||[]).map(function(x){if(x.id===it.id)x.state=state;return x});sugg[it.uid]=next;return db.doc("suggestions/"+it.uid).set(next)}
 
 /* ================= navigation ================= */
-var ROUTES=["actu","accueil","astuces","argent","voitures","plus","codes","faune","lieux","wiki","lexique","cent","liste","propositions","profil","confidentialite"];
+var ROUTES=["actu","accueil","astuces","argent","voitures","plus","codes","faune","lieux","wiki","lexique","cent","liste","propositions","profil","confidentialite","stats"];
+/* Mesure d'audience anonyme : une page comptée une fois par visite, sans cookie, sans identifiant, sans adresse IP enregistrée. */
+function trafficSrc(){try{var k=sessionStorage.getItem("pl_src");if(k)return k}catch(e){}
+  var q=(location.search.match(/[?&]src=([a-z]{2,12})/)||[])[1],r=document.referrer||"",ua=navigator.userAgent||"",k;
+  if(q)k=q;else if(/musical_ly|BytedanceWebview|TikTok/i.test(ua)||/tiktok\./.test(r))k="tiktok";else if(/Instagram/.test(ua)||/instagram\./.test(r))k="instagram";else if(/google\./.test(r))k="google";else if(/youtube\.|youtu\.be/.test(r))k="youtube";else if(/discord/.test(r))k="discord";else if(!r||r.indexOf(location.origin)===0)k="direct";else k="autre";
+  try{sessionStorage.setItem("pl_src",k)}catch(e){}return k}
+var hitDone={};function track(p){if(!window.plStats||isAdmin)return;try{if(localStorage.getItem("pl_notrack"))return}catch(_){}p=String(p||"accueil").toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,90);if(!p||hitDone[p])return;hitDone[p]=1;
+  try{var k=JSON.parse(sessionStorage.getItem("pl_hits")||"{}");if(k[p])return;k[p]=1;sessionStorage.setItem("pl_hits",JSON.stringify(k))}catch(e){}
+  window.plStats.hit(p,trafficSrc())}
 var DEEP=/^#?voir-([a-z]+)-([A-Za-z0-9_-]{1,80})$/;
 function route(){var r=(location.hash||"").slice(1),dm=DEEP.exec(r);if(dm&&ORDER.indexOf(dm[1])>-1)return dm[1];return ROUTES.indexOf(r)>-1?r:"accueil"}
 /* lien direct vers une fiche (partage, pages Google) : ouvre la fiche puis remet l'adresse du module */
@@ -926,8 +936,8 @@ function renderNav(){var n=document.getElementById("nav");n.innerHTML="";var cur
 function render(){
   renderNav();var v=document.getElementById("view");v.innerHTML="";renderFabs();
   if(query.trim().length>=2){renderSearch(v);return}
-  var r=route();
-  if(r==="actu")renderActu(v);else if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="wiki")renderWiki(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
+  var r=route();track(r);
+  if(r==="actu")renderActu(v);else if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="wiki")renderWiki(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else if(r==="stats")renderStats(v);else renderModule(v,r);
 }
 var rq=null;function rerender(){if(rq)return;rq=setTimeout(function(){rq=null;var y=window.scrollY;render();window.scrollTo(0,y)},30)}
 window.addEventListener("hashchange",function(){if(query){query="";qi.value="";qx.hidden=true}render();window.scrollTo(0,0);var v=document.getElementById("view");v.classList.remove("enter");void v.offsetWidth;v.classList.add("enter");takeDeep()});
@@ -1041,18 +1051,46 @@ function startProfileSync(){if(!db||!uid)return;
     else if(!s.metadata.fromCache){if(!s.exists||(s.data().at||0)<profAt)pushProfile();else profState="ok"}
   },function(){profState="err"})}
 function drawAvatar(el){el.innerHTML="";if(me.avatarUrl)el.append(h("img",{alt:"",src:me.avatarUrl}));else if(me.name)el.textContent=me.name.trim().charAt(0).toUpperCase();else el.append(ic("user"))}
+function renderStats(v){
+  v.append(h("div",{class:"pagehead"},h("h1",{text:"Statistiques"}),h("p",{class:"muted",text:"Pages vues, comptées une fois par visite, sans cookie ni donnée personnelle. Tes propres visites ne comptent pas."})));
+  if(!isAdmin||!window.plStats){v.append(h("div",{class:"empty",text:"Réservé à l'administrateur."}));return}
+  var box=h("div",{class:"statbox"},h("div",{class:"empty",text:"Chargement…"}));v.append(box);
+  var fmt=function(d){return new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Paris"}).format(d)},today=fmt(new Date()),d7=fmt(new Date(Date.now()-6*864e5)),since=fmt(new Date(Date.now()-29*864e5));
+  var SRC={tiktok:"TikTok",google:"Google",direct:"Accès direct",instagram:"Instagram",youtube:"YouTube",discord:"Discord",autre:"Autres sites"};
+  function label(p){if(p==="accueil")return "Accueil";if(MODS[p])return MODS[p].label;var named={actu:"L'actu du jeu",wiki:"Wiki",plus:"Plus",liste:"Ma liste",profil:"Mon profil",confidentialite:"Mentions légales",comparer:"Comparer"};if(named[p])return named[p];
+    var vm=/^voir-([a-z]+)-(.+)$/.exec(p);if(vm&&MODS[vm[1]]){var M=MODS[vm[1]],f=(data[M.col]||[]).filter(function(x){return x.id===vm[2]})[0];return (f?f[M.title]:vm[2])+" ("+M.tab+")"}
+    var pm=/^page-(.+)$/.exec(p);if(pm)return "Page Google : "+pm[1].replace(/-/g," ");return p}
+  function bars(title,list,total){var s=h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:title})));var l=h("div",{class:"brows"});
+    list.forEach(function(it){l.append(h("div",{class:"brow"},h("span",{class:"bl",text:it[0]}),h("b",{text:String(it[1])}),h("i",{class:"bar",style:"width:"+Math.max(2,Math.round(it[1]/Math.max(1,list[0][1])*100))+"%"})))});
+    if(!list.length)l.append(h("div",{class:"empty",text:"Pas encore de visites."}));s.append(l);return s}
+  window.plStats.read(since).then(function(rows){box.innerHTML="";
+    var t=0,w=0,m=0,bySrc={},byPath={},byDay={};
+    rows.forEach(function(r){m+=r.views;if(r.day===today)t+=r.views;if(r.day>=d7){w+=r.views;bySrc[r.src]=(bySrc[r.src]||0)+r.views;byPath[r.path]=(byPath[r.path]||0)+r.views}byDay[r.day]=(byDay[r.day]||0)+r.views});
+    box.append(h("div",{class:"kpis"},h("div",{class:"kpi"},h("small",{text:"Aujourd'hui"}),h("b",{text:String(t)})),h("div",{class:"kpi"},h("small",{text:"7 jours"}),h("b",{text:String(w)})),h("div",{class:"kpi"},h("small",{text:"30 jours"}),h("b",{text:String(m)}))));
+    var days=[];for(var i=13;i>=0;i--){var dd=fmt(new Date(Date.now()-i*864e5));days.push([dd,byDay[dd]||0])}var mx=Math.max.apply(null,days.map(function(x){return x[1]}).concat([1]));
+    var ch=h("div",{class:"days","aria-label":"Pages vues sur 14 jours"});days.forEach(function(x,i){ch.append(h("div",{class:"day",title:x[0]+" : "+x[1]},h("i",{style:"height:"+Math.max(2,Math.round(x[1]/mx*100))+"%"}),h("small",{text:i%2===1?x[0].slice(8,10):""})))});
+    box.append(h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:"14 derniers jours"})),ch));
+    box.append(bars("D'où viennent les visiteurs (7 jours)",Object.keys(bySrc).map(function(k){return [SRC[k]||k,bySrc[k]]}).sort(function(a,b){return b[1]-a[1]})));
+    box.append(bars("Pages les plus vues (7 jours)",Object.keys(byPath).map(function(k){return [label(k),byPath[k]]}).sort(function(a,b){return b[1]-a[1]}).slice(0,15)));
+    box.append(h("p",{class:"muted",style:"font-size:13px"},"Astuce : dans ta bio TikTok, mets le lien avec ",h("b",{text:"?src=tiktok"})," à la fin pour bien compter les visites qui viennent de TikTok."));
+  }).catch(function(){box.innerHTML="";box.append(h("div",{class:"empty",text:"Impossible de charger les statistiques. Réessaie plus tard."}))})}
 function renderPrivacy(v){
   function sec(t,ps){var b=h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:t})));ps.forEach(function(p){b.append(typeof p==="string"?h("p",{class:"muted",style:"margin:0;font-size:14px;line-height:1.55",text:p}):p)});v.append(b)}
-  v.append(h("div",{class:"pagehead"},h("h1",{text:"Confidentialité et mentions légales"}),h("p",{class:"muted",text:"En clair : on garde le strict minimum, et tu peux tout effacer quand tu veux."})));
+  v.append(h("div",{class:"pagehead"},h("h1",{text:"Mentions légales, conditions et confidentialité"}),h("p",{class:"muted",text:"En clair : un site de fan gratuit, des règles simples, et le strict minimum de données."})));
   sec("Ce site",["La Planque est un guide de fan non officiel consacré à GTA VI, édité à titre personnel et non commercial. Il n'a aucun lien avec Rockstar Games ni Take-Two Interactive. Grand Theft Auto est une marque de Take-Two Interactive.",
     "Images : captures officielles © Rockstar Games, mises à disposition sur rockstargames.com/VI/media et affichées depuis le site de Rockstar, avec crédit sur chaque fiche. Sur simple demande de Rockstar, elles sont retirées.",
-    "Hébergement des pages : GitHub Pages (GitHub Inc., San Francisco, États-Unis). Base de données et connexion : Supabase, serveurs situés à Paris.",
+    "Éditeur : un particulier, à titre non professionnel. Comme le permet la loi pour la confiance dans l'économie numérique (LCEN), il ne publie pas son identité ; elle est connue de l'hébergeur.",
+    "Hébergeur : GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis, téléphone +1 877 448 4820. Base de données et comptes : Supabase, Inc., serveurs situés à Paris.",
     h("p",{class:"muted",style:"margin:0;font-size:14px"},"Contact : ",h("a",{href:"https://github.com/Hojicooks/hojicooks.github.io/issues",target:"_blank",rel:"noopener",style:"color:var(--teal)",text:"page du projet sur GitHub"}),".")]);
-  sec("Sans compte",["Tu peux tout consulter sans te connecter. Tes fiches épinglées, ta progression, tes notes perso et ta console restent alors uniquement dans ton navigateur, sur ton appareil.","Le site n'utilise ni publicité, ni traceur, ni cookie publicitaire. Les polices d'écriture sont chargées depuis Google Fonts, qui reçoit ton adresse IP comme tout site que tu visites."]);
+  sec("Sans compte",["Tu peux tout consulter sans te connecter. Tes fiches épinglées, ta progression, tes notes perso et ta console restent alors uniquement dans ton navigateur, sur ton appareil.","Le site n'utilise ni publicité, ni traceur, ni cookie publicitaire : c'est pour ça qu'il n'y a pas de bandeau cookies. Les polices d'écriture sont chargées depuis Google Fonts, qui reçoit ton adresse IP comme tout site que tu visites.","Mesure d'audience : pour savoir quelles pages servent, le site compte les pages vues de façon anonyme (la page, le jour et le site d'où tu viens, par exemple TikTok ou Google). Aucun cookie, aucun identifiant, aucune adresse IP n'est enregistré."]);
   sec("Avec un compte",["Ton adresse e-mail : elle sert uniquement à te connecter et, si tu le demandes, à t'envoyer un lien pour changer ton mot de passe. Ton mot de passe est chiffré : personne, pas même l'administrateur, ne peut le lire. Elle n'est jamais affichée ni partagée.","Ton pseudo, tes votes et tes commentaires : ils sont publics, c'est le principe du site.","Tes propositions d'infos et tes signalements : visibles par toi et par l'administrateur du site.","Tes fiches épinglées, ta progression et tes notes perso : visibles par toi seul, pour les retrouver sur tous tes appareils."]);
   sec("Durée et suppression",["Tes données sont conservées tant que ton compte existe. Le bouton « Supprimer mon compte », dans Mon profil, efface immédiatement et définitivement ton e-mail, ton pseudo, tes votes, tes commentaires, tes propositions, tes signalements, ta progression et tes notes perso."]);
   sec("Tes droits",["Conformément au RGPD, tu peux accéder à tes données, les corriger ou les faire effacer. Écris-nous via la page de contact ci-dessus. Tu peux aussi adresser une réclamation à la CNIL (cnil.fr)."]);
-  sec("Contenus",["Les textes sont rédigés par l'équipe du site à partir de sources citées sur chaque fiche. Les commentaires engagent leurs auteurs. Tout contenu insultant, illégal ou hors sujet peut être supprimé."]);
+  sec("Conditions d'utilisation",["Le site est gratuit et ouvert à tous. Les infos sont données de bonne foi, à partir des sources citées sur chaque fiche, mais sans garantie : le jeu change avec ses mises à jour. En cas de doute, signale la fiche.",
+    "Pour voter, commenter, proposer une info ou signaler, il faut un compte. Choisis un pseudo correct : ni insulte, ni nom d'une autre personne.",
+    "Interdit dans les commentaires et les propositions : les insultes et le harcèlement, les contenus illégaux ou choquants, la publicité et les liens douteux, les spoilers de l'histoire, les contenus fuités, les glitchs, l'argent infini et la triche en ligne.",
+    "Modération : un contenu qui ne respecte pas ces règles peut être supprimé sans préavis, et un compte peut être supprimé en cas d'abus répétés. Pour signaler un problème, utilise le bouton « Signaler » sous la fiche ou le commentaire.",
+    "Les commentaires engagent leurs auteurs. En publiant, tu autorises leur affichage sur le site ; tu peux les supprimer quand tu veux. Les textes du site sont rédigés par l'équipe ; les marques et les images appartiennent à leurs propriétaires."]);
 }
 function authErr(e){var c=(e&&(e.code||""))+" "+(e&&e.message||"");
   if(/invalid_credentials|Invalid login/i.test(c))return "E-mail ou mot de passe incorrect.";
@@ -1075,6 +1113,7 @@ function authBlock(){
       go=h("button",{class:"btn",type:"submit",text:signup?"Créer mon compte":"Me connecter"});
     var f=h("form",{class:"edit"},h("label",{for:"au-mail"},"Ton e-mail",em),h("label",{for:"au-pw"},"Mot de passe",pw),show);
     if(nm)f.append(h("label",{for:"au-nick"},"Ton pseudo, affiché sur tes commentaires",nm));
+    if(signup)f.append(h("p",{class:"muted",style:"margin:0;font-size:13px"},"En créant un compte, tu acceptes les ",h("a",{href:"#confidentialite",style:"color:var(--teal)",text:"conditions d'utilisation"}),"."));
     f.append(go,msg);
     f.addEventListener("submit",function(e){e.preventDefault();var v=em.value.trim(),p=pw.value,n=nm?nm.value.trim():"";
       if(!/^\S+@\S+\.\S+$/.test(v))return say("Vérifie ton adresse e-mail.");
@@ -1191,7 +1230,7 @@ function renderPlus(v){
   tile("#liste","star","Ma liste","Tes fiches épinglées",Object.keys(favs()).length);
   tile("#profil","user","Mon profil","Ta progression et tes réglages");
   if(SITE&&!standalone())tile(null,"phone","Installer l'app","Sur ton écran d'accueil",null,false,openInstall);
-  if(isAdmin){var pc=pendingSugg().length;tile("#propositions","inbox","Propositions","À valider",pc,pc>0)}
+  if(isAdmin){var pc=pendingSugg().length;tile("#propositions","inbox","Propositions","À valider",pc,pc>0);tile("#stats","chart","Statistiques","Pages vues")}
   else if(canParticipate())tile(null,"send","Proposer une info","Une voiture, une astuce, une erreur",null,false,function(){openPropose(null,null)});
   v.append(g);
   var THEMES=[["vice","Vice City","Nuit violette, rose flamant",["#1d1532","#ff7eb3","#6fe3d4"]],["keys","Leonida Keys","Lagon et plein soleil",["#0e2a33","#ffcf5a","#82e8f3"]],["glades","Grassrivers","Marais et ambre",["#1a1f17","#f2a33a","#a9db8e"]],["motel","Motel","Clair, rose stuc",["#fbe7e3","#d81b6a","#0a7a82"]]];
@@ -1200,7 +1239,7 @@ function renderPlus(v){
     h("span",{class:"sw",style:"background:conic-gradient("+c[1]+" 0 25%,"+c[2]+" 25% 50%,"+c[0]+" 50% 100%)"}),h("b",{text:t[1]}),h("small",{text:t[2]})))});
   v.append(h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:"Couleurs du site"})),tg));
   v.append(h("p",{class:"muted",style:"font-size:12.5px;margin:22px 2px 0",text:"Guide de fan non officiel, sans lien avec Rockstar Games ni Take-Two Interactive. Les infos marquées « à confirmer » ne sont pas officielles."}));
-  v.append(h("p",{style:"font-size:13px;margin:8px 2px 0"},h("a",{href:"#confidentialite",style:"color:var(--teal);font-weight:600",text:"Confidentialité et mentions légales"})));
+  v.append(h("p",{style:"font-size:13px;margin:8px 2px 0"},h("a",{href:"#confidentialite",style:"color:var(--teal);font-weight:600",text:"Mentions légales, conditions et confidentialité"})));
 }
 
 /* ================= l'actu du jeu ================= */
@@ -1457,7 +1496,7 @@ function backlinks(m,id){var idx=lkIndex(),out=[];
     var hit=linkify(t,ctx).some(function(x){return x&&x.tagName==="A"&&x.getAttribute("href")==="#voir-"+m+"-"+id});if(hit)out.push([mm,d])})});
   return out.sort(function(a,b){return (MODS[a[0]].wiki?1:0)-(MODS[b[0]].wiki?1:0)||(b[1].updatedAt||0)-(a[1].updatedAt||0)})}
 function blk(title,nodes){return h("div",{class:"blk"},title?h("h3",{text:title}):null,nodes)}
-function openDetail(m,id){
+function openDetail(m,id){track("voir-"+m+"-"+id);
   var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;
   if(d.movedTo){var mv=String(d.movedTo).split("/"),MT=MODS[mv[0]];if(MT&&mv[1]&&!(mv[0]===m&&mv[1]===id)&&data[MT.col].some(function(x){return x.id===mv[1]}))return openDetail(mv[0],mv[1])}var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};lctx.manualOnly=/\[\[[^\]|]{1,80}\|[^\]]{1,120}\]\]/.test(String(d.steps||"")+String(M.body?M.body(d)||"":""));
   if(d.status==="archive")body.push(h("p",{class:"archnote"},h("b",{text:"Fiche expirée. "}),d.archiveNote||"Elle ne sert plus depuis la sortie du jeu, mais on la garde pour l'historique."));
@@ -1572,7 +1611,7 @@ if(window.claude&&window.claude.use){
     db=v[0];user=v[1];assets=v[2];
     if(!db){dbState="none";render();return null}
     return (user?user.id():Promise.resolve(null)).then(function(id){uid=id;return user?user.canEdit():false}).then(function(ok){
-      isAdmin=!!ok;document.getElementById("adminFlag").hidden=!ok;
+      isAdmin=!!ok;if(isAdmin){try{localStorage.setItem("pl_notrack","1")}catch(_){}};document.getElementById("adminFlag").hidden=!ok;
       if(user&&uid)user.profiles([uid]).then(function(ps){var p=ps[uid]||{};me={name:p.name||"",avatarUrl:p.avatarUrl||""};drawAvatar(document.getElementById("profBtn"));rerender()}).catch(function(){});
       startProfileSync();
       try{db.doc("config/home").onSnapshot(function(sn){var v=sn&&typeof sn.data==="function"?sn.data():null;homeCfg=v||{};LS.set("home",homeCfg);if(route()==="accueil")rerender()},function(){})}catch(_){}
