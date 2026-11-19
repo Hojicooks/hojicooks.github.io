@@ -26,7 +26,7 @@ WIKI = {"vehicles", "wildlife", "places", "lexicon", "codes", "completion"}
 REFS = {}
 SEC = {1: "Aucune", 2: "Alarme", 3: "Clé électronique", 4: "Antidémarrage"}
 RISK = {0: "Aucun", 1: "Faible", 2: "Moyen", 3: "Élevé"}
-STATUS = {"verifie": "Vérifié", "a-confirmer": "À confirmer", "rumeur": "Rumeur"}
+STATUS = {"verifie": "Vérifié", "a-confirmer": "À confirmer", "rumeur": "Rumeur", "archive": "Archivé"}
 PS = {"X": "✕", "O": "○", "CARRE": "□", "TRIANGLE": "△", "HAUT": "↑", "BAS": "↓", "GAUCHE": "←", "DROITE": "→"}
 XB = {"X": "A", "O": "B", "CARRE": "X", "TRIANGLE": "Y", "R1": "RB", "R2": "RT", "L1": "LB", "L2": "LT", "R3": "RS", "L3": "LS",
       "HAUT": "↑", "BAS": "↓", "GAUCHE": "←", "DROITE": "→"}
@@ -138,7 +138,7 @@ def linkify(text, ctx):
     return "".join(out)
 
 def thin(col, d):
-    if d.get("status") == "exemple": return True
+    if d.get("status") in ("exemple", "archive"): return True
     if col == "vehicles" and not d.get("value"): return True
     return False
 

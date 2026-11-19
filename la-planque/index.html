@@ -340,6 +340,11 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .hero.photo{height:0!important;padding-top:min(56.25%,300px);aspect-ratio:auto;max-height:none;flex:none}
 .hero.photo img{position:absolute;inset:0}
 .credit a{color:inherit}
+.item.arch{opacity:.55}
+.item.arch:hover{opacity:.85}
+.tag.arch{color:var(--dim);background:transparent!important;border:1px solid var(--line)}
+.archnote{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--card2);color:var(--mute);font-size:14px;line-height:1.45}
+.archnote b{color:var(--fg)}
 .lexshort{margin:2px 0 0;font-size:16.5px;font-weight:600;line-height:1.45;text-wrap:pretty}
 .refs{display:flex;flex-wrap:wrap;gap:8px}
 .ref{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:7px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13.5px;line-height:1.3}
@@ -643,14 +648,14 @@ function ago(t){var s=(Date.now()-t)/1000;if(s<60)return "à l'instant";if(s<360
 function uid8(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function toast(t){var host=document.getElementById("toastHost");host.innerHTML="";var el=h("div",{class:"toast",role:"status",text:t});host.append(el);setTimeout(function(){if(el.parentNode)el.remove()},2600)}
 
-var STATUS=[["verifie","Vérifié"],["a-confirmer","À confirmer"],["rumeur","Rumeur"],["exemple","Exemple"]];
+var STATUS=[["verifie","Vérifié"],["a-confirmer","À confirmer"],["rumeur","Rumeur"],["archive","Archivé (plus d'actualité)"],["exemple","Exemple"]];
 var REGIONS=["Vice City","Leonida Keys","Grassrivers","Port Gellhorn","Ambrosia","Mont Kalaga","Partout","Inconnu"];
 var RCOL={"Vice City":"#ff6fb5","Leonida Keys":"#33d1bc","Grassrivers":"#7ccf5a","Port Gellhorn":"#5aa9ff","Ambrosia":"#ffb347","Mont Kalaga":"#b48cff"};
 function regionTag(r){if(!r||r==="Inconnu")return null;var c=RCOL[r];return h("span",{class:"tag",style:c?"color:"+c+";background:color-mix(in srgb,"+c+" 14%,var(--card))":null},ic("gps"),r)}
 var SEC={1:"Aucune",2:"Alarme",3:"Clé électronique",4:"Antidémarrage"};
 var SECCOL={1:"var(--ok)",2:"var(--gold)",3:"var(--warn)",4:"var(--bad)"};
 var RISK={0:"Aucun",1:"Faible",2:"Moyen",3:"Élevé"};
-function statusTag(s){if(s==="verifie")return h("span",{class:"tag green"},ic("check"),"Vérifié");if(s==="a-confirmer")return h("span",{class:"tag gold",text:"À confirmer"});if(s==="rumeur")return h("span",{class:"tag red",title:"Rumeur non vérifiée (réseaux sociaux, fuite ou source unique)",text:"Rumeur"});return h("span",{class:"tag ex",text:"Exemple"})}
+function statusTag(s){if(s==="archive")return h("span",{class:"tag arch",text:"Archivé"});if(s==="verifie")return h("span",{class:"tag green"},ic("check"),"Vérifié");if(s==="a-confirmer")return h("span",{class:"tag gold",text:"À confirmer"});if(s==="rumeur")return h("span",{class:"tag red",title:"Rumeur non vérifiée (réseaux sociaux, fuite ou source unique)",text:"Rumeur"});return h("span",{class:"tag ex",text:"Exemple"})}
 function rank(d){return (d.status==="verifie"?0:d.status==="a-confirmer"?1:d.status==="rumeur"?2:3)}
 var VIC={"Super":"car","Sport":"car","Classique":"car","Muscle":"car","Berline":"car","Compacte":"car","SUV":"suv","Pick-up":"pickup","Utilitaire":"van","Tout-terrain":"buggy","Moto":"moto","Bateau":"boat","Hélicoptère":"heli","Avion":"plane"};
 var LONG=["Fusil d'assaut","Fusil à pompe","Fusil de précision","Mitraillette"],SHORT=["Pistolet","Revolver"];
@@ -824,7 +829,7 @@ function dshort(t){var n=dayDiff(t),d=new Date(t);if(n===0)return "Aujourd'hui";
 function dfull(t){return new Date(t).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})+" à "+new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
 function dateEl(d){if(!d.updatedAt)return null;var f=dayDiff(d.updatedAt)<=1;return h("span",{class:"dt"+(f?" fresh":""),title:"Mis à jour le "+dfull(d.updatedAt),"aria-label":"Mis à jour le "+dfull(d.updatedAt),text:dshort(d.updatedAt)})}
 function byRecent(a,b){return (b.updatedAt||0)-(a.updatedAt||0)}
-function isNew(d){return prevVisit&&d.updatedAt&&d.updatedAt>prevVisit}
+function isNew(d){return d.status!=="archive"&&prevVisit&&d.updatedAt&&d.updatedAt>prevVisit}
 function done(m){return LS.get("done_"+m,{})}
 function toggleDone(m,id){var p=done(m);if(p[id])delete p[id];else p[id]=1;LS.set("done_"+m,p)}
 function favs(){return LS.get("favs",{})}
@@ -919,7 +924,7 @@ function renderFabs(){var f=document.getElementById("fabs");f.innerHTML="";var r
 function item(m,d,showMod){
   var M=MODS[m],c=M.card(d),dn=M.done?done(m)[d.id]:false,fv=favs()[KEY(m,d.id)];
   var tags=h("div",{class:"m"});
-  if(d.prio)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));
+  var arch=d.status==="archive";if(d.prio&&!arch)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));
   if(isNew(d))tags.append(h("span",{class:"tag new",text:"Nouveau"}));
   var mt=h("span",{class:"mt"}),sc=M.vote?score(m,d.id):0,nc=ncom(m,d.id);
   if(sc)mt.append(h("span",{class:"deg",style:"color:"+tempColor(sc)},sc>0?ic("flame"):null,(sc>0?"+":"")+sc+"°"));
@@ -928,7 +933,7 @@ function item(m,d,showMod){
   if(showMod&&m!=="astuces")tags.append(h("span",{class:"tag"},ic(M.icon),M.tab));
   c.tags.forEach(function(t){if(t)tags.append(t)});
   if(d.status!=="verifie")tags.append(statusTag(d.status));
-  var el=h("button",{type:"button",class:"item"+(d.prio?" prio":"")+" pic",onclick:function(){openDetail(m,d.id)}},
+  var el=h("button",{type:"button",class:"item"+(d.prio&&!arch?" prio":"")+(arch?" arch":"")+" pic",onclick:function(){openDetail(m,d.id)}},
     visual(m,d,false),
     h("span",{class:"t",text:(dn?"✓ ":"")+(d[M.title]||"Sans titre")}),
     (c.right||d.updatedAt)?h("span",{class:"r"},dateEl(d),c.right):null,tags,
@@ -942,7 +947,7 @@ function topSort(m){var v=!!MODS[m].vote;return function(a,b){return (a.prio?0:1
 
 /* ================= accueil ================= */
 var RELEASE=new Date(2026,10,19,0,0,0),cdTimer=null,homeUi={tab:"top",n:6};
-function feedPool(){var out=[];["astuces","argent","codes","voitures"].forEach(function(m){data[MODS[m].col].forEach(function(d){if(m==="voitures"&&!d.value)return;if(d.status==="exemple")return;out.push([m,d])})});return out}
+function feedPool(){var out=[];["astuces","argent","codes","voitures"].forEach(function(m){data[MODS[m].col].forEach(function(d){if(m==="voitures"&&!d.value)return;if(d.status==="exemple"||d.status==="archive")return;out.push([m,d])})});return out}
 /* image derrière le compte à rebours : réglée par l'admin (config/home), captures officielles Rockstar uniquement */
 var homeCfg=LS.get("home",null),HOME_PICKS=[["Jason_Lucia_Rooftop_landscape.0c6p5do~-8~7..jpg","Jason et Lucia, artwork officiel"],["Jason_Lucia_Lock_And_Load_landscape.0l9s5w7ih9p~3.jpg","Jason et Lucia, artwork officiel"],["GTAVI_Official_Cover_Art_Landscape.03y6bcce9e2jr.jpg","La jaquette officielle"],["hero.0q5-tr6h86ai7.jpg","Vice City et au-delà"],["Vice_City_15.11tb0mz68edqo.jpg","Vice City"],["Leonida_Keys_01.0zgz7tveur6y8.jpg","Les Leonida Keys"],["Vice_City_27.0d2e~w_r93hmh.jpg","Vice City de nuit"],["Jason_and_Lucia_14.10e7v.06pcm_t.jpg","Jason et Lucia"]];
 function homeBg(bn){var c=homeCfg||{},u=extImg(c);
@@ -1223,6 +1228,7 @@ function renderModule(v,m){
   var sdef=M.sorts.filter(function(s){return s[0]===st.sort})[0];
   var sf=st.sort==="top"?topSort(m):function(a,b){return (a.prio?0:1)-(b.prio?0:1)||sdef[2](a,b)||score(m,b.id)-score(m,a.id)};
   rows.sort(sf);
+  var archived=rows.filter(function(d){return d.status==="archive"});rows=rows.filter(function(d){return d.status!=="archive"});
   var list=h("div",{class:"list",style:"margin-top:12px"});
   if(!rows.length)list.append(h("div",{class:"empty",text:all.length?"Aucune fiche avec ces filtres. Retire un filtre pour en voir plus.":(isAdmin?"Aucune fiche pour l'instant. Ajoute la première avec le bouton en bas.":"Aucune fiche pour l'instant.")}));
   else if(m==="astuces"&&st.sort!=="recent"&&!Object.keys(st.chips).some(function(g){return st.chips[g]!=null})){
@@ -1233,6 +1239,9 @@ function renderModule(v,m){
   else if(m==="lieux"&&st.sort==="region"){var cur=null;rows.forEach(function(d){var r=d.region&&d.region!=="Inconnu"?d.region:"Région pas encore connue";if(r!==cur){cur=r;list.append(h("div",{class:"group",style:RCOL[r]?"color:"+RCOL[r]:null,text:r}))}list.append(item(m,d))})}
   else rows.forEach(function(d){list.append(item(m,d))});
   v.append(list);
+  if(archived.length){
+    v.append(h("button",{type:"button",class:"more","aria-expanded":st.arch?"true":"false",text:st.arch?"Masquer les archives":"Voir les archives ("+archived.length+")",onclick:function(){st.arch=!st.arch;rerender()}}));
+    if(st.arch){v.append(h("p",{class:"muted",style:"font-size:13px;margin:14px 2px 8px",text:"Des fiches qui ne servent plus, gardées pour l'historique."}));var al=h("div",{class:"list"});archived.forEach(function(d){al.append(item(m,d))});v.append(al)}}
 }
 
 /* ================= Ma liste ================= */
@@ -1336,7 +1345,7 @@ function sheet(o){
 var LKSKIP={pic:1,rat:1,chat:1,autre:1},navStack=[];
 function plain(t){return String(t||"").replace(/\[\[([^\]|]{1,80})\|[^\]]{1,120}\]\]/g,"$1")}
 function findFiche(id){for(var i=0;i<ORDER.length;i++){var M=MODS[ORDER[i]];if(data[M.col]&&data[M.col].some(function(x){return x.id===id}))return ORDER[i]}return null}
-function lkIndex(){var out=[];ORDER.forEach(function(m){var M=MODS[m];(data[M.col]||[]).forEach(function(d){if(d.status==="exemple")return;
+function lkIndex(){var out=[];ORDER.forEach(function(m){var M=MODS[m];(data[M.col]||[]).forEach(function(d){if(d.status==="exemple"||d.status==="archive")return;
   var add=function(n,cs){n=String(n).trim();if(n.length<3)return;var k=cs?n:norm(n);if(!cs&&LKSKIP[k])return;out.push({k:k,cs:cs,m:m,id:d.id})};
   var n=String(d[M.title]||"").replace(/\s*\(.*?\)\s*/g," ").trim();
   if(m==="faune"||m==="lieux"||m==="voitures"||m==="lexique"){if(n.length>=4)add(n,false);if(m==="voitures"){var md=n.split(" ").slice(1).join(" ");if(md.length>=5)add(md,true)}}
@@ -1371,6 +1380,7 @@ function backlinks(m,id){var idx=lkIndex(),out=[];
 function blk(title,nodes){return h("div",{class:"blk"},title?h("h3",{text:title}):null,nodes)}
 function openDetail(m,id){
   var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};
+  if(d.status==="archive")body.push(h("p",{class:"archnote"},h("b",{text:"Fiche archivée. "}),d.archiveNote||"Elle ne sert plus depuis la sortie du jeu, mais on la garde pour l'historique."));
   var back=navStack.length?navStack[navStack.length-1]:null,bM=back&&MODS[back.m],bD=back&&data[bM.col].filter(function(x){return x.id===back.id})[0];
   if(bD&&!(back.m===m&&back.id===id))body.push(h("button",{type:"button",class:"backlk",onclick:function(){navStack.pop();openDetail(back.m,back.id)}},"← ",bD[bM.title]||"Retour"));
   var star=h("button",{class:"x"+(fv?" on":""),type:"button","aria-label":fv?"Retirer de ma liste":"Ajouter à ma liste","aria-pressed":fv?"true":"false",onclick:function(){var f=favs();if(f[k])delete f[k];else f[k]=1;LS.set("favs",f);renderNav();openDetail(m,id);toast(f[k]?"Ajouté à ta liste":"Retiré de ta liste")}},ic("star"));
