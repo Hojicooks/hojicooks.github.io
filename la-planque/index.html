@@ -348,6 +348,8 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .seg .segarch[aria-pressed="true"]{color:var(--fg)}
 .archnote{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--card2);color:var(--mute);font-size:14px;line-height:1.45}
 .archnote b{color:var(--fg)}
+.seclink{font-size:14px;font-weight:700;color:var(--teal);text-decoration:none;white-space:nowrap}
+.seclink:hover{text-decoration:underline}
 .lexshort{margin:2px 0 0;font-size:16.5px;font-weight:600;line-height:1.45;text-wrap:pretty}
 .refs{display:flex;flex-wrap:wrap;gap:8px}
 .ref{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:7px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13.5px;line-height:1.3}
@@ -750,8 +752,8 @@ var MODS={
   steps:true},
  astuces:{col:"tips",label:"Astuces",tab:"Astuces",icon:"tip",title:"title",vote:"Cette astuce t'a servi ?",
   intro:"Dans chaque thème, les astuces les plus votées remontent en haut.",
-  fields:[{k:"title",label:"Astuce",type:"text",req:true},{k:"theme",label:"Thème",type:"select",opts:opts(["Actu","Bases","Police","Combat","Véhicules","Argent","Santé","Divers"])},{k:"body",label:"Détail",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"imageUrl",label:"Image officielle (lien d'une capture sur rockstargames.com/VI/media)",type:"text"},{k:"imageCaption",label:"Légende de l'image",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
-  chips:["Actu","Bases","Police","Combat","Véhicules","Argent","Santé","Divers"].map(function(t){return {g:"t",l:t,t:function(d){return d.theme===t}}}),
+  fields:[{k:"title",label:"Astuce",type:"text",req:true},{k:"theme",label:"Thème",type:"select",opts:[["Actu","Actu (va dans la rubrique L'actu du jeu)"],["Bases","Bases"],["Police","Police"],["Combat","Combat"],["Véhicules","Véhicules"],["Argent","Argent"],["Santé","Santé"],["Divers","Divers"]]},{k:"body",label:"Détail",type:"textarea"},{k:"source",label:"Source (lien)",type:"text"},{k:"imageUrl",label:"Image officielle (lien d'une capture sur rockstargames.com/VI/media)",type:"text"},{k:"imageCaption",label:"Légende de l'image",type:"text"},{k:"prio",label:"Mettre en avant (info essentielle)",type:"bool"},{k:"status",label:"Statut de l'info",type:"select",opts:STATUS}],
+  chips:["Bases","Police","Combat","Véhicules","Argent","Santé","Divers"].map(function(t){return {g:"t",l:t,t:function(d){return d.theme===t}}}),
   sorts:[["top","Top"],["recent","Récentes",function(a,b){return (b.updatedAt||0)-(a.updatedAt||0)}]],
   card:function(d){return {right:null,tags:[d.theme?h("span",{class:"tag",text:d.theme}):null],sub:d.body}},
   stats:function(){return []},body:function(d){return d.body}},
@@ -832,6 +834,11 @@ function dshort(t){var n=dayDiff(t),d=new Date(t);if(n===0)return "Aujourd'hui";
 function dfull(t){return new Date(t).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})+" à "+new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
 function dateEl(d){if(!d.updatedAt)return null;var f=dayDiff(d.updatedAt)<=1;return h("span",{class:"dt"+(f?" fresh":""),title:"Mis à jour le "+dfull(d.updatedAt),"aria-label":"Mis à jour le "+dfull(d.updatedAt),text:dshort(d.updatedAt)})}
 function byRecent(a,b){return (b.updatedAt||0)-(a.updatedAt||0)}
+/* Actu = fiches du thème « Actu », rangées à part ; elles expirent seules au bout de 30 jours, sauf si épinglées. movedTo = fiche déplacée (redirigée) */
+function isNews(m,d){return m==="astuces"&&d.theme==="Actu"}
+function isArch(m,d){return d.status==="archive"||(isNews(m,d)&&!d.pin&&!!d.updatedAt&&Date.now()-d.updatedAt>30*86400000)}
+function newsList(){return data.tips.filter(function(d){return d.theme==="Actu"&&!d.movedTo&&d.status!=="exemple"})}
+function byPinRecent(a,b){return (b.pin?1:0)-(a.pin?1:0)||(b.updatedAt||0)-(a.updatedAt||0)}
 function isNew(d){return d.status!=="archive"&&prevVisit&&d.updatedAt&&d.updatedAt>prevVisit}
 function done(m){return LS.get("done_"+m,{})}
 function toggleDone(m,id){var p=done(m);if(p[id])delete p[id];else p[id]=1;LS.set("done_"+m,p)}
@@ -875,7 +882,7 @@ function pendingSugg(){var out=[];Object.keys(sugg).forEach(function(u){var s=su
 function setSuggState(it,state){var d=sugg[it.uid];if(!d)return Promise.reject({});var next=JSON.parse(JSON.stringify(d));next.items=(next.items||[]).map(function(x){if(x.id===it.id)x.state=state;return x});sugg[it.uid]=next;return db.doc("suggestions/"+it.uid).set(next)}
 
 /* ================= navigation ================= */
-var ROUTES=["accueil","astuces","argent","voitures","plus","codes","faune","lieux","wiki","lexique","cent","liste","propositions","profil","confidentialite"];
+var ROUTES=["actu","accueil","astuces","argent","voitures","plus","codes","faune","lieux","wiki","lexique","cent","liste","propositions","profil","confidentialite"];
 var DEEP=/^#?voir-([a-z]+)-([A-Za-z0-9_-]{1,80})$/;
 function route(){var r=(location.hash||"").slice(1),dm=DEEP.exec(r);if(dm&&ORDER.indexOf(dm[1])>-1)return dm[1];return ROUTES.indexOf(r)>-1?r:"accueil"}
 /* lien direct vers une fiche (partage, pages Google) : ouvre la fiche puis remet l'adresse du module */
@@ -903,7 +910,7 @@ function openInstall(){var I=window.PLANQUE_INSTALL;
     :and?[st(1,"Ouvre cette page dans Chrome."),st(2,"Touche le menu ⋮ en haut à droite."),st(3,"Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil ».")]
     :[st(1,"Ouvre cette page dans Chrome ou Edge."),st(2,"Clique sur l'icône d'installation à droite de la barre d'adresse."),st(3,"Confirme avec « Installer ».")];
   sheet({kicker:"Installer",title:"La Planque sur ton écran d'accueil",body:[h("p",{class:"muted",style:"margin:0 0 12px",text:"Elle s'ouvre comme une vraie appli, en plein écran, en un geste."}),h("ol",{class:"isteps"},steps),h("button",{type:"button",class:"btn",text:"Compris",onclick:closeModal})]})}
-function renderNav(){var n=document.getElementById("nav");n.innerHTML="";var cur=route();if(PLUSROUTES.indexOf(cur)>-1)cur="plus";if(WIKIROUTES.indexOf(cur)>-1)cur="wiki";
+function renderNav(){var n=document.getElementById("nav");n.innerHTML="";var cur=route();if(cur==="actu")cur="accueil";if(PLUSROUTES.indexOf(cur)>-1)cur="plus";if(WIKIROUTES.indexOf(cur)>-1)cur="wiki";
   [["accueil","Accueil","home"],["astuces","Astuces","tip"],["argent","Argent","cash"],["wiki","Wiki","book"],["plus","Plus","more"]].forEach(function(x){
     n.append(h("a",{href:"#"+x[0],"aria-current":cur===x[0]&&!query?"page":null},ic(x[2]),x[1]))});
 }
@@ -911,7 +918,7 @@ function render(){
   renderNav();var v=document.getElementById("view");v.innerHTML="";renderFabs();
   if(query.trim().length>=2){renderSearch(v);return}
   var r=route();
-  if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="wiki")renderWiki(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
+  if(r==="actu")renderActu(v);else if(r==="accueil")renderHome(v);else if(r==="plus")renderPlus(v);else if(r==="wiki")renderWiki(v);else if(r==="liste")renderFavs(v);else if(r==="profil")renderProfile(v);else if(r==="confidentialite")renderPrivacy(v);else if(r==="comparer")renderCompare(v);else if(r==="propositions")renderSugg(v);else renderModule(v,r);
 }
 var rq=null;function rerender(){if(rq)return;rq=setTimeout(function(){rq=null;var y=window.scrollY;render();window.scrollTo(0,y)},30)}
 window.addEventListener("hashchange",function(){if(query){query="";qi.value="";qx.hidden=true}render();window.scrollTo(0,0);var v=document.getElementById("view");v.classList.remove("enter");void v.offsetWidth;v.classList.add("enter");takeDeep()});
@@ -927,7 +934,7 @@ function renderFabs(){var f=document.getElementById("fabs");f.innerHTML="";var r
 function item(m,d,showMod){
   var M=MODS[m],c=M.card(d),dn=M.done?done(m)[d.id]:false,fv=favs()[KEY(m,d.id)];
   var tags=h("div",{class:"m"});
-  var arch=d.status==="archive";if(d.prio&&!arch)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));
+  var arch=isArch(m,d);if(d.prio&&!arch)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));
   if(isNew(d))tags.append(h("span",{class:"tag new",text:"Nouveau"}));
   var mt=h("span",{class:"mt"}),sc=M.vote?score(m,d.id):0,nc=ncom(m,d.id);
   if(sc)mt.append(h("span",{class:"deg",style:"color:"+tempColor(sc)},sc>0?ic("flame"):null,(sc>0?"+":"")+sc+"°"));
@@ -935,7 +942,7 @@ function item(m,d,showMod){
   var nv=vids(d).length;if(nv)mt.append(h("span",null,ic("play"),nv>1?nv+" vidéos":"Vidéo"));
   if(showMod&&m!=="astuces")tags.append(h("span",{class:"tag"},ic(M.icon),M.tab));
   c.tags.forEach(function(t){if(t)tags.append(t)});
-  if(d.status!=="verifie")tags.append(statusTag(d.status));
+  if(arch&&d.status!=="archive")tags.append(statusTag("archive"));else if(d.status!=="verifie")tags.append(statusTag(d.status));
   var el=h("button",{type:"button",class:"item"+(d.prio&&!arch?" prio":"")+(arch?" arch":"")+" pic",onclick:function(){openDetail(m,d.id)}},
     visual(m,d,false),
     h("span",{class:"t",text:(dn?"✓ ":"")+(d[M.title]||"Sans titre")}),
@@ -950,7 +957,7 @@ function topSort(m){var v=!!MODS[m].vote;return function(a,b){return (a.prio?0:1
 
 /* ================= accueil ================= */
 var RELEASE=new Date(2026,10,19,0,0,0),cdTimer=null,homeUi={tab:"top",n:6};
-function feedPool(){var out=[];["astuces","argent","codes","voitures"].forEach(function(m){data[MODS[m].col].forEach(function(d){if(m==="voitures"&&!d.value)return;if(d.status==="exemple"||d.status==="archive")return;out.push([m,d])})});return out}
+function feedPool(){var out=[];["astuces","argent","codes","voitures"].forEach(function(m){data[MODS[m].col].forEach(function(d){if(m==="voitures"&&!d.value)return;if(d.status==="exemple"||isArch(m,d)||d.movedTo||isNews(m,d))return;out.push([m,d])})});return out}
 /* image derrière le compte à rebours : réglée par l'admin (config/home), captures officielles Rockstar uniquement */
 var homeCfg=LS.get("home",null),HOME_PICKS=[["Jason_Lucia_Rooftop_landscape.0c6p5do~-8~7..jpg","Jason et Lucia, artwork officiel"],["Jason_Lucia_Lock_And_Load_landscape.0l9s5w7ih9p~3.jpg","Jason et Lucia, artwork officiel"],["GTAVI_Official_Cover_Art_Landscape.03y6bcce9e2jr.jpg","La jaquette officielle"],["hero.0q5-tr6h86ai7.jpg","Vice City et au-delà"],["Vice_City_15.11tb0mz68edqo.jpg","Vice City"],["Leonida_Keys_01.0zgz7tveur6y8.jpg","Les Leonida Keys"],["Vice_City_27.0d2e~w_r93hmh.jpg","Vice City de nuit"],["Jason_and_Lucia_14.10e7v.06pcm_t.jpg","Jason et Lucia"]];
 function homeBg(bn){var c=homeCfg||{},u=extImg(c);
@@ -983,8 +990,11 @@ function renderHome(v){
     sc("s3","car","Je veux voler une voiture",function(){openSituation("vol")}),
     sc("s4","heart","Je suis blessé",function(){openSituation("soin")}),
     sc("s5","star","Je débute",function(){if(data.tips.some(function(d){return d.id==="bases-premiere-nuit"}))openDetail("astuces","bases-premiere-nuit");else openSituation("debut")}),
-    sc("s6","flame","L'actu du jeu",function(){ui.astuces.chips={t:0};location.hash="#astuces"}))));
+    sc("s6","flame","L'actu du jeu",function(){location.hash="#actu"}))));
   if(n){v.append(h("section",{class:"sec"},n));return}
+  var news=newsList().filter(function(d){return !isArch("astuces",d)}).sort(byPinRecent).slice(0,3);
+  if(news.length){var nl=h("div",{class:"list compact"});news.forEach(function(d){nl.append(item("astuces",d))});
+    v.append(h("section",{class:"sec"},h("div",{class:"sech"},h("h2",{text:"L'actu du jeu"}),h("a",{class:"seclink",href:"#actu",text:"Toutes les actus"})),nl))}
   var pool=feedPool(),top=homeUi.tab==="top";
   pool.sort(top?function(a,b){return (a[1].prio?0:1)-(b[1].prio?0:1)||score(b[0],b[1].id)-score(a[0],a[1].id)||rank(a[1])-rank(b[1])||(b[1].updatedAt||0)-(a[1].updatedAt||0)}
                :function(a,b){return (b[1].updatedAt||0)-(a[1].updatedAt||0)});
@@ -1143,7 +1153,7 @@ function hay(d){var t=[];for(var k in d)if(!NOSEARCH[k]&&typeof d[k]==="string")
 function renderSearch(v){
   var words=norm(query).trim().split(/\s+/).filter(Boolean),total=0;
   ["lexique"].concat(ORDER.filter(function(x){return x!=="lexique"})).forEach(function(m){var M=MODS[m];
-    var hits=data[M.col].filter(function(d){var t=hay(d);return words.every(function(w){return t.indexOf(w)>-1})})
+    var hits=data[M.col].filter(function(d){if(d.movedTo)return false;var t=hay(d);return words.every(function(w){return t.indexOf(w)>-1})})
       .sort(function(a,b){var ta=norm(a[M.title]),tb=norm(b[M.title]),at=words.every(function(w){return ta.indexOf(w)>-1})?0:1,bt=words.every(function(w){return tb.indexOf(w)>-1})?0:1;return at-bt||topSort(m)(a,b)});
     if(!hits.length)return;total+=hits.length;
     v.append(h("div",{class:"group",text:M.label+" · "+hits.length}));
@@ -1183,6 +1193,21 @@ function renderPlus(v){
   v.append(h("p",{style:"font-size:13px;margin:8px 2px 0"},h("a",{href:"#confidentialite",style:"color:var(--teal);font-weight:600",text:"Confidentialité et mentions légales"})));
 }
 
+/* ================= l'actu du jeu ================= */
+function renderActu(v){
+  var st=ui.actu||(ui.actu={arch:false}),all=newsList();
+  var arch=all.filter(function(d){return isArch("astuces",d)}),live=all.filter(function(d){return !isArch("astuces",d)});
+  var head=h("div",{class:"pagehead"},h("h1",{text:"L'actu du jeu"}),h("p",{class:"muted",text:"Mises à jour, annonces de Rockstar et événements, de la plus récente à la plus ancienne. Une actu expire au bout de 30 jours."}));
+  var n=notice();if(n)head.append(n);
+  if(arch.length){var seg=h("div",{class:"seg",role:"group","aria-label":"Afficher"});
+    seg.append(h("button",{type:"button","aria-pressed":st.arch?"false":"true",text:"En cours",onclick:function(){st.arch=false;render()}}));
+    seg.append(h("button",{type:"button",class:"segarch","aria-pressed":st.arch?"true":"false",onclick:function(){st.arch=true;render()}},"Expirées ",h("span",{class:"n",text:String(arch.length)})));head.append(seg)}
+  v.append(head);
+  var rows=(st.arch?arch:live).slice().sort(byPinRecent),l=h("div",{class:"list",style:"margin-top:12px"});
+  rows.forEach(function(d){l.append(item("astuces",d))});
+  if(!rows.length)l.append(h("div",{class:"empty",text:st.arch?"Aucune actu expirée.":"Pas d'actu en ce moment."}));
+  v.append(l)}
+
 /* ================= wiki : tout ce que le jeu contient ================= */
 function renderWiki(v){
   var n=notice();if(n)v.append(n);
@@ -1202,14 +1227,14 @@ function renderWiki(v){
   LEXCAT.forEach(function(t,i){var c=data.lexicon.filter(function(d){return d.cat===t}).length;if(!c)return;
     cats.append(h("button",{type:"button",class:"chip",onclick:function(){ui.lexique.chips={c:i};location.hash="#lexique"}},(LEXPL[t]||t)+" ("+c+")"))});
   if(cats.childNodes.length)v.append(h("div",{class:"group",text:"Le lexique par catégorie"}),cats);
-  var rec=[];ORDER.forEach(function(m){if(!MODS[m].wiki)return;data[MODS[m].col].forEach(function(d){if(d.status!=="exemple"&&d.updatedAt)rec.push([m,d])})});
+  var rec=[];ORDER.forEach(function(m){if(!MODS[m].wiki)return;data[MODS[m].col].forEach(function(d){if(d.status!=="exemple"&&!d.movedTo&&d.updatedAt)rec.push([m,d])})});
   rec.sort(function(a,b){return b[1].updatedAt-a[1].updatedAt});
   if(rec.length){v.append(h("div",{class:"group",text:"Derniers ajouts"}));var l=h("div",{class:"list"});rec.slice(0,5).forEach(function(x){l.append(item(x[0],x[1],true))});v.append(l)}
 }
 
 /* ================= module ================= */
 function renderModule(v,m){
-  var M=MODS[m],st=ui[m],all=data[M.col];
+  var M=MODS[m],st=ui[m],all=data[M.col].filter(function(d){return !d.movedTo&&!isNews(m,d)});
   var head=h("div",{class:"pagehead"},h("h1",{text:M.label}),(STATIC&&M.vote?null:h("p",{class:"muted",text:M.intro})));
   var n=notice();if(n)head.append(n);
   if(m==="codes"){var con=LS.get("console","ps"),cs=h("div",{class:"seg",role:"group","aria-label":"Console"});
@@ -1218,7 +1243,7 @@ function renderModule(v,m){
     [["long",0,"Arme longue 1"],["long",1,"Arme longue 2"],["short",0,"Arme de poing 1"],["short",1,"Arme de poing 2"]].forEach(function(x){var id=loadout[x[0]][x[1]],w=id&&data.weapons.filter(function(d){return d.id===id})[0];
       sl.append(h("button",{type:"button",class:"slot"+(w?" on":""),onclick:function(){if(w)openDetail("armes",w.id);else{ui.armes.chips={s:x[0]==="long"?0:1};render()}}},h("small",{text:x[2]}),h("b",{text:w?w.name:"Vide",style:w?null:"color:var(--dim)"})))});
     head.append(sl)}
-  var narch=all.filter(function(d){return d.status==="archive"}).length;if(!narch)st.arch=false;
+  var narch=all.filter(function(d){return isArch(m,d)}).length;if(!narch)st.arch=false;
   if(M.chips.length){var chips=h("div",{class:"chips"});
     M.chips.forEach(function(c,i){var on=st.chips[c.g]===i;chips.append(h("button",{type:"button",class:"chip","aria-pressed":on?"true":"false",text:c.l,onclick:function(){st.chips[c.g]=on?undefined:i;render()}}))});
     head.append(chips)}
@@ -1235,12 +1260,12 @@ function renderModule(v,m){
   var sdef=M.sorts.filter(function(s){return s[0]===st.sort})[0];
   var sf=st.sort==="top"?topSort(m):function(a,b){return (a.prio?0:1)-(b.prio?0:1)||sdef[2](a,b)||score(m,b.id)-score(m,a.id)};
   rows.sort(sf);
-  rows=rows.filter(function(d){return st.arch?d.status==="archive":d.status!=="archive"});
+  rows=rows.filter(function(d){return st.arch?isArch(m,d):!isArch(m,d)});
   var list=h("div",{class:"list",style:"margin-top:12px"});
   if(!rows.length)list.append(h("div",{class:"empty",text:all.length?"Aucune fiche avec ces filtres. Retire un filtre pour en voir plus.":(isAdmin?"Aucune fiche pour l'instant. Ajoute la première avec le bouton en bas.":"Aucune fiche pour l'instant.")}));
   else if(m==="astuces"&&st.sort!=="recent"&&!Object.keys(st.chips).some(function(g){return st.chips[g]!=null})){
     var groups={};rows.forEach(function(d){(groups[d.theme||"Divers"]=groups[d.theme||"Divers"]||[]).push(d)});
-    ["Actu","Bases","Police","Combat","Véhicules","Argent","Santé","Divers"].forEach(function(t){if(!groups[t])return;list.append(h("div",{class:"group",text:t}));groups[t].forEach(function(d){list.append(item(m,d))})})}
+    ["Bases","Police","Combat","Véhicules","Argent","Santé","Divers","Actu"].forEach(function(t){if(!groups[t])return;list.append(h("div",{class:"group",text:t}));groups[t].forEach(function(d){list.append(item(m,d))})})}
   else if(m==="lexique"&&st.sort==="cat"&&st.chips.c==null){var cc=null;rows.slice().sort(function(a,b){return LEXCAT.indexOf(a.cat||"Autre")-LEXCAT.indexOf(b.cat||"Autre")||(a.prio?0:1)-(b.prio?0:1)||String(a.name).localeCompare(b.name,"fr")}).forEach(function(d){var c=d.cat||"Autre";if(c!==cc){cc=c;list.append(h("div",{class:"group",style:LEXCOL[c]?"color:"+LEXCOL[c]:null,text:LEXPL[c]||c}))}list.append(item(m,d))})}
   else if(m==="cent"&&st.sort==="group"&&st.chips.c==null){var cg=null;rows.slice().sort(MODS.cent.sorts[0][2]).forEach(function(d){var c=d.group||"Défis à trophée";if(c!==cg){cg=c;list.append(h("div",{class:"group",style:CENTCOL[c]?"color:"+CENTCOL[c]:null,text:c}))}list.append(item(m,d))})}
   else if(m==="lieux"&&st.sort==="region"){var cur=null;rows.forEach(function(d){var r=d.region&&d.region!=="Inconnu"?d.region:"Région pas encore connue";if(r!==cur){cur=r;list.append(h("div",{class:"group",style:RCOL[r]?"color:"+RCOL[r]:null,text:r}))}list.append(item(m,d))})}
@@ -1349,7 +1374,7 @@ function sheet(o){
 var LKSKIP={pic:1,rat:1,chat:1,autre:1},navStack=[];
 function plain(t){return String(t||"").replace(/\[\[([^\]|]{1,80})\|[^\]]{1,120}\]\]/g,"$1")}
 function findFiche(id){for(var i=0;i<ORDER.length;i++){var M=MODS[ORDER[i]];if(data[M.col]&&data[M.col].some(function(x){return x.id===id}))return ORDER[i]}return null}
-function lkIndex(){var out=[];ORDER.forEach(function(m){var M=MODS[m];(data[M.col]||[]).forEach(function(d){if(d.status==="exemple"||d.status==="archive")return;
+function lkIndex(){var out=[];ORDER.forEach(function(m){var M=MODS[m];(data[M.col]||[]).forEach(function(d){if(d.status==="exemple"||d.status==="archive"||d.movedTo)return;
   var add=function(n,cs){n=String(n).trim();if(n.length<3)return;var k=cs?n:norm(n);if(!cs&&LKSKIP[k])return;out.push({k:k,cs:cs,m:m,id:d.id})};
   var n=String(d[M.title]||"").replace(/\s*\(.*?\)\s*/g," ").trim();
   if(m==="faune"||m==="lieux"||m==="voitures"||m==="lexique"){if(n.length>=4)add(n,false);if(m==="voitures"){var md=n.split(" ").slice(1).join(" ");if(md.length>=5)add(md,true)}}
@@ -1378,13 +1403,14 @@ function autoLinks(t,ctx){if(ctx.manualOnly)return [t];var nt=nmap(t),hits=[];
   if(!hits.length)return [t];hits.sort(function(a,b){return a.i-b.i});
   var out=[],p=0;hits.forEach(function(x){if(x.i>p)out.push(t.slice(p,x.i));out.push(lkA(t.slice(x.i,x.j),x.m,x.id));p=x.j});if(p<t.length)out.push(t.slice(p));return out}
 function backlinks(m,id){var idx=lkIndex(),out=[];
-  ORDER.forEach(function(mm){var MM=MODS[mm];(data[MM.col]||[]).forEach(function(d){if(d.status==="exemple"||(mm===m&&d.id===id))return;
+  ORDER.forEach(function(mm){var MM=MODS[mm];(data[MM.col]||[]).forEach(function(d){if(d.status==="exemple"||d.movedTo||(mm===m&&d.id===id))return;
     var ctx={self:d.id,used:{},idx:idx},t=[d.steps,MM.body?MM.body(d):null].filter(Boolean).join("\n\n");if(!t)return;
     var hit=linkify(t,ctx).some(function(x){return x&&x.tagName==="A"&&x.getAttribute("href")==="#voir-"+m+"-"+id});if(hit)out.push([mm,d])})});
   return out.sort(function(a,b){return (MODS[a[0]].wiki?1:0)-(MODS[b[0]].wiki?1:0)||(b[1].updatedAt||0)-(a[1].updatedAt||0)})}
 function blk(title,nodes){return h("div",{class:"blk"},title?h("h3",{text:title}):null,nodes)}
 function openDetail(m,id){
-  var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};lctx.manualOnly=/\[\[[^\]|]{1,80}\|[^\]]{1,120}\]\]/.test(String(d.steps||"")+String(M.body?M.body(d)||"":""));
+  var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;
+  if(d.movedTo){var mv=String(d.movedTo).split("/"),MT=MODS[mv[0]];if(MT&&mv[1]&&!(mv[0]===m&&mv[1]===id)&&data[MT.col].some(function(x){return x.id===mv[1]}))return openDetail(mv[0],mv[1])}var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};lctx.manualOnly=/\[\[[^\]|]{1,80}\|[^\]]{1,120}\]\]/.test(String(d.steps||"")+String(M.body?M.body(d)||"":""));
   if(d.status==="archive")body.push(h("p",{class:"archnote"},h("b",{text:"Fiche expirée. "}),d.archiveNote||"Elle ne sert plus depuis la sortie du jeu, mais on la garde pour l'historique."));
   var back=navStack.length?navStack[navStack.length-1]:null,bM=back&&MODS[back.m],bD=back&&data[bM.col].filter(function(x){return x.id===back.id})[0];
   if(bD&&!(back.m===m&&back.id===id))body.push(h("button",{type:"button",class:"backlk",onclick:function(){navStack.pop();openDetail(back.m,back.id)}},"← ",bD[bM.title]||"Retour"));
@@ -1422,7 +1448,7 @@ function openDetail(m,id){
   body.push(h("div",{class:"foot"},h("span",null,src?"Source : ":null,src,src&&d.updatedAt?" · ":null,d.updatedAt?"mis à jour le "+dfull(d.updatedAt):null),
     !isAdmin&&canParticipate()?h("button",{type:"button",class:"linkbtn",style:"display:inline-flex;gap:4px;align-items:center",onclick:function(){openPropose(m,d)}},ic("edit"),"Signaler une erreur"):null));
   // vote : seulement pour les infos qu'on peut juger
-  if(M.vote&&!STATIC){var s=score(m,id),mv=myVotes[k]||0;
+  if(M.vote&&!STATIC&&!isNews(m,d)){var s=score(m,id),mv=myVotes[k]||0;
     function doVote(v){vote(m,id,v).then(function(){if(openSheetRef&&openSheetRef.id===id)openDetail(m,id)});openDetail(m,id)}
     body.push(h("div",{class:"voter"},h("div",{class:"q"},h("b",{text:M.vote}),h("small",{text:mv?"Merci, ton vote est compté.":"Ton vote fait remonter les infos fiables."})),
       h("div",{class:"vgrp",role:"group","aria-label":M.vote},
@@ -1449,7 +1475,7 @@ function openDetail(m,id){
     body.push(h("div",{class:"adminrow"},h("button",{class:"btn sec",type:"button",onclick:function(){openForm(m,d)}},ic("edit")," Modifier"),
       del))}
   var shr=SITE&&d.status!=="exemple"?h("button",{class:"x",type:"button","aria-label":"Partager cette fiche",onclick:function(){shareFiche(m,d)}},ic("share")):null;
-  sheet({kicker:M.label,title:d[M.title]||"Sans titre",actions:[shr,star],body:body,ref:{m:m,id:id}});
+  sheet({kicker:isNews(m,d)?"L'actu du jeu":M.label,title:d[M.title]||"Sans titre",actions:[shr,star],body:body,ref:{m:m,id:id}});
 }
 
 Object.keys(MODS).forEach(function(m){var F=MODS[m].fields;if(F&&!F.some(function(f){return f.k==="links"}))F.push({k:"links",label:"Mots-clés qui renvoient vers cette fiche (séparés par des virgules)",type:"text"})});

@@ -140,7 +140,7 @@ def linkify(text, ctx):
     return "".join(out)
 
 def thin(col, d):
-    if d.get("status") in ("exemple", "archive"): return True
+    if d.get("status") in ("exemple", "archive") or d.get("movedTo"): return True
     if col == "vehicles" and not d.get("value"): return True
     return False
 
@@ -244,6 +244,9 @@ def fiche_html(cat, row, siblings):
     if st: tags.append(f'<span class="tag { {"verifie":"ok","rumeur":"rum"}.get(d.get("status"),"gold") }">{esc(st)}</span>')
     b = [f'<div class="crumb"><a href="../../">La Planque</a> › <a href="../">{esc(ctitle)}</a></div>',
          f"<h1>{esc(t)}</h1>", '<div class="tags">' + "".join(tags) + "</div>"]
+    mv = str(d.get("movedTo") or "").split("/")
+    if len(mv) == 2 and mv[0] in MODSEG and SAFE_ID.match(mv[1]):
+        b.append(f'<div class="box"><b>Cette fiche a été déplacée :</b> <a href="../../{MODSEG[mv[0]]}/{esc(mv[1])}/">voir la nouvelle page</a>.</div>')
     if col == "codes" and d.get("combo"):
         toks = str(d["combo"]).upper().split()
         b.append('<div class="box"><small>PlayStation</small><div class="combo">' + esc(" ".join(PS.get(x, x) for x in toks)) +
