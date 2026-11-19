@@ -348,6 +348,9 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .seg .segarch[aria-pressed="true"]{color:var(--fg)}
 .archnote{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--card2);color:var(--mute);font-size:14px;line-height:1.45}
 .archnote b{color:var(--fg)}
+.list.steps{counter-reset:st}
+.list.steps > .item{counter-increment:st}
+.list.steps > .item::before{content:counter(st);position:absolute;left:6px;top:6px;z-index:1;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-weight:800;font-size:12.5px;line-height:23px;text-align:center;font-variant-numeric:tabular-nums}
 .lexshort{margin:2px 0 0;font-size:16.5px;font-weight:600;line-height:1.45;text-wrap:pretty}
 .refs{display:flex;flex-wrap:wrap;gap:8px}
 .ref{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:7px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13.5px;line-height:1.3}
@@ -1120,20 +1123,22 @@ function openSituation(k){
   if(k==="police"){head("Je suis recherché","D'après les mécaniques confirmées par Rockstar.");
     var ol=h("ol",{class:"steps"});["Sors du champ de vision des policiers : ils n'apparaissent plus sur la mini-carte, surveille l'écran.","Change de véhicule : la police connaît ta voiture.","Change de tenue ou mets un masque : les témoins ont donné ta description.","Évite les caméras et les témoins : sans témoin, pas de nouvelle recherche."].forEach(function(t){ol.append(h("li",{text:t}))});
     nodes.push(h("div",{class:"prose"},ol));
-    data.tips.filter(function(d){return d.theme==="Police"}).sort(topSort("astuces")).forEach(function(d){list.append(item("astuces",d))})}
+    data.tips.filter(function(d){return d.theme==="Police"&&d.status!=="archive"}).sort(topSort("astuces")).forEach(function(d){list.append(item("astuces",d))})}
   if(k==="argent"){head("Il me faut de l'argent","Les méthodes les mieux notées par les joueurs, puis les plus rentables.");
-    data.money.slice().sort(function(a,b){return score("argent",b.id)-score("argent",a.id)||(b.perHour||0)-(a.perHour||0)}).forEach(function(d){list.append(item("argent",d))})}
+    data.money.filter(function(d){return d.status!=="archive"}).sort(function(a,b){return score("argent",b.id)-score("argent",a.id)||(b.perHour||0)-(a.perHour||0)}).forEach(function(d){list.append(item("argent",d))})}
   if(k==="vol"){head("Je veux voler une voiture","Scanne la voiture avec ton téléphone avant : valeur, alarme et traceur s'affichent.");
-    data.tips.filter(function(d){return d.theme==="Véhicules"}).sort(topSort("astuces")).slice(0,3).forEach(function(d){list.append(item("astuces",d))});
+    data.tips.filter(function(d){return d.theme==="Véhicules"&&d.status!=="archive"}).sort(topSort("astuces")).slice(0,3).forEach(function(d){list.append(item("astuces",d))});
     var cars=data.vehicles.filter(function(d){return d.value&&d.security&&!d.tracker}).sort(MODS.voitures.sorts[1][2]).slice(0,8);
     list.append(h("div",{class:"group",text:"Les plus rentables sans traceur"}));
     if(cars.length)cars.forEach(function(d){list.append(item("voitures",d))});
     else list.append(h("div",{class:"empty",text:"Les valeurs de revente seront ajoutées dès la sortie du jeu."}))}
   if(k==="soin"){head("Je suis blessé","Ce qui te soigne, et ce qu'il faut éviter.");
-    data.tips.filter(function(d){return d.theme==="Santé"}).sort(topSort("astuces")).forEach(function(d){list.append(item("astuces",d))})}
-  if(k==="debut"){head("Je débute","L'essentiel à savoir avant ta première heure de jeu.");
-    data.tips.filter(function(d){return d.theme==="Bases"||(d.prio&&d.theme!=="Actu")}).sort(function(a,b){return (a.theme==="Bases"?0:1)-(b.theme==="Bases"?0:1)||topSort("astuces")(a,b)}).forEach(function(d){list.append(item("astuces",d))});
-    data.money.filter(function(d){return d.prio}).sort(topSort("argent")).forEach(function(d){list.append(item("argent",d,true))})}
+    data.tips.filter(function(d){return d.theme==="Santé"&&d.status!=="archive"}).sort(topSort("astuces")).forEach(function(d){list.append(item("astuces",d))})}
+  if(k==="debut"){head("Je débute","Dans l'ordre, ce qui sert vraiment pendant tes premières heures. Rien sur les trophées ni l'histoire.");
+    var steps=[];[["astuces","tips"],["argent","money"]].forEach(function(x){data[x[1]].forEach(function(d){if(d.debut&&d.status!=="archive"&&d.status!=="exemple")steps.push([x[0],d])})});
+    steps.sort(function(a,b){return a[1].debut-b[1].debut});list.classList.add("steps");
+    steps.forEach(function(x){list.append(item(x[0],x[1],x[0]!=="astuces"))});
+    if(!steps.length)data.tips.filter(function(d){return d.theme==="Bases"&&d.status!=="archive"}).sort(topSort("astuces")).forEach(function(d){list.append(item("astuces",d))})}
   if(!list.childNodes.length)list.append(h("div",{class:"empty",text:"Pas encore de fiches pour ce cas."}));
   nodes.push(list);sheet({kicker:"Raccourci",title:title,body:nodes});
 }
@@ -1452,6 +1457,7 @@ function openDetail(m,id){
   sheet({kicker:M.label,title:d[M.title]||"Sans titre",actions:[shr,star],body:body,ref:{m:m,id:id}});
 }
 
+["astuces","argent"].forEach(function(m){MODS[m].fields.push({k:"debut",label:"Place dans « Je débute » (1, 2, 3… ; vide = absent)",type:"number"})});
 Object.keys(MODS).forEach(function(m){var F=MODS[m].fields;if(F&&!F.some(function(f){return f.k==="links"}))F.push({k:"links",label:"Mots-clés qui renvoient vers cette fiche (séparés par des virgules)",type:"text"})});
 /* ================= formulaire admin ================= */
 var pendingOpen=null,imgState={id:null,file:null};
