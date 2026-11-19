@@ -104,6 +104,7 @@ def lk_a(txt, mod, fid):
     return f'<a class="xl" href="{esc(href)}">{esc(txt)}</a>'
 
 def auto_links(t, ctx):
+    if ctx.get("manual"): return esc(t)
     nt, hits = nmap(t), []
     for k, cs, mod, fid in IDX:
         if fid == ctx["self"] or fid in ctx["used"]: continue
@@ -125,6 +126,7 @@ def auto_links(t, ctx):
 
 def linkify(text, ctx):
     t, out, last = str(text or ""), [], 0
+    if MANUAL.search(t): ctx["manual"] = True
     for m in MANUAL.finditer(t):
         out.append(auto_links(t[last:m.start()], ctx))
         tg, tm, tid = m.group(2).strip(), None, None
@@ -234,7 +236,7 @@ def fiche_html(cat, row, siblings):
     col, seg, mod, label, ctitle, _ = cat
     d, fid = row["data"], row["id"]
     t = title_of(d)
-    ctx = {"self": fid, "used": set()}
+    ctx = {"self": fid, "used": set(), "manual": bool(MANUAL.search(text_of(d)))}
     url = f"{SITE}{seg}/{fid}/"
     tags = [f'<span class="tag">{esc(label)}</span>']
     if d.get("theme"): tags.append(f'<span class="tag">{esc(d["theme"])}</span>')

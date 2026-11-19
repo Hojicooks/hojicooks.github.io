@@ -1363,12 +1363,13 @@ function lkGo(e,m,id){if(e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefaul
 function lkA(txt,m,id){return h("a",{class:"xl",href:"#"+(id?"voir-"+m+"-"+id:m),onclick:function(e){lkGo(e,m,id)}},txt)}
 /* découpe un texte en noeuds, liens compris ; ctx = {self, used, idx} partagé par toute la fiche */
 function linkify(text,ctx){var t=String(text||""),out=[],re=/\[\[([^\]|]{1,80})\|([^\]]{1,120})\]\]/g,last=0,mm;
+  var hasManual=/\[\[[^\]|]{1,80}\|[^\]]{1,120}\]\]/.test(t);if(hasManual)ctx.manualOnly=true;
   while((mm=re.exec(t))){if(mm.index>last)out=out.concat(autoLinks(t.slice(last,mm.index),ctx));
     var tg=mm[2].trim(),tm=null,tid=null;
     if(ORDER.indexOf(tg)>-1)tm=tg;else{var sp=tg.split("/");if(sp.length===2&&ORDER.indexOf(sp[0])>-1){tm=sp[0];tid=sp[1]}else{tid=tg;tm=findFiche(tg)}}
     if(tm&&(!tid||findFiche(tid))){out.push(lkA(mm[1],tm,tid));if(tid)ctx.used[tid]=1}else out.push(mm[1]);last=re.lastIndex}
   if(last<t.length)out=out.concat(autoLinks(t.slice(last),ctx));return out}
-function autoLinks(t,ctx){var nt=nmap(t),hits=[];
+function autoLinks(t,ctx){if(ctx.manualOnly)return [t];var nt=nmap(t),hits=[];
   ctx.idx.forEach(function(e){if(e.id===ctx.self||ctx.used[e.id])return;var hay=e.cs?t:nt,from=0,i;
     while((i=hay.indexOf(e.k,from))>-1){from=i+1;var j=i+e.k.length;
       if(isW(nt[i-1]))continue;if(!e.cs&&(nt[j]==="s"||nt[j]==="x")&&!isW(nt[j+1]))j++;if(isW(nt[j]))continue;
@@ -1383,7 +1384,7 @@ function backlinks(m,id){var idx=lkIndex(),out=[];
   return out.sort(function(a,b){return (MODS[a[0]].wiki?1:0)-(MODS[b[0]].wiki?1:0)||(b[1].updatedAt||0)-(a[1].updatedAt||0)})}
 function blk(title,nodes){return h("div",{class:"blk"},title?h("h3",{text:title}):null,nodes)}
 function openDetail(m,id){
-  var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};
+  var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};lctx.manualOnly=/\[\[[^\]|]{1,80}\|[^\]]{1,120}\]\]/.test(String(d.steps||"")+String(M.body?M.body(d)||"":""));
   if(d.status==="archive")body.push(h("p",{class:"archnote"},h("b",{text:"Fiche expirée. "}),d.archiveNote||"Elle ne sert plus depuis la sortie du jeu, mais on la garde pour l'historique."));
   var back=navStack.length?navStack[navStack.length-1]:null,bM=back&&MODS[back.m],bD=back&&data[bM.col].filter(function(x){return x.id===back.id})[0];
   if(bD&&!(back.m===m&&back.id===id))body.push(h("button",{type:"button",class:"backlk",onclick:function(){navStack.pop();openDetail(back.m,back.id)}},"← ",bD[bM.title]||"Retour"));
