@@ -531,8 +531,8 @@ h1,h2,h3,.pagehead h1,.hello h1,.banner h1,.sech h2{font-family:var(--display);f
 .dt{background:none!important;padding:0;font-size:12.5px;font-weight:600;color:var(--dim)}
 .dt.fresh{color:var(--teal)}
 /* Situations : des boutons qui se suivent, pas une grille de cartes */
-.situ{display:flex;flex-wrap:wrap;gap:8px}
-.situ button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 13px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.situ{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.situ button{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:left}
 .situ .si{width:auto;height:auto;background:none;border-radius:0}
 .situ button b{font-size:14.5px;font-weight:700;line-height:1.2}
 .situ button svg.i,.situ .si svg.i{width:19px;height:19px}
