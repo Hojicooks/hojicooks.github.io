@@ -1145,7 +1145,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     </div>
     <div class="group" id="decartGroup">
       <h3>Direct IA (Decart)</h3>
-      <p class="note">Essayage réaliste en direct par Decart (Lucy VTON 3.6), sur tes tenues. Coût : 2 crédits par seconde de direct, soit environ 8 min avec 1 000 crédits. Rien n'est facturé tant que tu n'es pas en place et que le retardateur n'est pas fini ; deux mains levées arrêtent le direct.</p>
+      <p class="note">Essayage réaliste en direct par Decart (Lucy VTON 3.6), sur tes tenues. Coût : 2 crédits par seconde de direct, soit environ 8 min avec 1 000 crédits (4 crédits par seconde en mode rapide). Rien n'est facturé tant que tu n'es pas en place et que le retardateur n'est pas fini ; deux mains levées arrêtent le direct.</p>
       <div class="field">
         <label for="dcKey">Clé API Decart</label>
         <input id="dcKey" type="password" autocomplete="off" spellcheck="false" placeholder="dct_…">
@@ -1162,8 +1162,13 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
           <button type="button" role="radio" data-s="120">2 min</button>
         </div>
       </div>
+      <button class="opt" id="dcFast" type="button" role="switch" aria-checked="false">
+        <span><b>Mode rapide (moins de latence)</b><small>Option de Decart : moins de retard, même qualité d'image, mais 2 fois plus cher (4 crédits par seconde). Vaut pour le Direct IA et le Clip IA Rapide.</small></span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
+      <p class="note" id="dcLat"></p>
       <button class="opt" id="dcRec" type="button" role="switch" aria-checked="true">
-        <span><b>Enregistrer une vidéo de chaque essai</b><small>Une vidéo par tenue, rangée dans les Looks et sur la fiche des vêtements et de la tenue. Ne consomme pas de crédits.</small></span>
+        <span><b>Enregistrer une vidéo de chaque essai</b><small>Une vidéo par tenue, rangée dans les Looks et sur la fiche des vêtements et de la tenue. Ne consomme pas de crédits ; le couper allège un peu le téléphone pendant le direct.</small></span>
         <span class="switch" aria-hidden="true"></span>
       </button>
       <div class="field">
@@ -1206,7 +1211,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
         <button class="btn ghost small" id="replayGuide" type="button">Revoir le guide</button>
         <button class="btn ghost small" id="settingsHelp" type="button">Questions fréquentes</button>
       </div>
-      <p class="note">Cabine Miroir · version 6.8</p>
+      <p class="note">Cabine Miroir · version 6.9</p>
     </div>
   </div>
 </div>
@@ -2069,7 +2074,10 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   function tickLive(gen){
     if(!live.on || gen!==live.gen) return;
     const now=performance.now();
-    if(video.readyState>=2 && video.videoWidth && now-live.last>=(fx.on?30:190)){
+    // Pendant un rendu Decart, la détection ralentit (12 fois par seconde suffisent aux gestes) pour laisser
+    // le téléphone encoder et décoder la vidéo sans retard.
+    const busy=(ai.on && ai.phase==='live') || !!clip.job;
+    if(video.readyState>=2 && video.videoWidth && now-live.last>=(fx.on?(busy?80:30):190)){
       live.last=now;
       let p=null;
       try{ const r=live.lm.detectForVideo(video,now); p=(r && r.landmarks && r.landmarks[0]) || null; live.err=0; }
@@ -2442,7 +2450,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   const DECART_MODEL='lucy-vton-3.6', CREDITS_PER_S=2;
   // Phases : off → armed (attente d'être en place, gratuit) → countdown → connecting → live.
   const ai={on:false,phase:'off',rt:null,track:null,gen:0,timer:null,start:0,secs:0,switching:false,pendingSwitch:false,
-    input:null,inAspect:0,fix:false,remote:null,rec:null,recSaved:0,cd:null,armSince:0,armAt:0,armMsg:'',swT:null,sent:'',sentO:null,tok:null};
+    input:null,inAspect:0,fix:false,remote:null,rec:null,recSaved:0,cd:null,armSince:0,armAt:0,armMsg:'',swT:null,sent:'',sentO:null,tok:null,rate:2,lat:null,net:null};
   if(window.__cabineTest) window.__cabineAi=ai; // tests automatisés uniquement
   let decartMod=null;
   async function loadDecart(){
@@ -2454,13 +2462,52 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   const dcKey = () => pref.get('decartKey','');
   const dcMax = () => { const v=pref.get('decartMax',60); return [30,60,120].includes(v)?v:60; };
   const dcUsedSec = () => pref.get('decartUsedSec',0);
-  const dcUsedCr = () => pref.get('decartUsedCr',0); // crédits du mode vidéo (Clip IA qualité)
+  const dcUsedCr = () => pref.get('decartUsedCr',0); // crédits hors direct normal : mode vidéo (Clip IA qualité) et mode rapide
+  // Mode rapide de Decart : latence plus basse, même qualité d'image, 2 fois plus cher (4 crédits par seconde).
+  const dcFast = () => !!pref.get('decartFast',false);
+  const dcRate = () => dcFast() ? CREDITS_PER_S*2 : CREDITS_PER_S;
+  // Compte des secondes facturées : au tarif normal en secondes de direct, au tarif rapide directement en crédits.
+  function dcBill(secs,rate){ if(!(secs>0)) return; if(rate>CREDITS_PER_S) pref.set('decartUsedCr',dcUsedCr()+secs*rate); else pref.set('decartUsedSec',dcUsedSec()+secs); }
   const dcUsedCredits = () => Math.round(dcUsedSec()*CREDITS_PER_S+dcUsedCr());
   const dcLeft = () => Math.max(0,dcBudget()-dcUsedCredits());
   const dcBudget = () => { const v=Number(pref.get('decartBudget',1000)); return isFinite(v)&&v>=0?v:1000; };
   function aiUsageText(){
     const used=dcUsedCredits(), left=dcLeft(), cr=Math.round(dcUsedCr());
-    return 'Utilisé avec cette app : '+Math.round(dcUsedSec())+' s de direct'+(cr?' + '+cr+' crédits de vidéos':'')+', soit '+used+' crédits. Restant estimé : '+left+' crédits, environ '+Math.floor(left/CREDITS_PER_S/60)+' min '+String(Math.round(left/CREDITS_PER_S%60)).padStart(2,'0')+' de direct.';
+    const r=dcRate();
+    return 'Utilisé avec cette app : '+Math.round(dcUsedSec())+' s de direct'+(cr?' + '+cr+' crédits (vidéos, mode rapide)':'')+', soit '+used+' crédits. Restant estimé : '+left+' crédits, environ '+Math.floor(left/r/60)+' min '+String(Math.round(left/r%60)).padStart(2,'0')+' de direct'+(r>CREDITS_PER_S?' en mode rapide':'')+'.';
+  }
+  /* Latence : Decart mesure le délai réel caméra → image habillée (« glass-to-glass »). Sans cette mesure
+     (certains navigateurs), on affiche l'aller-retour réseau. */
+  const latNew = () => ({g2g:[],rtt:[],q:'',slow:false,warned:false});
+  // Ajoute une mesure ; renvoie vrai la première fois que la connexion est jugée lente (pour prévenir une fois).
+  function latPush(L,rep){
+    if(!L || !rep || !rep.metrics) return false;
+    const m=rep.metrics;
+    if(m.g2gMs!=null && isFinite(m.g2gMs) && !rep.warmingUp) L.g2g.push(m.g2gMs);
+    if(m.rttMs!=null && isFinite(m.rttMs)) L.rtt.push(m.rttMs);
+    if(L.g2g.length>120) L.g2g.shift(); if(L.rtt.length>120) L.rtt.shift();
+    L.q=rep.quality||'';
+    L.slow=!rep.warmingUp && (rep.quality==='poor' || rep.quality==='critical');
+    if(L.slow && !L.warned){ L.warned=true; return true; }
+    return false;
+  }
+  const median = a => { if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y), m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+  const fmtLat = ms => ms>=1000 ? (ms/1000).toFixed(1).replace('.',',')+' s' : Math.round(ms/10)*10+' ms';
+  function latText(L){
+    if(!L) return '';
+    const g=L.g2g.length ? L.g2g[L.g2g.length-1] : null, r=L.rtt.length ? L.rtt[L.rtt.length-1] : null;
+    if(g!=null) return ' · latence '+fmtLat(g)+(L.slow?' (lente)':'');
+    if(r!=null) return ' · réseau '+fmtLat(r)+(L.slow?' (lent)':'');
+    return '';
+  }
+  // Moyenne de la session, gardée pour les réglages.
+  function latSave(L,fast){
+    if(!L) return null;
+    const g=median(L.g2g), r=median(L.rtt);
+    if(g==null && r==null) return null;
+    const rec={ms:g!=null?g:r,kind:g!=null?'g2g':'rtt',fast:!!fast,at:Date.now()};
+    pref.set('decartLastLat',rec);
+    return rec;
   }
   function aiLiveSecs(){ return ai.phase==='live' && ai.start ? Math.max(ai.secs,(Date.now()-ai.start)/1000) : ai.secs; }
   function aiStatus(text){
@@ -2468,7 +2515,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(text){ ai.msg=text; fxStatus(text); return; }
     // Message d'attente effacé entre-temps (fin d'un détourage…) : on le remet.
     if(ai.phase!=='live' && ai.msg && !$('fxStatus').textContent) fxStatus(ai.msg);
-    if(ai.phase==='live'){ const s=aiLiveSecs(); fxStatus('Direct IA · '+Math.round(s)+' s / '+dcMax()+' s · '+Math.round(s*CREDITS_PER_S)+' crédits'); }
+    if(ai.phase==='live'){ const s=aiLiveSecs(); fxStatus('Direct IA'+(ai.rate>CREDITS_PER_S?' rapide':'')+' · '+Math.round(s)+' s / '+dcMax()+' s · '+Math.round(s*ai.rate)+' crédits'+latText(ai.lat)); }
   }
   // Description envoyée avec l'image du vêtement (Decart conseille une phrase précise de 20 à 30 mots).
   function aiPrompt(ps){
@@ -2508,7 +2555,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(!fxOutfits().length){ setFx(true); return; } // invite à créer une tenue
     if(state.mode!=='live'){ await startCamera(); if(state.mode!=='live') return; }
     if(clip.job || clip.rec){ toast('Clip IA en cours : attends la fin ou arrête-le'); return; }
-    if(dcLeft()<CREDITS_PER_S*10){ toast('Crédits Decart presque épuisés d\'après le compteur (réglages pour le corriger)'); }
+    if(dcLeft()<dcRate()*10){ toast('Crédits Decart presque épuisés d\'après le compteur (réglages pour le corriger)'); }
     unlockAudio(); cancelCountdown();
     ai.prevFx=fx.on; ai.on=true; ai.phase='armed'; ai.secs=0; ai.start=0; ai.armSince=0; ai.armAt=Date.now(); ai.armMsg=''; ai.sent=''; ai.sentO=null; ++ai.gen;
     fx.on=true; renderStageOpts(); syncLive();
@@ -2531,7 +2578,19 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   async function aiPrepare(gen){
     try{
       const sdk=await loadDecart(); if(gen!==ai.gen) return;
-      const t=await aiToken(sdk); if(gen===ai.gen) ai.tok=t;
+      const t=await aiToken(sdk); if(gen!==ai.gen) return;
+      ai.tok=t;
+      // Test du réseau, gratuit (aucune session ouverte) : prévient si la connexion risque de donner du retard.
+      try{
+        const c=sdk.createDecartClient({apiKey:t.key,telemetry:false});
+        if(c.realtime && c.realtime.checkConnectivity){
+          const r=await c.realtime.checkConnectivity({iceGatherTimeoutMs:3000});
+          if(gen===ai.gen && r){
+            ai.net=r;
+            if(r.quality==='poor' || r.quality==='critical') toast('Réseau lent'+(r.metrics && r.metrics.rttMs ? ' ('+r.metrics.rttMs+' ms)' : '')+' : en Wi-Fi, le direct aura moins de retard');
+          }
+        }
+      }catch(e){}
     }catch(e){ if(gen===ai.gen && /401|403|invalid/i.test(errText(e))) aiStop(aiErrText(e),true); }
   }
   function aiArmStatus(t){ if(ai.armMsg!==t || !$('fxStatus').textContent){ ai.armMsg=t; aiStatus(t); } }
@@ -2577,9 +2636,12 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       const o=fxCurrent(); outfitPieces(o).forEach(x=>fxPrep(x.g));
       const init=await aiGarment(o); if(gen!==ai.gen) return;
       ai.sent=outfitKey(o); ai.sentO=o;
+      ai.rate=dcRate(); ai.lat=latNew();
       const rt=await client.realtime.connect(ai.input.stream,{
         model, mirror:false,
+        ...(ai.rate>CREDITS_PER_S ? {speed:'fast'} : {}),
         initialState:{prompt:{text:init.prompt,enhance:false},image:init.image},
+        onConnectionQuality:q=>{ if(gen===ai.gen && latPush(ai.lat,q)) toast('Connexion lente : en Wi-Fi, le direct aura moins de retard'); },
         onRemoteStream:st=>{
           if(gen!==ai.gen) return;
           const v=$('aiVideo'); v.srcObject=st; v.hidden=false; const pr=v.play(); if(pr && pr.catch) pr.catch(()=>{});
@@ -2650,14 +2712,16 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(ai.input){ ai.input.stop(); ai.input=null; }
     ai.remote=null;
     // Compteur : le plus grand entre les secondes annoncées par Decart et le temps écoulé depuis l'image reçue.
-    const secs=aiLiveSecs();
-    if(secs>0) pref.set('decartUsedSec',dcUsedSec()+secs);
+    const secs=aiLiveSecs(), rate=ai.rate||CREDITS_PER_S;
+    dcBill(secs,rate);
+    const lat=latSave(ai.lat,rate>CREDITS_PER_S);
+    ai.lat=null;
     ai.on=false; ai.phase='off'; ai.start=0; ai.secs=0; ai.switching=false; ai.pendingSwitch=false; ai.armSince=0; ai.sent=''; ai.sentO=null; ai.tok=null; ai.msg=''; ai.armMsg='';
     if(!ai.prevFx){ fx.on=false; fxClear(); }
     const v=$('aiVideo'); v.hidden=true; try{ v.srcObject=null; }catch(e){}
     ai.fix=false; v.classList.remove('fixed'); v.style.width=v.style.height=v.style.left=v.style.top='';
     fxStatus(''); renderStageOpts(); syncLive();
-    if(msg) toast(msg+(secs>0?' · '+Math.round(secs)+' s, '+Math.round(secs*CREDITS_PER_S)+' crédits':'')+(recLen>=2?' · vidéo rangée dans les Looks':''));
+    if(msg) toast(msg+(secs>0?' · '+Math.round(secs)+' s, '+Math.round(secs*rate)+' crédits':'')+(lat?' · '+(lat.kind==='g2g'?'latence ':'réseau ')+fmtLat(lat.ms):'')+(recLen>=2?' · vidéo rangée dans les Looks':''));
     if(!settings.hidden) renderSettings();
   }
   $('aiBtn').addEventListener('click',()=>{
@@ -2691,6 +2755,8 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     const loop=()=>{ if(stopped) return; draw(); handle = usesRvfc ? src.requestVideoFrameCallback(loop) : setTimeout(loop,33); };
     loop();
     api.stream=c.captureStream(30);
+    // Vidéo de personne qui bouge : l'encodeur privilégie la fluidité plutôt que le détail.
+    try{ const t=api.stream.getVideoTracks()[0]; if(t && 'contentHint' in t) t.contentHint='motion'; }catch(e){}
     api.stop=()=>{
       stopped=true;
       try{ if(usesRvfc && src.cancelVideoFrameCallback) src.cancelVideoFrameCallback(handle); else clearTimeout(handle); }catch(e){}
@@ -2775,7 +2841,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
   const clipById = id => state.clips.find(c=>c.id===id)||null;
   const clipChosen = () => fxOutfits().filter(o=>clip.picks.has(o.id));
   function clipCost(n,dur,mode){
-    return mode==='video' ? Math.round(n*dur*CREDITS_PER_S_VIDEO) : Math.round(CREDITS_PER_S*(n*(dur+1.6)+1.5));
+    return mode==='video' ? Math.round(n*dur*CREDITS_PER_S_VIDEO) : Math.round(dcRate()*(n*(dur+1.6)+1.5));
   }
   const euros = cr => (cr/100).toFixed(2).replace('.',',')+' $';
   function recChip(t){ $('recChip').hidden=!t; $('recText').textContent=t||''; }
@@ -2924,9 +2990,12 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     clipStatus('Connexion à Decart…');
     const view=$('clipVideo');
     let remote=null, gotRemote=null; const remoteP=new Promise(r=>{ gotRemote=r; });
+    job.rate=dcRate(); job.lat=latNew();
     const rt=await client.realtime.connect(inp.stream,{
       model, mirror:false,
+      ...(job.rate>CREDITS_PER_S ? {speed:'fast'} : {}),
       initialState:{prompt:{text:g.prompt,enhance:false},image:g.image},
+      onConnectionQuality:q=>{ if(!job.stop) latPush(job.lat,q); },
       onRemoteStream:st=>{
         if(job.stop) return;
         remote=st; view.removeAttribute('src'); view.srcObject=st; view.loop=false; view.classList.add('on');
@@ -3039,7 +3108,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     if(!dcKey()){ openSettingsAt('dcKey'); toast('Colle d\'abord ta clé Decart dans les réglages'); return; }
     if(ai.on) aiStop('Direct IA arrêté');
     unlockAudio();
-    const job=clip.job={mode:clip.mode,stop:false,secs:0,start:0,done:0,failed:0,credits:0,cleanup:[],wakers:[],rt:null,abort:null,ended:'',n:outs.length};
+    const job=clip.job={mode:clip.mode,stop:false,secs:0,start:0,done:0,failed:0,credits:0,rate:2,lat:null,cleanup:[],wakers:[],rt:null,abort:null,ended:'',n:outs.length};
     renderClipSheet();
     let err='';
     try{ if(job.mode==='video') await clipRunVideo(c,outs,job); else await clipRunLive(c,outs,job); }
@@ -3058,14 +3127,15 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     const rt=job.rt; job.rt=null; try{ if(rt) rt.disconnect(); }catch(e){}
     job.cleanup.forEach(f=>{ try{ f(); }catch(e){} }); job.cleanup=[];
     let credits=job.credits;
-    if(job.start){ const secs=Math.max(job.secs,(Date.now()-job.start)/1000); pref.set('decartUsedSec',dcUsedSec()+secs); credits+=Math.round(secs*CREDITS_PER_S); }
+    if(job.start){ const secs=Math.max(job.secs,(Date.now()-job.start)/1000), rate=job.rate||CREDITS_PER_S; dcBill(secs,rate); credits+=Math.round(secs*rate); }
+    const lat=job.lat ? latSave(job.lat,(job.rate||CREDITS_PER_S)>CREDITS_PER_S) : null;
     clip.job=null;
     const v=$('clipVideo'); if(v.srcObject){ v.srcObject=null; v.classList.remove('on'); }
     if(v.dataset.id!=='result') v.dataset.id='';
     clipStatus(''); renderClipSheet();
     if(!settings.hidden) renderSettings();
     const head = err || job.ended || job.abortMsg || (job.done ? (job.done>1?job.done+' vidéos rangées':'Vidéo rangée')+' dans les Looks'+(job.failed?' ('+job.failed+' refusée'+(job.failed>1?'s':'')+' par Decart)':'') : job.failed ? 'Decart n\'a pas pu traiter le clip' : 'Aucune vidéo obtenue');
-    toast(head+(credits?' · '+credits+' crédits':''));
+    toast(head+(credits?' · '+credits+' crédits':'')+(lat?' · '+(lat.kind==='g2g'?'latence ':'réseau ')+fmtLat(lat.ms):''));
     if(job.done && !err && !job.stop){ beep(1320,0.15); buzz(40); }
   }
   function openClipSheet(o){
@@ -4914,6 +4984,9 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     document.querySelectorAll('#dcMax button').forEach(b=>b.setAttribute('aria-checked',String(Number(b.dataset.s)===dcMax())));
     $('dcUsage').textContent=aiUsageText();
     $('dcRec').setAttribute('aria-checked',String(!!pref.get('decartRec',true)));
+    $('dcFast').setAttribute('aria-checked',String(dcFast()));
+    const ll=pref.get('decartLastLat',null);
+    $('dcLat').textContent = ll && ll.ms ? 'Dernière mesure : '+(ll.kind==='g2g'?'latence de '+fmtLat(ll.ms):'réseau '+fmtLat(ll.ms)+' (latence réelle non mesurée par ce navigateur)')+(ll.fast?' en mode rapide':' en mode normal')+' ('+new Date(ll.at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'). En dessous de 0,5 s c\'est bon, au-delà de 0,9 s ça se voit. Le Wi-Fi aide souvent plus que le mode rapide.' : 'La latence de chaque direct s\'affiche à l\'écran pendant la session, et la moyenne ici ensuite.';
     const info=$('storageInfo');
     info.textContent=state.photos.length+' photos, '+state.garments.length+' vêtements, '+state.outfits.length+' tenues, '+state.looks.length+' looks.';
     try{
@@ -4938,6 +5011,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
     pref.set('decartKey',v); toast(v?'Clé Decart enregistrée dans ce téléphone':'Clé Decart effacée'); renderSettings();
   });
   $('dcRec').addEventListener('click',()=>{ pref.set('decartRec',!pref.get('decartRec',true)); renderSettings(); });
+  $('dcFast').addEventListener('click',()=>{ pref.set('decartFast',!dcFast()); renderSettings(); toast(dcFast()?'Mode rapide activé : 4 crédits par seconde, au prochain direct':'Mode normal : 2 crédits par seconde'); });
   $('dcClear').addEventListener('click',()=>{ pref.set('decartKey',''); $('dcKey').value=''; toast('Clé Decart effacée'); renderSettings(); });
   document.querySelectorAll('#dcMax button').forEach(b=>b.addEventListener('click',()=>{ pref.set('decartMax',Number(b.dataset.s)); renderSettings(); }));
   $('dcBudget').addEventListener('change',()=>{
@@ -5056,6 +5130,7 @@ body.immersive .fx-bar{top:calc(60px + env(safe-area-inset-top,0px))}
       ['L\'effet filtre','Touche « Tenue en filtre » : les pièces de tes tenues se posent sur toi en direct, gratuitement, dans le téléphone. C\'est un effet de type filtre (pas de vrais plis ni d\'ombres) ; pour un rendu réaliste, prends la photo puis touche « Rendu IA ». Les pièces sont détourées automatiquement la première fois.'],
       ['Changer de tenue d\'un geste','Avec l\'effet filtre ou le Direct IA, lève une main à hauteur de poitrine (au-dessus du coude) et balaie franchement l\'air, sur au moins un tiers de l\'image : vers la gauche pour la tenue suivante, vers la droite pour la précédente. Une grande flèche confirme le geste. Le retour de la main est ignoré : marque un temps d\'arrêt ou baisse la main avant le geste suivant. Les flèches en haut de l\'image marchent aussi, et en touchant la miniature de la tenue tu vois toutes tes tenues en vignettes pour choisir directement. Reste en entier dans l\'image pour que tes mains soient vues.'],
       ['Direct IA (Decart)','« Direct IA » envoie ta caméra à Decart, qui te renvoie la vidéo habillée de ta tenue, de façon réaliste. C\'est payant au temps : 2 crédits par seconde, environ 8 min pour 1 000 crédits. Rien n\'est facturé au démarrage : après l\'appui sur « Direct IA », l\'app attend de te voir en entier une seconde, lance ton retardateur avec les bips, et ne se connecte qu\'ensuite. Pour arrêter sans toucher le téléphone, lève les deux mains au-dessus de la tête une seconde (une seule main levée prend une photo). L\'app s\'arrête aussi seule au bout de la durée choisie (réglages), 3 s après ta sortie de l\'image ou si tu quittes le miroir. Balaie l\'air de la main pour changer de tenue sans couper : la tenue est envoyée une demi-seconde après le dernier geste. L\'image est envoyée à la verticale quand le téléphone est droit ; recule jusqu\'à être vu de la tête aux pieds. Chaque tenue essayée est enregistrée en vidéo (Looks → Vidéos, et sur la fiche du vêtement) : pas besoin de la refaire.'],
+      ['Moins de retard en Direct IA','Le retard (latence) entre ton geste et l\'image habillée s\'affiche en haut pendant le direct : en dessous de 0,5 s c\'est bon, au-delà de 0,9 s ça se voit. Le plus efficace : le Wi-Fi plutôt que la 4G (l\'app te prévient si le réseau semble lent avant de se connecter). Ensuite, le « Mode rapide » dans les réglages : Decart annonce moins de retard pour la même qualité, mais c\'est 2 fois plus cher (4 crédits par seconde). Couper l\'enregistrement vidéo allège aussi un peu le téléphone. Bouge lentement : le Direct IA suit mieux les poses que les gestes rapides. Le petit logo « AI Generated » est ajouté par Decart et ne peut pas être retiré.'],
       ['Clip IA : un clip, toutes tes tenues','« Clip IA » : filme-toi 5 s une fois (ou choisis une vidéo de ta galerie, 10 s au plus), coche les tenues, et Decart les essaie sur ce clip. Tu n\'as pas à te replacer devant le téléphone à chaque tenue, et tu peux réutiliser le clip plus tard. « Rapide » rejoue le clip vers le Direct IA : 2 crédits par seconde, environ 14 à 16 crédits par tenue pour un clip de 5 s. « Qualité » l\'envoie au mode vidéo de Decart : 4 crédits par seconde, 20 crédits pour 5 s, résultat en quelques minutes. Le coût estimé s\'affiche avant de lancer. Les vidéos arrivent dans Looks → Vidéos et sur les fiches. Pendant l\'enregistrement du clip, le déclencheur annule.'],
       ['Le plein écran','Le bouton en haut à droite du miroir l\'agrandit sur tout l\'écran, avec un déclencheur flottant. Touche « Quitter » ou fais retour pour en sortir.'],
       ['Mon visage est sombre','Active « Lumière » : un cadre blanc entoure l\'image et éclaire ton visage. Monte la luminosité et place-toi face à une fenêtre.'],
