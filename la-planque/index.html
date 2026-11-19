@@ -343,6 +343,9 @@ table.cmp td.best{color:var(--ok);font-weight:700}
 .item.arch{opacity:.55}
 .item.arch:hover{opacity:.85}
 .tag.arch{color:var(--dim);background:transparent!important;border:1px solid var(--line)}
+.seg .segarch{color:var(--dim)}
+.seg .segarch .n{font-variant-numeric:tabular-nums;font-size:12px;padding:1px 6px;border-radius:999px;background:var(--card2);margin-left:2px}
+.seg .segarch[aria-pressed="true"]{color:var(--fg)}
 .archnote{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--card2);color:var(--mute);font-size:14px;line-height:1.45}
 .archnote b{color:var(--fg)}
 .lexshort{margin:2px 0 0;font-size:16.5px;font-weight:600;line-height:1.45;text-wrap:pretty}
@@ -648,14 +651,14 @@ function ago(t){var s=(Date.now()-t)/1000;if(s<60)return "à l'instant";if(s<360
 function uid8(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function toast(t){var host=document.getElementById("toastHost");host.innerHTML="";var el=h("div",{class:"toast",role:"status",text:t});host.append(el);setTimeout(function(){if(el.parentNode)el.remove()},2600)}
 
-var STATUS=[["verifie","Vérifié"],["a-confirmer","À confirmer"],["rumeur","Rumeur"],["archive","Archivé (plus d'actualité)"],["exemple","Exemple"]];
+var STATUS=[["verifie","Vérifié"],["a-confirmer","À confirmer"],["rumeur","Rumeur"],["archive","Expiré (plus d'actualité)"],["exemple","Exemple"]];
 var REGIONS=["Vice City","Leonida Keys","Grassrivers","Port Gellhorn","Ambrosia","Mont Kalaga","Partout","Inconnu"];
 var RCOL={"Vice City":"#ff6fb5","Leonida Keys":"#33d1bc","Grassrivers":"#7ccf5a","Port Gellhorn":"#5aa9ff","Ambrosia":"#ffb347","Mont Kalaga":"#b48cff"};
 function regionTag(r){if(!r||r==="Inconnu")return null;var c=RCOL[r];return h("span",{class:"tag",style:c?"color:"+c+";background:color-mix(in srgb,"+c+" 14%,var(--card))":null},ic("gps"),r)}
 var SEC={1:"Aucune",2:"Alarme",3:"Clé électronique",4:"Antidémarrage"};
 var SECCOL={1:"var(--ok)",2:"var(--gold)",3:"var(--warn)",4:"var(--bad)"};
 var RISK={0:"Aucun",1:"Faible",2:"Moyen",3:"Élevé"};
-function statusTag(s){if(s==="archive")return h("span",{class:"tag arch",text:"Archivé"});if(s==="verifie")return h("span",{class:"tag green"},ic("check"),"Vérifié");if(s==="a-confirmer")return h("span",{class:"tag gold",text:"À confirmer"});if(s==="rumeur")return h("span",{class:"tag red",title:"Rumeur non vérifiée (réseaux sociaux, fuite ou source unique)",text:"Rumeur"});return h("span",{class:"tag ex",text:"Exemple"})}
+function statusTag(s){if(s==="archive")return h("span",{class:"tag arch",text:"Expiré"});if(s==="verifie")return h("span",{class:"tag green"},ic("check"),"Vérifié");if(s==="a-confirmer")return h("span",{class:"tag gold",text:"À confirmer"});if(s==="rumeur")return h("span",{class:"tag red",title:"Rumeur non vérifiée (réseaux sociaux, fuite ou source unique)",text:"Rumeur"});return h("span",{class:"tag ex",text:"Exemple"})}
 function rank(d){return (d.status==="verifie"?0:d.status==="a-confirmer"?1:d.status==="rumeur"?2:3)}
 var VIC={"Super":"car","Sport":"car","Classique":"car","Muscle":"car","Berline":"car","Compacte":"car","SUV":"suv","Pick-up":"pickup","Utilitaire":"van","Tout-terrain":"buggy","Moto":"moto","Bateau":"boat","Hélicoptère":"heli","Avion":"plane"};
 var LONG=["Fusil d'assaut","Fusil à pompe","Fusil de précision","Mitraillette"],SHORT=["Pistolet","Revolver"];
@@ -1216,19 +1219,24 @@ function renderModule(v,m){
     [["long",0,"Arme longue 1"],["long",1,"Arme longue 2"],["short",0,"Arme de poing 1"],["short",1,"Arme de poing 2"]].forEach(function(x){var id=loadout[x[0]][x[1]],w=id&&data.weapons.filter(function(d){return d.id===id})[0];
       sl.append(h("button",{type:"button",class:"slot"+(w?" on":""),onclick:function(){if(w)openDetail("armes",w.id);else{ui.armes.chips={s:x[0]==="long"?0:1};render()}}},h("small",{text:x[2]}),h("b",{text:w?w.name:"Vide",style:w?null:"color:var(--dim)"})))});
     head.append(sl)}
+  var narch=all.filter(function(d){return d.status==="archive"}).length;if(!narch)st.arch=false;
   if(M.chips.length){var chips=h("div",{class:"chips"});
-    M.chips.forEach(function(c,i){var on=st.chips[c.g]===i;chips.append(h("button",{type:"button",class:"chip","aria-pressed":on?"true":"false",text:c.l,onclick:function(){st.chips[c.g]=on?undefined:i;render()}}))});head.append(chips)}
+    M.chips.forEach(function(c,i){var on=st.chips[c.g]===i;chips.append(h("button",{type:"button",class:"chip","aria-pressed":on?"true":"false",text:c.l,onclick:function(){st.chips[c.g]=on?undefined:i;render()}}))});
+    head.append(chips)}
   var seg=h("div",{class:"seg",role:"group","aria-label":"Trier"});
-  M.sorts.forEach(function(s){seg.append(h("button",{type:"button","aria-pressed":st.sort===s[0]?"true":"false",onclick:function(){st.sort=s[0];render()}},s[0]==="top"?ic("flame"):null,s[0]==="top"?" ":null,s[1]))});head.append(seg);
+  M.sorts.forEach(function(s){seg.append(h("button",{type:"button","aria-pressed":!st.arch&&st.sort===s[0]?"true":"false",onclick:function(){st.sort=s[0];st.arch=false;render()}},s[0]==="top"?ic("flame"):null,s[0]==="top"?" ":null,s[1]))});
+  if(narch)seg.append(h("button",{type:"button",class:"segarch","aria-pressed":st.arch?"true":"false",title:"Les fiches qui ne servent plus, gardées pour l'historique",onclick:function(){st.arch=!st.arch;render()}},"Expirées ",h("span",{class:"n",text:String(narch)})));
+  head.append(seg);
   if(M.done&&all.length){var dn=all.filter(function(d){return done(m)[d.id]}).length;
     head.append(h("div",{class:"meter"},h("span",{class:"num",text:dn+"/"+all.length}),h("span",{class:"bar"},h("i",{style:"width:"+(dn/all.length*100)+"%"})),h("span",{text:M.done.toLowerCase()+(dn>1?"s":"")})))}
+  if(st.arch)head.append(h("p",{class:"muted",style:"font-size:13px;margin:0",text:"Fiches expirées : elles ne servent plus, mais on les garde pour l'historique."}));
   v.append(head);
   var dmap=done(m);
   var rows=all.filter(function(d){for(var g in st.chips){var i=st.chips[g];if(i==null)continue;var c=M.chips[i];if(c.todo){if(dmap[d.id])return false}else if(!c.t(d))return false}return true});
   var sdef=M.sorts.filter(function(s){return s[0]===st.sort})[0];
   var sf=st.sort==="top"?topSort(m):function(a,b){return (a.prio?0:1)-(b.prio?0:1)||sdef[2](a,b)||score(m,b.id)-score(m,a.id)};
   rows.sort(sf);
-  var archived=rows.filter(function(d){return d.status==="archive"});rows=rows.filter(function(d){return d.status!=="archive"});
+  rows=rows.filter(function(d){return st.arch?d.status==="archive":d.status!=="archive"});
   var list=h("div",{class:"list",style:"margin-top:12px"});
   if(!rows.length)list.append(h("div",{class:"empty",text:all.length?"Aucune fiche avec ces filtres. Retire un filtre pour en voir plus.":(isAdmin?"Aucune fiche pour l'instant. Ajoute la première avec le bouton en bas.":"Aucune fiche pour l'instant.")}));
   else if(m==="astuces"&&st.sort!=="recent"&&!Object.keys(st.chips).some(function(g){return st.chips[g]!=null})){
@@ -1239,9 +1247,6 @@ function renderModule(v,m){
   else if(m==="lieux"&&st.sort==="region"){var cur=null;rows.forEach(function(d){var r=d.region&&d.region!=="Inconnu"?d.region:"Région pas encore connue";if(r!==cur){cur=r;list.append(h("div",{class:"group",style:RCOL[r]?"color:"+RCOL[r]:null,text:r}))}list.append(item(m,d))})}
   else rows.forEach(function(d){list.append(item(m,d))});
   v.append(list);
-  if(archived.length){
-    v.append(h("button",{type:"button",class:"more","aria-expanded":st.arch?"true":"false",text:st.arch?"Masquer les archives":"Voir les archives ("+archived.length+")",onclick:function(){st.arch=!st.arch;rerender()}}));
-    if(st.arch){v.append(h("p",{class:"muted",style:"font-size:13px;margin:14px 2px 8px",text:"Des fiches qui ne servent plus, gardées pour l'historique."}));var al=h("div",{class:"list"});archived.forEach(function(d){al.append(item(m,d))});v.append(al)}}
 }
 
 /* ================= Ma liste ================= */
@@ -1380,7 +1385,7 @@ function backlinks(m,id){var idx=lkIndex(),out=[];
 function blk(title,nodes){return h("div",{class:"blk"},title?h("h3",{text:title}):null,nodes)}
 function openDetail(m,id){
   var M=MODS[m],d=data[M.col].filter(function(x){return x.id===id})[0];if(!d)return;var k=KEY(m,id),fv=!!favs()[k],body=[],lctx={self:id,used:{},idx:lkIndex()};
-  if(d.status==="archive")body.push(h("p",{class:"archnote"},h("b",{text:"Fiche archivée. "}),d.archiveNote||"Elle ne sert plus depuis la sortie du jeu, mais on la garde pour l'historique."));
+  if(d.status==="archive")body.push(h("p",{class:"archnote"},h("b",{text:"Fiche expirée. "}),d.archiveNote||"Elle ne sert plus depuis la sortie du jeu, mais on la garde pour l'historique."));
   var back=navStack.length?navStack[navStack.length-1]:null,bM=back&&MODS[back.m],bD=back&&data[bM.col].filter(function(x){return x.id===back.id})[0];
   if(bD&&!(back.m===m&&back.id===id))body.push(h("button",{type:"button",class:"backlk",onclick:function(){navStack.pop();openDetail(back.m,back.id)}},"← ",bD[bM.title]||"Retour"));
   var star=h("button",{class:"x"+(fv?" on":""),type:"button","aria-label":fv?"Retirer de ma liste":"Ajouter à ma liste","aria-pressed":fv?"true":"false",onclick:function(){var f=favs();if(f[k])delete f[k];else f[k]=1;LS.set("favs",f);renderNav();openDetail(m,id);toast(f[k]?"Ajouté à ta liste":"Retiré de ta liste")}},ic("star"));
