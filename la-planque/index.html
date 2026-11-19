@@ -836,7 +836,7 @@ function dshort(t){var n=dayDiff(t),d=new Date(t);if(n===0)return "Aujourd'hui";
 function dfull(t){return new Date(t).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})+" à "+new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
 function wasUpdated(d){return !!(d.createdAt&&d.updatedAt&&d.updatedAt-d.createdAt>3600000)}
 function whenTxt(t){return dayDiff(t)<=1?dshort(t).toLowerCase():"le "+dshort(t)}
-function dateTitle(d){var c=d.createdAt||d.updatedAt;return "Ajoutée le "+dfull(c)+(wasUpdated(d)?", mise à jour le "+dfull(d.updatedAt):"")}
+function dateTitle(d){var c=d.createdAt||d.updatedAt;return "Ajoutée le "+dfull(c)+(wasUpdated(d)?", mise à jour le "+dfull(d.updatedAt):"")+(d.checkedAt&&d.checkedAt-(d.updatedAt||0)>3600000?", revérifiée le "+dfull(d.checkedAt):"")}
 function dateEl(d){if(!d.updatedAt)return null;var f=dayDiff(d.updatedAt)<=1;return h("span",{class:"dt"+(f?" fresh":""),title:dateTitle(d),"aria-label":dateTitle(d),text:dshort(d.updatedAt)})}
 function byRecent(a,b){return (b.updatedAt||0)-(a.updatedAt||0)}
 /* Actu = fiches du thème « Actu », rangées à part ; elles expirent seules au bout de 30 jours, sauf si épinglées. movedTo = fiche déplacée (redirigée) */
