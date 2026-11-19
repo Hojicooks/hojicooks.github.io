@@ -4,7 +4,7 @@ de catégories, le sommaire et le sitemap, à partir de la base Supabase (lectur
 Usage : python3 la-planque/tools/build_pages.py [--local fichier.json]
 Écrit uniquement dans la-planque/<catégorie>/, la-planque/fiches/ et la-planque/sitemap.xml."""
 import json, os, re, sys, shutil, html, unicodedata, urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 SITE = "https://hojicooks.github.io/la-planque/"
 SUPABASE = "https://sonpigelysgbfvbeotgj.supabase.co"
@@ -139,6 +139,11 @@ def linkify(text, ctx):
     out.append(auto_links(t[last:], ctx))
     return "".join(out)
 
+MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+def fr_date(ms):
+    t = datetime.fromtimestamp(int(ms) / 1000, timezone.utc).astimezone(timezone(timedelta(hours=1)))
+    return f"{t.day} {MOIS[t.month - 1]} {t.year}"
+
 def thin(col, d):
     if d.get("status") in ("exemple", "archive") or d.get("movedTo"): return True
     if col == "vehicles" and not d.get("value"): return True
@@ -244,6 +249,11 @@ def fiche_html(cat, row, siblings):
     if st: tags.append(f'<span class="tag { {"verifie":"ok","rumeur":"rum"}.get(d.get("status"),"gold") }">{esc(st)}</span>')
     b = [f'<div class="crumb"><a href="../../">La Planque</a> › <a href="../">{esc(ctitle)}</a></div>',
          f"<h1>{esc(t)}</h1>", '<div class="tags">' + "".join(tags) + "</div>"]
+    c_ts, u_ts = d.get("createdAt") or d.get("updatedAt"), d.get("updatedAt")
+    if c_ts:
+        line = "Ajoutée le " + fr_date(c_ts)
+        if u_ts and u_ts - c_ts > 3600000: line += ", mise à jour le " + fr_date(u_ts)
+        b.append(f'<p class="crumb">{esc(line)}.</p>')
     mv = str(d.get("movedTo") or "").split("/")
     if len(mv) == 2 and mv[0] in MODSEG and SAFE_ID.match(mv[1]):
         b.append(f'<div class="box"><b>Cette fiche a été déplacée :</b> <a href="../../{MODSEG[mv[0]]}/{esc(mv[1])}/">voir la nouvelle page</a>.</div>')

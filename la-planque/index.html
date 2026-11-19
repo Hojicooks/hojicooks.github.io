@@ -247,6 +247,8 @@ svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .tag.ex{color:var(--dim);background:transparent;border:1px dashed var(--line)}
 .tag.prio{color:var(--accent-fg);background:var(--accent)}
 .tag.new{color:var(--bg);background:var(--teal)}
+.tag.upd{color:var(--teal);background:transparent!important;border:1px solid color-mix(in srgb,var(--teal) 55%,transparent)}
+.item .m .tag.upd{padding:0 7px;height:20px;font-weight:700;font-size:11.5px;border:1px solid color-mix(in srgb,var(--teal) 55%,transparent)!important}
 .temp{display:inline-flex;align-items:center;gap:3px;height:22px;padding:0 8px;border-radius:7px;font-family:var(--mono);font-size:12.5px;font-weight:600;border:1px solid currentColor}
 .lvl{display:inline-flex;gap:2px}
 .lvl i{width:6px;height:12px;border-radius:2px;background:var(--line)}
@@ -832,7 +834,10 @@ var prevVisit=LS.get("lastVisit",0);LS.set("lastVisit",Date.now());
 function dayDiff(t){var a=new Date(t),b=new Date();return Math.round((new Date(b.getFullYear(),b.getMonth(),b.getDate())-new Date(a.getFullYear(),a.getMonth(),a.getDate()))/864e5)}
 function dshort(t){var n=dayDiff(t),d=new Date(t);if(n===0)return "Aujourd'hui";if(n===1)return "Hier";return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+(d.getFullYear()!==new Date().getFullYear()?"/"+String(d.getFullYear()).slice(2):"")}
 function dfull(t){return new Date(t).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})+" à "+new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
-function dateEl(d){if(!d.updatedAt)return null;var f=dayDiff(d.updatedAt)<=1;return h("span",{class:"dt"+(f?" fresh":""),title:"Mis à jour le "+dfull(d.updatedAt),"aria-label":"Mis à jour le "+dfull(d.updatedAt),text:dshort(d.updatedAt)})}
+function wasUpdated(d){return !!(d.createdAt&&d.updatedAt&&d.updatedAt-d.createdAt>3600000)}
+function whenTxt(t){return dayDiff(t)<=1?dshort(t).toLowerCase():"le "+dshort(t)}
+function dateTitle(d){var c=d.createdAt||d.updatedAt;return "Ajoutée le "+dfull(c)+(wasUpdated(d)?", mise à jour le "+dfull(d.updatedAt):"")}
+function dateEl(d){if(!d.updatedAt)return null;var f=dayDiff(d.updatedAt)<=1;return h("span",{class:"dt"+(f?" fresh":""),title:dateTitle(d),"aria-label":dateTitle(d),text:dshort(d.updatedAt)})}
 function byRecent(a,b){return (b.updatedAt||0)-(a.updatedAt||0)}
 /* Actu = fiches du thème « Actu », rangées à part ; elles expirent seules au bout de 30 jours, sauf si épinglées. movedTo = fiche déplacée (redirigée) */
 function isNews(m,d){return m==="astuces"&&d.theme==="Actu"}
@@ -935,7 +940,7 @@ function item(m,d,showMod){
   var M=MODS[m],c=M.card(d),dn=M.done?done(m)[d.id]:false,fv=favs()[KEY(m,d.id)];
   var tags=h("div",{class:"m"});
   var arch=isArch(m,d);if(d.prio&&!arch)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));
-  if(isNew(d))tags.append(h("span",{class:"tag new",text:"Nouveau"}));
+  if(isNew(d))tags.append(wasUpdated(d)&&prevVisit&&d.createdAt<=prevVisit?h("span",{class:"tag upd",text:"Mis à jour"}):h("span",{class:"tag new",text:"Nouveau"}));
   var mt=h("span",{class:"mt"}),sc=M.vote?score(m,d.id):0,nc=ncom(m,d.id);
   if(sc)mt.append(h("span",{class:"deg",style:"color:"+tempColor(sc)},sc>0?ic("flame"):null,(sc>0?"+":"")+sc+"°"));
   if(nc)mt.append(h("span",null,ic("chat"),nc+" commentaire"+(nc>1?"s":"")));
@@ -1420,8 +1425,10 @@ function openDetail(m,id){
   if(d.imageId&&d.imageCredit)body.push(h("p",{class:"credit",text:"Photo : "+d.imageCredit}));
   else if(extImg(d)){var rk=extImg(d).indexOf(RIMG)===0,src=String(d.imageSource||"");
     body.push(h("p",{class:"credit"},rk?"Image : ":"Photo réelle : ",h("a",{href:rk?(/^https:\/\/www\.rockstargames\.com\//.test(src)?src:"https://www.rockstargames.com/VI/media"):(/^https:\/\/commons\.wikimedia\.org\//.test(src)?src:"https://commons.wikimedia.org"),target:"_blank",rel:"noopener",text:rk?"capture officielle © Rockstar Games":(d.imageCredit||"Wikimedia Commons")}),d.imageCaption?" · "+d.imageCaption:""))}
-  var tags=h("div",{class:"taglist"});if(d.prio)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));if(isNew(d))tags.append(h("span",{class:"tag new",text:"Nouveau"}));tags.append(statusTag(d.status));
-  if(d.updatedAt)tags.append(h("span",{class:"tag when"+(dayDiff(d.updatedAt)<=1?" fresh":""),title:dfull(d.updatedAt),text:"Mis à jour "+(dayDiff(d.updatedAt)<=1?dshort(d.updatedAt).toLowerCase():"le "+dshort(d.updatedAt))}));
+  var tags=h("div",{class:"taglist"});if(d.prio)tags.append(h("span",{class:"tag prio",text:"Essentiel"}));if(isNew(d))tags.append(wasUpdated(d)&&prevVisit&&d.createdAt<=prevVisit?h("span",{class:"tag upd",text:"Mis à jour"}):h("span",{class:"tag new",text:"Nouveau"}));tags.append(statusTag(d.status));
+  var c0=d.createdAt||d.updatedAt;
+  if(c0)tags.append(h("span",{class:"tag when"+(!wasUpdated(d)&&dayDiff(c0)<=1?" fresh":""),title:dfull(c0),text:"Ajoutée "+whenTxt(c0)}));
+  if(wasUpdated(d))tags.append(h("span",{class:"tag when"+(dayDiff(d.updatedAt)<=1?" fresh":""),title:dfull(d.updatedAt),text:"Mise à jour "+whenTxt(d.updatedAt)}));
   if(m==="astuces"&&d.theme)tags.append(h("span",{class:"tag",text:d.theme}));
   body.push(tags);
   // chiffres clés : seulement ce qui est connu
@@ -1445,7 +1452,7 @@ function openDetail(m,id){
   if(M.wiki){var refs=backlinks(m,id);if(refs.length){var rl=h("div",{class:"refs"});refs.slice(0,8).forEach(function(x){var XM=MODS[x[0]];rl.append(h("button",{type:"button",class:"ref",onclick:function(){if(openSheetRef)navStack.push({m:openSheetRef.m,id:openSheetRef.id});openDetail(x[0],x[1].id)}},svgUse("#ic-"+XM.icon),h("span",{text:x[1][XM.title]||"Sans titre"})))});
     body.push(blk("Mentionné dans",rl))}}
   var src=d.source&&/^https?:\/\//.test(d.source)?h("a",{href:d.source,target:"_blank",rel:"noopener",style:"color:var(--teal)",text:d.source.replace(/^https?:\/\/(www\.)?/,"").split("/")[0]}):null;
-  body.push(h("div",{class:"foot"},h("span",null,src?"Source : ":null,src,src&&d.updatedAt?" · ":null,d.updatedAt?"mis à jour le "+dfull(d.updatedAt):null),
+  body.push(h("div",{class:"foot"},h("span",null,src?"Source : ":null,src,src&&(d.createdAt||d.updatedAt)?". ":null,(d.createdAt||d.updatedAt)?dateTitle(d)+".":null),
     !isAdmin&&canParticipate()?h("button",{type:"button",class:"linkbtn",style:"display:inline-flex;gap:4px;align-items:center",onclick:function(){openPropose(m,d)}},ic("edit"),"Signaler une erreur"):null));
   // vote : seulement pour les infos qu'on peut juger
   if(M.vote&&!STATIC&&!isNews(m,d)){var s=score(m,id),mv=myVotes[k]||0;
