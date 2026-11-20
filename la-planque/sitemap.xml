@@ -19,6 +19,10 @@
   <url><loc>https://hojicooks.github.io/la-planque/astuces/bases-edition/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/combat-armes/</loc><lastmod>2026-11-12</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/police-visage/</loc><lastmod>2026-11-12</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/astuces/catch-jardin-hamlin/</loc><lastmod>2026-11-20</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/astuces/rumeur-arrestation-armes/</loc><lastmod>2026-11-20</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/astuces/police-desamorcer/</loc><lastmod>2026-11-20</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/astuces/vehicules-retourner-pousser/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/bases-concentration/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/actu-ventes-premier-jour/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/actu-plantages-sauvegardes/</loc><lastmod>2026-11-19</lastmod></url>
@@ -32,7 +36,6 @@
   <url><loc>https://hojicooks.github.io/la-planque/astuces/divers-interieurs/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/divers-planques/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/divers-rappels/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/astuces/rumeur-arrestation-armes/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/rumeur-braquage-coffre/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/rumeur-lucia-rupture/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/rumeur-voiture-reserve/</loc><lastmod>2026-11-19</lastmod></url>
@@ -157,6 +160,7 @@
   <url><loc>https://hojicooks.github.io/la-planque/faune/macaque-rhesus/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/faune/</loc></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/garage-shore-court/</loc><lastmod>2026-11-13</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/lieux/trinity-apartments-dexter/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/planque-bayside/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/wyman-salvage/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/receleur-dunk/</loc><lastmod>2026-11-19</lastmod></url>
@@ -191,9 +195,9 @@
   <url><loc>https://hojicooks.github.io/la-planque/lexique/editions/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/waink/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/niveau-recherche/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/lexique/scooter-bros/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/jauge-ralenti/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/rideme/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/lexique/scooter-bros/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/carte-leonida/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/mode-en-ligne/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/billets-marques/</loc><lastmod>2026-11-19</lastmod></url>
