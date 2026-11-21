@@ -916,6 +916,15 @@ html[data-theme="nuit"] .reset-bar { color: var(--ink); }
   .tcard { grid-template-columns: 72px minmax(0, 1fr); }
   .when select { width: 100%; }
 }
+
+/* ---------- iPhone : champs date et heure qui ne débordent plus (Logements, excursions…) ---------- */
+input[type="date"], input[type="time"], input[type="datetime-local"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; box-sizing: border-box; }
+input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; min-width: 0; }
+.vcard, .vcard > *, .vrow, .vrow > *, .vcard label, .ex-fields, .ex-fields > *, .ex-fields label { min-width: 0; max-width: 100%; }
+.vcard label, .ex-fields label { grid-template-columns: minmax(0, 1fr); }
+.vcard input, .vcard select, .ex-fields input, .ex-fields select { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; min-height: 2.35em; }
+.vcard input[type="date"], .vcard input[type="time"], .ex-fields input[type="date"], .ex-fields input[type="time"] { background: var(--field); line-height: 1.3; }
+.vlist { min-width: 0; }
 </style>
 </head>
 <body>
