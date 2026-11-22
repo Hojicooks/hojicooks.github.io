@@ -19,6 +19,7 @@
   <url><loc>https://hojicooks.github.io/la-planque/astuces/bases-edition/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/combat-armes/</loc><lastmod>2026-11-12</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/police-visage/</loc><lastmod>2026-11-12</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/astuces/rumeur-telephone-applis/</loc><lastmod>2026-11-22</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/armes-legendaires-permit-keys/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/bon-plan-entrepot/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/actu-boite-sans-code/</loc><lastmod>2026-11-21</lastmod></url>
@@ -53,7 +54,6 @@
   <url><loc>https://hojicooks.github.io/la-planque/astuces/actu-tests/</loc><lastmod>2026-11-18</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/bases-reglages-ps5/</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/divers-radio/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/astuces/rumeur-telephone-applis/</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/actu-discord-theme/</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/actu-game-awards/</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/astuces/actu-maj-1002/</loc><lastmod>2026-11-17</lastmod></url>
@@ -161,6 +161,8 @@
   <url><loc>https://hojicooks.github.io/la-planque/faune/macaque-rhesus/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/faune/</loc></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/garage-shore-court/</loc><lastmod>2026-11-13</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/lieux/jack-of-hearts/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/lieux/marina-key-lento/</loc><lastmod>2026-11-22</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/trinity-apartments-dexter/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/planque-bayside/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/wyman-salvage/</loc><lastmod>2026-11-19</lastmod></url>
@@ -175,7 +177,6 @@
   <url><loc>https://hojicooks.github.io/la-planque/lieux/rusty-anchor/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/marina-brian/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/tours-megamundo/</loc><lastmod>2026-11-13</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/lieux/jack-of-hearts/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/mont-kalaga/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/raffinerie-allied-crystal/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/tisha-wocka/</loc><lastmod>2026-11-13</lastmod></url>
@@ -185,7 +186,6 @@
   <url><loc>https://hojicooks.github.io/la-planque/lieux/stock-305/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/one-eyed-willie/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/garage-paradise/</loc><lastmod>2026-11-13</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/lieux/marina-key-lento/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/planque-key-lento/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/starlet-motel/</loc><lastmod>2026-11-13</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lieux/marina-washington-beach/</loc><lastmod>2026-11-13</lastmod></url>
@@ -222,39 +222,39 @@
   <url><loc>https://hojicooks.github.io/la-planque/lexique/appli-forme/</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/snapmatic/</loc><lastmod>2026-11-17</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/lexique/</loc></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/animaux-etudies/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/taches-optionnelles/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/coffres-banques/</loc><lastmod>2026-11-22</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/flamants-cocaine/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/histoire/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/taches-optionnelles/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/coffres-banques/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/cartes/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/lieux-waink/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/animaux-etudies/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/armes-tenues/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/basket/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/billard/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/chasse-bret/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/lectures/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/mini-golf/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/playlists/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/styles/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/tresors-kenton/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/courses/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/defis-course/</loc><lastmod>2026-11-22</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/banques/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/bijouteries/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/operations-gangs/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/payday-loan/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/petits-braquages/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/revente-butin/</loc><lastmod>2026-11-21</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/courses/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/defis-course/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/stands-tir/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/drones-top-fun/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/cascades/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/defis/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/arcade/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/billard/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/mini-golf/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/basket/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/peche-cal/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/meditation/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/chasse-bret/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/toutes-activites/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/tresors-kenton/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/lectures/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/styles/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/playlists/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/vehicules-decouverts/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/armes-tenues/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/explorer-leonida/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/garages/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://hojicooks.github.io/la-planque/100-pourcent/scooter-bros/</loc><lastmod>2026-11-19</lastmod></url>
